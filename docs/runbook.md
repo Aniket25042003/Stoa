@@ -26,7 +26,7 @@
 - `REDIS_URL` (same for broker if desired)
 - `CELERY_BROKER_URL`, `CELERY_RESULT_BACKEND`
 - `CORS_ORIGINS` — include `https://<your-vercel-domain>`
-- Optional: `LANGCHAIN_TRACING_V2=true`, `LANGCHAIN_API_KEY`, `LANGCHAIN_PROJECT`
+- Optional LangSmith (worker only): `LANGSMITH_TRACING=true`, `LANGSMITH_API_KEY`, `LANGSMITH_PROJECT` — see [LangGraph observability](https://docs.langchain.com/oss/python/langgraph/observability). Legacy `LANGCHAIN_TRACING_V2` / `LANGCHAIN_API_KEY` / `LANGCHAIN_PROJECT` are still mapped when `LANGSMITH_*` is unset.
 - Optional research: `TAVILY_API_KEY`, `SERPAPI_API_KEY`, Reddit/X keys
 
 ## Supabase
@@ -43,8 +43,8 @@
 
 ## Observability
 
-- LangSmith: enable on worker only; never expose keys to browser.
-- API logs: Railway logs; correlate `run_id` in `run_events` table.
+- LangSmith: set `LANGSMITH_TRACING=true` on the **Celery worker** only; never expose keys to the browser. Traces include graph nodes, agent planning/approval spans, MCP tool calls, and research provider tools. Each completed pipeline stores `langsmith_correlation` in `agent_artifacts` when trace IDs are available; progress events also include `langsmith_trace_id` / `langsmith_run_id` in `detail` when inside a trace.
+- API logs: Railway logs; correlate `run_id` in `run_events` table and filter LangSmith by metadata `run_id` or tag `run:<uuid>`.
 
 ## Rollback
 

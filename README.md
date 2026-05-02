@@ -52,6 +52,10 @@ over stdio MCP. Configure `GTM_AGENT_MODEL` plus a provider key such as
 product. Without a model, the app uses a conservative broad web-research fallback
 instead of fabricating platform-specific findings.
 
+### LangSmith tracing
+
+On the Celery worker, set `LANGSMITH_TRACING=true`, `LANGSMITH_API_KEY`, and optionally `LANGSMITH_PROJECT` (see [LangGraph observability](https://docs.langchain.com/oss/python/langgraph/observability)). Legacy `LANGCHAIN_TRACING_V2` / `LANGCHAIN_API_KEY` are mapped to LangSmith when the new vars are unset. After a run, check Supabase `agent_artifacts` for `langsmith_correlation` or filter traces by `run_id` metadata.
+
 ### User-approved master plan
 
 Creating a run now drafts the main agent's master plan and leaves the run in

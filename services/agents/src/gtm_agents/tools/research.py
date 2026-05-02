@@ -14,6 +14,7 @@ from typing import Any, Iterable, Literal, TypedDict
 from urllib.parse import quote_plus
 
 import httpx
+from gtm_agents.observability import traced_tool
 from gtm_agents.state import ResearchItem
 
 SourceType = Literal["reddit", "x", "web", "serp", "other"]
@@ -80,6 +81,7 @@ def research_plan(source: str, query: str, product_context: str = "") -> dict[st
     }
 
 
+@traced_tool(name="research_reddit", run_type="tool")
 def research_reddit(plan: dict[str, Any], max_results: int = 8) -> ResearchToolResult:
     """Search Reddit via PRAW using app credentials."""
     client_id = os.getenv("REDDIT_CLIENT_ID")
@@ -124,6 +126,7 @@ def research_reddit(plan: dict[str, Any], max_results: int = 8) -> ResearchToolR
     return _result("reddit", items)
 
 
+@traced_tool(name="research_x", run_type="tool")
 def research_x(plan: dict[str, Any], max_results: int = 10) -> ResearchToolResult:
     """Search recent public X/Twitter posts via X API v2."""
     bearer = os.getenv("X_API_BEARER_TOKEN")
@@ -192,6 +195,7 @@ def _jina_extract(url: str) -> str:
         return ""
 
 
+@traced_tool(name="research_web", run_type="tool")
 def research_web(plan: dict[str, Any], max_results: int = 8) -> ResearchToolResult:
     """Search the open web using Tavily when configured, with Jina as extractor/fallback."""
     query = _source_query(plan, "web")
@@ -263,6 +267,7 @@ def research_web(plan: dict[str, Any], max_results: int = 8) -> ResearchToolResu
     return _result("web", items, warnings)
 
 
+@traced_tool(name="research_competitors", run_type="tool")
 def research_competitors(plan: dict[str, Any], max_results: int = 8) -> ResearchToolResult:
     """Discover competitors and comparison pages using SerpAPI."""
     api_key = os.getenv("SERPAPI_API_KEY")
@@ -303,6 +308,7 @@ def research_competitors(plan: dict[str, Any], max_results: int = 8) -> Research
     return _result("serp", items)
 
 
+@traced_tool(name="run_research_suite", run_type="tool")
 def run_research_suite(plan: dict[str, Any]) -> ResearchToolResult:
     """Run all configured research integrations and return a merged result."""
     if os.getenv("GTM_DISABLE_EXTERNAL_RESEARCH") == "true":

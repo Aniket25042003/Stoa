@@ -10,6 +10,8 @@ from typing import Any
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
+from gtm_agents.observability import span
+
 
 def _repo_root() -> Path:
     return Path(__file__).resolve().parents[4]
@@ -52,21 +54,26 @@ def _content_to_json(result: Any) -> dict[str, Any]:
 
 
 async def _list_tools_async() -> list[dict[str, Any]]:
-    server = StdioServerParameters(command=sys.executable, args=[str(default_research_server_path())], env=_server_env())
-    async with stdio_client(server) as (read, write):
-        async with ClientSession(read, write) as session:
-            await session.initialize()
-            response = await session.list_tools()
-            tools = []
-            for tool in response.tools:
-                tools.append(
-                    {
-                        "name": tool.name,
-                        "description": tool.description or "",
-                        "input_schema": tool.inputSchema,
-                    }
-                )
-            return tools
+    with span(
+        "mcp_list_tools",
+        "tool",
+        {"server_script": str(default_research_server_path())},
+    ):
+        server = StdioServerParameters(command=sys.executable, args=[str(default_research_server_path())], env=_server_env())
+        async with stdio_client(server) as (read, write):
+            async with ClientSession(read, write) as session:
+                await session.initialize()
+                response = await session.list_tools()
+                tools = []
+                for tool in response.tools:
+                    tools.append(
+                        {
+                            "name": tool.name,
+                            "description": tool.description or "",
+                            "input_schema": tool.inputSchema,
+                        }
+                    )
+                return tools
 
 
 async def _call_tools_async(calls: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -82,7 +89,16 @@ async def _call_tools_async(calls: list[dict[str, Any]]) -> list[dict[str, Any]]
                     results.append({"items": [], "warnings": ["Skipped MCP call without tool_name."], "tool_name": name})
                     continue
                 try:
-                    raw = await session.call_tool(name, arguments)
+                    with span(
+                        "mcp_call_tool",
+                        "tool",
+                        {
+                            "tool_name": name,
+                            "argument_keys": list(arguments.keys()) if isinstance(arguments, dict) else [],
+                            "reason": call.get("reason"),
+                        },
+                    ):
+                        raw = await session.call_tool(name, arguments)
                     parsed = _content_to_json(raw)
                     parsed["tool_name"] = name
                     parsed["arguments"] = arguments

@@ -6,6 +6,7 @@ from typing import Any
 
 from gtm_agents.memory import append_memory, read_memory, write_context_snapshot
 from gtm_agents.mcp_client import call_research_tools, list_research_tools
+from gtm_agents.observability import span
 from gtm_agents.state import ResearchItem
 from gtm_agents.tools.research import merge_research
 
@@ -14,24 +15,35 @@ def _llm_json(system: str, payload: dict[str, Any], max_chars: int = 16000) -> d
     model = os.getenv("GTM_AGENT_MODEL") or os.getenv("GTM_SYNTHESIS_MODEL")
     if not model or not os.getenv("OPENAI_API_KEY"):
         return None
-    try:
-        from langchain_openai import ChatOpenAI
+    payload_keys = list(payload.keys()) if isinstance(payload, dict) else []
+    with span(
+        "llm_json",
+        "llm",
+        {
+            "model": model,
+            "system_preview": (system[:400] + "…") if len(system) > 400 else system,
+            "payload_keys": payload_keys,
+            "max_chars": max_chars,
+        },
+    ):
+        try:
+            from langchain_openai import ChatOpenAI
 
-        llm = ChatOpenAI(model=model, temperature=0.25)
-        msg = llm.invoke(
-            [
-                ("system", system + "\nReturn only valid JSON. Do not wrap it in markdown."),
-                ("human", json.dumps(payload, default=str)[:max_chars]),
-            ]
-        )
-        content = str(getattr(msg, "content", "")).strip()
-        if content.startswith("```"):
-            content = content.strip("`")
-            content = content.removeprefix("json").strip()
-        parsed = json.loads(content)
-        return parsed if isinstance(parsed, dict) else None
-    except Exception:
-        return None
+            llm = ChatOpenAI(model=model, temperature=0.25)
+            msg = llm.invoke(
+                [
+                    ("system", system + "\nReturn only valid JSON. Do not wrap it in markdown."),
+                    ("human", json.dumps(payload, default=str)[:max_chars]),
+                ]
+            )
+            content = str(getattr(msg, "content", "")).strip()
+            if content.startswith("```"):
+                content = content.strip("`")
+                content = content.removeprefix("json").strip()
+            parsed = json.loads(content)
+            return parsed if isinstance(parsed, dict) else None
+        except Exception:
+            return None
 
 
 def _product_context(user_input: dict[str, Any]) -> str:
@@ -62,6 +74,22 @@ def _normalize_steps(plan: dict[str, Any], fallback_steps: list[str]) -> dict[st
 
 
 def create_agent_plan(
+    agent_name: str,
+    objective: str,
+    context: dict[str, Any],
+    fallback_steps: list[str],
+    run_id: str | None = None,
+    parent_agent: str | None = None,
+) -> dict[str, Any]:
+    with span(
+        "create_agent_plan",
+        "chain",
+        {"agent_name": agent_name, "parent_agent": parent_agent, "run_id": run_id, "objective_preview": (objective[:240] + "…") if len(objective) > 240 else objective},
+    ):
+        return _create_agent_plan_impl(agent_name, objective, context, fallback_steps, run_id, parent_agent)
+
+
+def _create_agent_plan_impl(
     agent_name: str,
     objective: str,
     context: dict[str, Any],
@@ -159,6 +187,22 @@ def generate_revision_instructions(
     context: dict[str, Any],
     run_id: str | None = None,
 ) -> dict[str, Any]:
+    with span(
+        "generate_revision_instructions",
+        "chain",
+        {"reviewing_agent": reviewing_agent, "target_agent": target_agent, "run_id": run_id},
+    ):
+        return _generate_revision_instructions_impl(reviewing_agent, target_agent, failed_output, approval, context, run_id)
+
+
+def _generate_revision_instructions_impl(
+    reviewing_agent: str,
+    target_agent: str,
+    failed_output: dict[str, Any],
+    approval: dict[str, Any],
+    context: dict[str, Any],
+    run_id: str | None = None,
+) -> dict[str, Any]:
     prompt = f"""You are {reviewing_agent}. You rejected or questioned {target_agent}'s work.
 Generate concrete new instructions for {target_agent}: what is missing, how to improve it, what to retry, and what approval criteria must be met next.
 Return JSON with: missing, improved_instructions, must_do_next, approval_criteria."""
@@ -184,6 +228,11 @@ Return JSON with: missing, improved_instructions, must_do_next, approval_criteri
 
 
 def review_agent_work(agent_name: str, objective: str, output: dict[str, Any], context: dict[str, Any], run_id: str | None = None) -> dict[str, Any]:
+    with span("review_agent_work", "chain", {"agent_name": agent_name, "run_id": run_id}):
+        return _review_agent_work_impl(agent_name, objective, output, context, run_id)
+
+
+def _review_agent_work_impl(agent_name: str, objective: str, output: dict[str, Any], context: dict[str, Any], run_id: str | None = None) -> dict[str, Any]:
     prompt = f"""You are the reviewer for {agent_name}.
 Decide whether the agent should stop or continue. If it should continue, identify exactly what must be fixed.
 Return JSON: approved (boolean), decision ("approve"|"revise"|"blocked"), issues (array), rationale."""
@@ -205,6 +254,18 @@ Return JSON: approved (boolean), decision ("approve"|"revise"|"blocked"), issues
 
 
 def parent_approve(
+    parent_agent: str,
+    child_agent: str,
+    child_plan: dict[str, Any],
+    child_output: dict[str, Any],
+    context: dict[str, Any],
+    run_id: str | None = None,
+) -> dict[str, Any]:
+    with span("parent_approve", "chain", {"parent_agent": parent_agent, "child_agent": child_agent, "run_id": run_id}):
+        return _parent_approve_impl(parent_agent, child_agent, child_plan, child_output, context, run_id)
+
+
+def _parent_approve_impl(
     parent_agent: str,
     child_agent: str,
     child_plan: dict[str, Any],
@@ -262,30 +323,40 @@ def run_planned_agent(
     run_id: str | None = None,
     max_iterations: int = 2,
 ) -> dict[str, Any]:
-    plan = create_agent_plan(agent_name, objective, context, fallback_steps, run_id, parent_agent)
-    output: dict[str, Any] = {}
-    approval: dict[str, Any] = {"approved": False, "decision": "not_reviewed", "issues": []}
+    with span(
+        "run_planned_agent",
+        "chain",
+        {"agent_name": agent_name, "parent_agent": parent_agent, "run_id": run_id, "max_iterations": max_iterations},
+    ):
+        plan = create_agent_plan(agent_name, objective, context, fallback_steps, run_id, parent_agent)
+        output: dict[str, Any] = {}
+        approval: dict[str, Any] = {"approved": False, "decision": "not_reviewed", "issues": []}
 
-    for iteration in range(max_iterations):
-        append_memory(run_id, agent_name, "iteration_started", {"iteration": iteration + 1, "plan": plan})
-        output = work_fn(plan, context, iteration)
-        for idx, step in enumerate(plan.get("steps") or []):
-            if step.get("status") == "pending":
-                complete_step(plan, idx, review="Executed during iteration.")
+        for iteration in range(max_iterations):
+            with span(
+                "run_planned_agent_iteration",
+                "chain",
+                {"agent_name": agent_name, "iteration": iteration + 1, "run_id": run_id},
+            ):
+                append_memory(run_id, agent_name, "iteration_started", {"iteration": iteration + 1, "plan": plan})
+                output = work_fn(plan, context, iteration)
+                for idx, step in enumerate(plan.get("steps") or []):
+                    if step.get("status") == "pending":
+                        complete_step(plan, idx, review="Executed during iteration.")
 
-        self_review = review_agent_work(agent_name, objective, output, context, run_id)
-        approval = parent_approve(parent_agent, agent_name, plan, output, {**context, "self_review": self_review}, run_id)
-        if approval.get("approved"):
-            plan["status"] = "completed"
-            break
-        issues = approval.get("issues") or self_review.get("issues") or ["Parent requested revision."]
-        request_fix(plan, "; ".join(str(issue) for issue in issues))
-        append_memory(run_id, agent_name, "revision_requested", {"iteration": iteration + 1, "issues": issues})
-    else:
-        plan["status"] = "blocked"
+                self_review = review_agent_work(agent_name, objective, output, context, run_id)
+                approval = parent_approve(parent_agent, agent_name, plan, output, {**context, "self_review": self_review}, run_id)
+                if approval.get("approved"):
+                    plan["status"] = "completed"
+                    break
+                issues = approval.get("issues") or self_review.get("issues") or ["Parent requested revision."]
+                request_fix(plan, "; ".join(str(issue) for issue in issues))
+                append_memory(run_id, agent_name, "revision_requested", {"iteration": iteration + 1, "issues": issues})
+        else:
+            plan["status"] = "blocked"
 
-    append_memory(run_id, agent_name, "work_finished", {"plan": plan, "output": output, "approval": approval})
-    return {"plan": plan, "output": output, "approval": approval}
+        append_memory(run_id, agent_name, "work_finished", {"plan": plan, "output": output, "approval": approval})
+        return {"plan": plan, "output": output, "approval": approval}
 
 
 def _fallback_research_calls(user_input: dict[str, Any], tools: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -318,6 +389,15 @@ def _fallback_research_calls(user_input: dict[str, Any], tools: list[dict[str, A
 
 
 def plan_research_calls(user_input: dict[str, Any], tools: list[dict[str, Any]]) -> dict[str, Any]:
+    with span(
+        "plan_research_calls",
+        "chain",
+        {"run_id": str(user_input.get("run_id") or ""), "tool_count": len(tools)},
+    ):
+        return _plan_research_calls_impl(user_input, tools)
+
+
+def _plan_research_calls_impl(user_input: dict[str, Any], tools: list[dict[str, Any]]) -> dict[str, Any]:
     prompt = """You are the autonomous research supervisor for a GTM multi-agent system.
 Choose only the MCP tools that are likely to produce useful evidence for this specific product.
 Do not call every tool by default. For example:
@@ -346,6 +426,20 @@ Create focused, source-specific queries. Return:
 
 
 def autonomous_research(
+    user_input: dict[str, Any],
+    run_id: str | None = None,
+    parent_agent: str = "main_agent",
+    additional_instructions: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    with span(
+        "autonomous_research",
+        "chain",
+        {"run_id": run_id, "parent_agent": parent_agent, "has_revision_instructions": bool(additional_instructions)},
+    ):
+        return _autonomous_research_impl(user_input, run_id, parent_agent, additional_instructions)
+
+
+def _autonomous_research_impl(
     user_input: dict[str, Any],
     run_id: str | None = None,
     parent_agent: str = "main_agent",
@@ -527,6 +621,11 @@ def autonomous_research(
 
 
 def synthesize_section(section_name: str, user_input: dict[str, Any], research: dict[str, Any], prior: dict[str, Any] | None = None) -> dict[str, Any]:
+    with span("synthesize_section", "chain", {"section_name": section_name, "evidence_count": len(research.get("items") or [])}):
+        return _synthesize_section_impl(section_name, user_input, research, prior)
+
+
+def _synthesize_section_impl(section_name: str, user_input: dict[str, Any], research: dict[str, Any], prior: dict[str, Any] | None = None) -> dict[str, Any]:
     prompt = f"""You are a senior GTM agent responsible for the {section_name} layer.
 You have full freedom to choose the structure and fields that are most useful for this product.
 Do not force generic keys like value_props or messaging_angles unless they genuinely fit the evidence.
@@ -548,6 +647,17 @@ Return a JSON object with your chosen structure."""
 
 
 def run_reasoning_layer(
+    user_input: dict[str, Any],
+    research: dict[str, Any],
+    run_id: str | None = None,
+    parent_agent: str = "main_agent",
+    additional_instructions: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    with span("run_reasoning_layer", "chain", {"run_id": run_id, "parent_agent": parent_agent}):
+        return _run_reasoning_layer_impl(user_input, research, run_id, parent_agent, additional_instructions)
+
+
+def _run_reasoning_layer_impl(
     user_input: dict[str, Any],
     research: dict[str, Any],
     run_id: str | None = None,
@@ -632,6 +742,11 @@ def run_reasoning_layer(
 
 
 def synthesize_report_markdown(user_input: dict[str, Any], research: dict[str, Any], synthesis: dict[str, Any]) -> str | None:
+    with span("synthesize_report_markdown", "chain", {"markdown_request": True}):
+        return _synthesize_report_markdown_impl(user_input, research, synthesis)
+
+
+def _synthesize_report_markdown_impl(user_input: dict[str, Any], research: dict[str, Any], synthesis: dict[str, Any]) -> str | None:
     prompt = """You are the final WriterAgent for an autonomous GTM system.
 Write a professional GTM strategy document in Markdown. You may decide the section structure,
 but it must include citations/source references where available, assumptions, and concrete next actions.
@@ -644,6 +759,22 @@ Do not use a generic template if the product calls for a different structure."""
 
 
 def run_writing_layer(
+    user_input: dict[str, Any],
+    research: dict[str, Any],
+    reasoning: dict[str, Any],
+    validation: dict[str, Any],
+    fallback_writer,
+    run_id: str | None = None,
+    parent_agent: str = "main_agent",
+    additional_instructions: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    with span("run_writing_layer", "chain", {"run_id": run_id, "parent_agent": parent_agent}):
+        return _run_writing_layer_impl(
+            user_input, research, reasoning, validation, fallback_writer, run_id, parent_agent, additional_instructions
+        )
+
+
+def _run_writing_layer_impl(
     user_input: dict[str, Any],
     research: dict[str, Any],
     reasoning: dict[str, Any],

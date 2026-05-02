@@ -20,6 +20,11 @@ class Settings(BaseSettings):
     langchain_api_key: str | None = None
     langchain_project: str | None = None
 
+    # LangSmith (official); worker maps legacy LANGCHAIN_* when unset
+    langsmith_tracing: bool = False
+    langsmith_api_key: str | None = None
+    langsmith_project: str | None = None
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]

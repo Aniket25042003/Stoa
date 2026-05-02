@@ -16,6 +16,7 @@ from gtm_agents.autonomy import (
     run_writing_layer,
 )
 from gtm_agents.memory import append_memory, read_memory, write_context_snapshot
+from gtm_agents.observability import span
 
 
 def _clean(text: str | None, limit: int = 500) -> str:
@@ -42,6 +43,11 @@ def _progress(state: GTMState, agent: str, phase: str, message: str, detail: dic
 
 
 def node_orchestrator(state: GTMState) -> dict[str, Any]:
+    with span("node_orchestrator", "chain", {"run_id": state.get("run_id")}):
+        return _node_orchestrator_impl(state)
+
+
+def _node_orchestrator_impl(state: GTMState) -> dict[str, Any]:
     inp = state.get("input") or {}
     run_id = state.get("run_id")
     _progress(state, "main_agent", "planning", "Reading the approved master plan")
@@ -68,6 +74,11 @@ def node_orchestrator(state: GTMState) -> dict[str, Any]:
 
 
 def node_research(state: GTMState) -> dict[str, Any]:
+    with span("node_research", "chain", {"run_id": state.get("run_id")}):
+        return _node_research_impl(state)
+
+
+def _node_research_impl(state: GTMState) -> dict[str, Any]:
     master_plan = state.get("master_plan") or {}
     result: dict[str, Any] = {}
     instructions: dict[str, Any] | None = None
@@ -123,6 +134,11 @@ def node_research(state: GTMState) -> dict[str, Any]:
 
 
 def node_reasoning(state: GTMState) -> dict[str, Any]:
+    with span("node_reasoning", "chain", {"run_id": state.get("run_id")}):
+        return _node_reasoning_impl(state)
+
+
+def _node_reasoning_impl(state: GTMState) -> dict[str, Any]:
     research = {"items": state.get("research_items") or [], "bundle": state.get("research_bundle") or {}, "plan": state.get("research_plan") or {}}
     master_plan = state.get("master_plan") or {}
     result: dict[str, Any] = {}
@@ -175,6 +191,11 @@ def node_reasoning(state: GTMState) -> dict[str, Any]:
 
 
 def node_validate(state: GTMState) -> dict[str, Any]:
+    with span("node_validate", "chain", {"run_id": state.get("run_id")}):
+        return _node_validate_impl(state)
+
+
+def _node_validate_impl(state: GTMState) -> dict[str, Any]:
     _progress(state, "validator", "reasoning", "Validating citations and source coverage")
     items = state.get("research_items") or []
     warnings = list(state.get("tool_errors") or [])
@@ -188,6 +209,11 @@ def node_validate(state: GTMState) -> dict[str, Any]:
 
 
 def node_writer(state: GTMState) -> dict[str, Any]:
+    with span("node_writer", "chain", {"run_id": state.get("run_id")}):
+        return _node_writer_impl(state)
+
+
+def _node_writer_impl(state: GTMState) -> dict[str, Any]:
     inp = state.get("input") or {}
     title = inp.get("product_name") or "Unnamed product"
     seg = state.get("segmentation") or {}
