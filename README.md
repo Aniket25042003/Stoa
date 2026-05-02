@@ -1,0 +1,52 @@
+# GTM Multi-Agent Monorepo
+
+See **[AGENT.md](./AGENT.md)** for full architecture and build instructions.
+
+## Quick start
+
+### Prerequisites
+
+- Node 20+, pnpm 9+
+- Python 3.11+
+- Docker (for local Redis)
+- Supabase project (Postgres + Auth)
+
+### Local services
+
+```bash
+docker compose up -d redis
+```
+
+### Web app
+
+```bash
+cp apps/web/.env.example apps/web/.env.local
+pnpm install
+pnpm dev:web
+```
+
+### API + worker
+
+```bash
+cd services/api
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+uvicorn app.main:app --reload --port 8000
+```
+
+In another terminal (same venv):
+
+```bash
+cd services/api
+celery -A app.celery_app worker -l info
+```
+
+Set `PYTHONPATH` to include `services/agents` (see `services/api/.env.example`).
+
+## Layout
+
+- `apps/web` — Next.js (Vercel)
+- `services/api` — FastAPI + Celery (Railway)
+- `services/agents` — LangGraph (`gtm_agents` package)
+- `supabase/migrations` — SQL + RLS

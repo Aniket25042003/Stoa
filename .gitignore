@@ -1,0 +1,15 @@
+node_modules
+.next
+.turbo
+dist
+.venv
+__pycache__
+*.pyc
+.env
+.env.local
+.DS_Store
+*.egg-info
+.pytest_cache
+.coverage
+htmlcov
+AGENT.md
