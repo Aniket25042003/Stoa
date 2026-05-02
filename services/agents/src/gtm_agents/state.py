@@ -22,6 +22,7 @@ class GTMState(TypedDict, total=False):
     run_id: str
     user_id: str
     input: dict[str, Any]
+    progress_callback: Any
     master_plan: dict[str, Any]
     agent_plans: dict[str, Any]
     approvals: dict[str, Any]

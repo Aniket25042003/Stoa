@@ -6,8 +6,11 @@ create extension if not exists "uuid-ossp";
 create table if not exists public.gtm_runs (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users (id) on delete cascade,
-  status text not null default 'queued' check (status in ('queued', 'running', 'completed', 'failed')),
+  status text not null default 'awaiting_plan_approval' check (status in ('awaiting_plan_approval', 'queued', 'running', 'completed', 'failed')),
   run_input jsonb not null default '{}',
+  master_plan jsonb not null default '{}',
+  plan_feedback text,
+  plan_approved_at timestamptz,
   error text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()

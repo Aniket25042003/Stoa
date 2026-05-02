@@ -112,6 +112,16 @@ def create_master_plan_for_user(
     )
     plan["requires_user_approval"] = True
     plan["user_feedback_applied"] = user_feedback or None
+    if user_feedback:
+        plan.setdefault("user_requested_edits", []).append(user_feedback)
+        plan.setdefault("steps", []).append(
+            {
+                "id": f"user_edit_{len(plan.get('steps') or []) + 1}",
+                "description": f"Apply user-requested plan update before execution: {user_feedback}",
+                "status": "pending",
+                "review": "Awaiting user approval of regenerated plan.",
+            }
+        )
     plan["hierarchy"] = {
         "top_boss": "user",
         "executor": "main_agent",
@@ -335,7 +345,12 @@ Create focused, source-specific queries. Return:
     }
 
 
-def autonomous_research(user_input: dict[str, Any], run_id: str | None = None, parent_agent: str = "main_agent") -> dict[str, Any]:
+def autonomous_research(
+    user_input: dict[str, Any],
+    run_id: str | None = None,
+    parent_agent: str = "main_agent",
+    additional_instructions: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     if os.getenv("GTM_DISABLE_EXTERNAL_RESEARCH") == "true":
         disabled_plan = {
             "autonomy_mode": "disabled",
@@ -410,7 +425,12 @@ def autonomous_research(user_input: dict[str, Any], run_id: str | None = None, p
     research_parent_plan = create_agent_plan(
         "research_parent_agent",
         "Decide what market evidence is needed, choose relevant MCP research tools, supervise subagents, and stop only after parent approval.",
-        {"user_input": user_input, "available_tools": tools, "shared_memory": read_memory(run_id, 50)},
+        {
+            "user_input": user_input,
+            "available_tools": tools,
+            "additional_instructions": additional_instructions or {},
+            "shared_memory": read_memory(run_id, 50),
+        },
         [
             "Inspect product details and available MCP tools.",
             "Choose relevant sources and formulate source-specific queries.",
@@ -421,7 +441,9 @@ def autonomous_research(user_input: dict[str, Any], run_id: str | None = None, p
         run_id,
         parent_agent,
     )
-    research_plan = plan_research_calls({**user_input, "run_id": run_id}, tools)
+    research_plan = plan_research_calls({**user_input, "run_id": run_id, "additional_instructions": additional_instructions or {}}, tools)
+    if additional_instructions:
+        research_plan["revision_instructions"] = additional_instructions
     complete_step(research_parent_plan, 0, "Available MCP tools inspected.")
     complete_step(research_parent_plan, 1, "Research calls selected.")
 
@@ -525,11 +547,22 @@ Return a JSON object with your chosen structure."""
     }
 
 
-def run_reasoning_layer(user_input: dict[str, Any], research: dict[str, Any], run_id: str | None = None, parent_agent: str = "main_agent") -> dict[str, Any]:
+def run_reasoning_layer(
+    user_input: dict[str, Any],
+    research: dict[str, Any],
+    run_id: str | None = None,
+    parent_agent: str = "main_agent",
+    additional_instructions: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     parent_plan = create_agent_plan(
         "reasoning_parent_agent",
         "Turn approved research into GTM reasoning. Decide which reasoning subagents are needed and approve their work before completion.",
-        {"user_input": user_input, "research": research, "shared_memory": read_memory(run_id, 75)},
+        {
+            "user_input": user_input,
+            "research": research,
+            "additional_instructions": additional_instructions or {},
+            "shared_memory": read_memory(run_id, 75),
+        },
         [
             "Review research approval and source quality.",
             "Delegate segmentation reasoning.",
@@ -557,7 +590,13 @@ def run_reasoning_layer(user_input: dict[str, Any], research: dict[str, Any], ru
             agent_name,
             "reasoning_parent_agent",
             objective,
-            {"user_input": user_input, "research": research, "prior_outputs": outputs, "shared_memory": read_memory(run_id, 75)},
+            {
+                "user_input": user_input,
+                "research": research,
+                "prior_outputs": outputs,
+                "additional_instructions": additional_instructions or {},
+                "shared_memory": read_memory(run_id, 75),
+            },
             [
                 "Read research evidence and sibling memory.",
                 "Create evidence-grounded reasoning output with a structure suited to this product.",
@@ -587,6 +626,7 @@ def run_reasoning_layer(user_input: dict[str, Any], research: dict[str, Any], ru
         request_fix(parent_plan, "; ".join(str(issue) for issue in approval.get("issues") or ["Main agent requested reasoning revision."]))
     parent_output["reasoning_parent_plan"] = parent_plan
     parent_output["reasoning_parent_approval"] = approval
+    parent_output["revision_instructions"] = additional_instructions or None
     write_context_snapshot(run_id, {"reasoning": parent_output, "memory_tail": read_memory(run_id, 25)})
     return parent_output
 
@@ -611,11 +651,19 @@ def run_writing_layer(
     fallback_writer,
     run_id: str | None = None,
     parent_agent: str = "main_agent",
+    additional_instructions: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     parent_plan = create_agent_plan(
         "writing_parent_agent",
         "Create the final GTM strategy document from approved research and reasoning, review it, and request main-agent approval before completion.",
-        {"user_input": user_input, "research": research, "reasoning": reasoning, "validation": validation, "shared_memory": read_memory(run_id, 75)},
+        {
+            "user_input": user_input,
+            "research": research,
+            "reasoning": reasoning,
+            "validation": validation,
+            "additional_instructions": additional_instructions or {},
+            "shared_memory": read_memory(run_id, 75),
+        },
         [
             "Review approved research and reasoning context.",
             "Draft a product-specific GTM strategy document.",
@@ -638,7 +686,13 @@ def run_writing_layer(
         "writer_agent",
         "writing_parent_agent",
         "Produce a final GTM report that is specific to this product and grounded in approved evidence.",
-        {"user_input": user_input, "research": research, "reasoning": reasoning, "validation": validation},
+        {
+            "user_input": user_input,
+            "research": research,
+            "reasoning": reasoning,
+            "validation": validation,
+            "additional_instructions": additional_instructions or {},
+        },
         [
             "Read approved layer outputs.",
             "Draft GTM report.",
@@ -660,5 +714,6 @@ def run_writing_layer(
         request_fix(parent_plan, "; ".join(str(issue) for issue in approval.get("issues") or ["Main agent requested writing revision."]))
     output["writing_parent_plan"] = parent_plan
     output["writing_parent_approval"] = approval
+    output["revision_instructions"] = additional_instructions or None
     write_context_snapshot(run_id, {"writing": output, "memory_tail": read_memory(run_id, 25)})
     return output

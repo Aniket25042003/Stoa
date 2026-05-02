@@ -5,6 +5,7 @@ import { apiFetch } from "@/lib/api";
 import { consumeSse } from "./stream";
 
 type EventRow = { message?: string; agent?: string; phase?: string; detail?: Record<string, unknown> };
+type RunRow = { status?: string; master_plan?: Record<string, unknown> };
 type SourceRow = {
   id: string;
   source_type: string;
@@ -14,11 +15,72 @@ type SourceRow = {
   metadata?: Record<string, unknown>;
 };
 
+const ACTIVITY_MESSAGES = {
+  planning: ["Reading your approved master plan", "Preparing the agent hierarchy", "Loading shared Redis context"],
+  queued: ["Waiting for a worker to pick up the run", "Preparing the GTM pipeline", "Getting the agent team ready"],
+  research: [
+    "Researching Reddit discussions",
+    "Checking X/Twitter market signals",
+    "Searching the web for problem and competitor signals",
+    "Looking for competitor positioning and pricing clues",
+    "Reviewing sources before the research parent asks for approval",
+  ],
+  reasoning: [
+    "Building ICP and persona hypotheses",
+    "Synthesizing pain points from the research bundle",
+    "Drafting positioning and messaging angles",
+    "Ranking launch channels and experiment ideas",
+    "Checking whether reasoning is strong enough for main-agent approval",
+  ],
+  writing: [
+    "Drafting the GTM strategy document",
+    "Turning research and reasoning into a clear narrative",
+    "Adding citations and assumptions",
+    "Reviewing the report for actionability",
+    "Preparing the final Markdown and PDF-ready output",
+  ],
+  completed: ["Pipeline completed. The report is ready."],
+  failed: ["The run failed. Check the latest event for details."],
+  awaiting_plan_approval: ["Waiting for your approval before starting any agents."],
+} as const;
+
+type ActivityPhase = keyof typeof ACTIVITY_MESSAGES;
+
+function activityPhase(status: string, events: EventRow[]): ActivityPhase {
+  if (status === "awaiting_plan_approval") return "awaiting_plan_approval";
+  if (status === "completed") return "completed";
+  if (status === "failed") return "failed";
+  const latestPhase = events.at(-1)?.phase;
+  if (latestPhase === "planning" || latestPhase === "research" || latestPhase === "reasoning" || latestPhase === "writing") {
+    return latestPhase;
+  }
+  if (status === "queued") return "queued";
+  return "research";
+}
+
 export function RunDetail({ runId, accessToken }: { runId: string; accessToken: string }) {
   const [status, setStatus] = useState<string>("…");
   const [events, setEvents] = useState<EventRow[]>([]);
   const [markdown, setMarkdown] = useState<string | null>(null);
   const [sources, setSources] = useState<SourceRow[]>([]);
+  const [masterPlan, setMasterPlan] = useState<Record<string, unknown> | null>(null);
+  const [planFeedback, setPlanFeedback] = useState("");
+  const [planBusy, setPlanBusy] = useState(false);
+  const [activityIndex, setActivityIndex] = useState(0);
+  const currentActivityPhase = activityPhase(status, events);
+  const currentActivityMessages = ACTIVITY_MESSAGES[currentActivityPhase];
+  const currentActivity = currentActivityMessages[activityIndex % currentActivityMessages.length];
+  const latestEvent = events.at(-1);
+
+  useEffect(() => {
+    setActivityIndex(0);
+  }, [currentActivityPhase]);
+
+  useEffect(() => {
+    if (status !== "queued" && status !== "running") return;
+    const t = setInterval(() => setActivityIndex((i) => i + 1), 2200);
+    return () => clearInterval(t);
+  }, [status]);
 
   useEffect(() => {
     let cancelled = false;
@@ -26,7 +88,11 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
       const r = await apiFetch(`/v1/runs/${runId}`, { accessToken });
       if (r.ok) {
         const body = await r.json();
-        if (!cancelled) setStatus(body.run?.status ?? "?");
+        if (!cancelled) {
+          const run = body.run as RunRow | undefined;
+          setStatus(run?.status ?? "?");
+          setMasterPlan(run?.master_plan ?? null);
+        }
       }
     })();
     return () => {
@@ -36,6 +102,7 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
 
   useEffect(() => {
     const base = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
+    if (status === "…" || status === "awaiting_plan_approval") return;
     if (!base) return;
     const ac = new AbortController();
     const url = `${base}/v1/runs/${runId}/events`;
@@ -61,7 +128,7 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
       }
     })();
     return () => ac.abort();
-  }, [runId, accessToken]);
+  }, [runId, accessToken, status]);
 
   useEffect(() => {
     let cancelled = false;
@@ -83,7 +150,11 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
       }
       if (runRes.ok) {
         const body = await runRes.json();
-        if (!cancelled) setStatus(body.run?.status ?? "?");
+        if (!cancelled) {
+          const run = body.run as RunRow | undefined;
+          setStatus(run?.status ?? "?");
+          setMasterPlan(run?.master_plan ?? null);
+        }
       }
     }, 4000);
     return () => {
@@ -104,11 +175,83 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
     URL.revokeObjectURL(url);
   }
 
+  async function revisePlan() {
+    if (!planFeedback.trim()) return;
+    setPlanBusy(true);
+    try {
+      const res = await apiFetch(`/v1/runs/${runId}/plan/revise`, {
+        method: "POST",
+        accessToken,
+        body: JSON.stringify({ feedback: planFeedback }),
+      });
+      if (res.ok) {
+        const body = await res.json();
+        setMasterPlan(body.master_plan ?? null);
+        setStatus(body.status ?? "awaiting_plan_approval");
+        setPlanFeedback("");
+      }
+    } finally {
+      setPlanBusy(false);
+    }
+  }
+
+  async function approvePlan() {
+    setPlanBusy(true);
+    try {
+      const res = await apiFetch(`/v1/runs/${runId}/plan/approve`, {
+        method: "POST",
+        accessToken,
+      });
+      if (res.ok) {
+        const body = await res.json();
+        setStatus(body.status ?? "queued");
+      }
+    } finally {
+      setPlanBusy(false);
+    }
+  }
+
   return (
     <div>
       <p>
         Status: <strong>{status}</strong>
       </p>
+      <section className="card" aria-live="polite">
+        <strong>Current backend activity</strong>
+        <p style={{ marginBottom: "0.25rem" }}>{currentActivity}</p>
+        {latestEvent ? (
+          <p style={{ color: "var(--muted)", marginTop: 0 }}>
+            Latest event: [{latestEvent.phase ?? "system"}] {latestEvent.agent ?? "agent"} - {latestEvent.message ?? "Working"}
+          </p>
+        ) : (
+          <p style={{ color: "var(--muted)", marginTop: 0 }}>Waiting for the first backend event.</p>
+        )}
+      </section>
+      {status === "awaiting_plan_approval" && (
+        <section className="card">
+          <h2>User approval required</h2>
+          <p style={{ color: "var(--muted)" }}>
+            Review the main agent&apos;s master plan. You can request edits; the main agent will regenerate the plan before any layer starts.
+          </p>
+          <pre style={{ maxHeight: 360, whiteSpace: "pre-wrap" }}>{JSON.stringify(masterPlan, null, 2)}</pre>
+          <label htmlFor="plan-feedback">Plan edits or updates</label>
+          <textarea
+            id="plan-feedback"
+            rows={5}
+            value={planFeedback}
+            onChange={(e) => setPlanFeedback(e.target.value)}
+            placeholder="Example: focus more on SMB founders, skip X research unless Reddit and web are inconclusive, add competitor pricing analysis..."
+          />
+          <p>
+            <button type="button" onClick={revisePlan} disabled={planBusy || !planFeedback.trim()}>
+              Regenerate plan with edits
+            </button>{" "}
+            <button type="button" onClick={approvePlan} disabled={planBusy || !masterPlan}>
+              Approve plan and start agents
+            </button>
+          </p>
+        </section>
+      )}
       <h2>Live events</h2>
       <pre style={{ maxHeight: 280 }}>
         {events

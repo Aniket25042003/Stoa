@@ -52,11 +52,14 @@ def run_pipeline_task(run_id: str, user_id: str) -> dict[str, Any]:
     try:
         run_row = supabase_db.get_run(run_id)
         inp = (run_row or {}).get("run_input") or {}
+        approved_plan = (run_row or {}).get("master_plan") or {}
+        inp = {**inp, "approved_master_plan": approved_plan}
 
         initial: dict[str, Any] = {
             "run_id": run_id,
             "user_id": user_id,
             "input": inp,
+            "progress_callback": lambda agent, phase, message, detail=None: _emit(run_id, agent, phase, message, detail),
         }
         _emit(run_id, "orchestrator", "research", "Planning research objectives")
         _record_task(run_id, "orchestrator", "running", payload=inp)

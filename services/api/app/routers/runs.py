@@ -13,6 +13,7 @@ from app.deps.auth import verify_supabase_jwt
 from app.services import supabase_db
 from app.services.redis_events import read_events_since
 from app.tasks.gtm import run_pipeline_task
+from gtm_agents.autonomy import create_master_plan_for_user
 
 router = APIRouter(prefix="/v1/runs", tags=["runs"])
 
@@ -30,12 +31,16 @@ class CreateRunBody(BaseModel):
     horizon_days: int | None = 90
 
 
+class RevisePlanBody(BaseModel):
+    feedback: str = Field(..., min_length=3)
+
+
 @router.post("")
 def create_run(body: CreateRunBody, user_id: str = Depends(verify_supabase_jwt)) -> dict[str, Any]:
     payload = body.model_dump()
-    run_id = supabase_db.insert_run(user_id, payload)
-    run_pipeline_task.delay(run_id, user_id)
-    return {"id": run_id, "status": "queued"}
+    master_plan = create_master_plan_for_user(payload)
+    run_id = supabase_db.insert_run(user_id, payload, master_plan)
+    return {"id": run_id, "status": "awaiting_plan_approval", "master_plan": master_plan}
 
 
 @router.get("")
@@ -50,6 +55,30 @@ def get_run(run_id: str, user_id: str = Depends(verify_supabase_jwt)) -> dict[st
     if not row or row.get("user_id") != user_id:
         raise HTTPException(404, "Run not found")
     return {"run": row}
+
+
+@router.post("/{run_id}/plan/revise")
+def revise_plan(run_id: str, body: RevisePlanBody, user_id: str = Depends(verify_supabase_jwt)) -> dict[str, Any]:
+    row = supabase_db.get_run(run_id)
+    if not row or row.get("user_id") != user_id:
+        raise HTTPException(404, "Run not found")
+    if row.get("status") != "awaiting_plan_approval":
+        raise HTTPException(409, "Plan can only be revised before approval")
+    plan = create_master_plan_for_user(row.get("run_input") or {}, user_feedback=body.feedback, prior_plan=row.get("master_plan") or {}, run_id=run_id)
+    supabase_db.update_master_plan(run_id, plan, feedback=body.feedback)
+    return {"status": "awaiting_plan_approval", "master_plan": plan}
+
+
+@router.post("/{run_id}/plan/approve")
+def approve_plan(run_id: str, user_id: str = Depends(verify_supabase_jwt)) -> dict[str, Any]:
+    row = supabase_db.get_run(run_id)
+    if not row or row.get("user_id") != user_id:
+        raise HTTPException(404, "Run not found")
+    if row.get("status") != "awaiting_plan_approval":
+        raise HTTPException(409, "Plan has already been approved or run has started")
+    supabase_db.approve_master_plan(run_id)
+    run_pipeline_task.delay(run_id, user_id)
+    return {"id": run_id, "status": "queued"}
 
 
 @router.get("/{run_id}/report")

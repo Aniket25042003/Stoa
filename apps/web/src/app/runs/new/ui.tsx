@@ -102,7 +102,7 @@ export function NewRunForm({ accessToken }: { accessToken: string }) {
       {err && <p style={{ color: "#c62828" }}>{err}</p>}
       <p style={{ marginTop: "1rem" }}>
         <button type="submit" disabled={loading}>
-          {loading ? "Starting…" : "Start GTM run"}
+          {loading ? "Creating plan…" : "Create master plan"}
         </button>
       </p>
     </form>

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Any
 
 from supabase import Client, create_client
@@ -14,13 +15,37 @@ def get_supabase_admin() -> Client:
     return create_client(s.supabase_url, s.supabase_service_role_key)
 
 
-def insert_run(user_id: str, input_payload: dict[str, Any]) -> str:
+def insert_run(user_id: str, input_payload: dict[str, Any], master_plan: dict[str, Any] | None = None) -> str:
     sb = get_supabase_admin()
-    row = sb.table("gtm_runs").insert({"user_id": user_id, "status": "queued", "run_input": input_payload}).execute()
+    row = (
+        sb.table("gtm_runs")
+        .insert(
+            {
+                "user_id": user_id,
+                "status": "awaiting_plan_approval",
+                "run_input": input_payload,
+                "master_plan": master_plan or {},
+            }
+        )
+        .execute()
+    )
     data = row.data
     if not data:
         raise RuntimeError("Failed to insert gtm_run")
     return str(data[0]["id"])
+
+
+def update_master_plan(run_id: str, master_plan: dict[str, Any], feedback: str | None = None) -> None:
+    sb = get_supabase_admin()
+    payload: dict[str, Any] = {"master_plan": master_plan, "status": "awaiting_plan_approval"}
+    if feedback is not None:
+        payload["plan_feedback"] = feedback
+    sb.table("gtm_runs").update(payload).eq("id", run_id).execute()
+
+
+def approve_master_plan(run_id: str) -> None:
+    sb = get_supabase_admin()
+    sb.table("gtm_runs").update({"status": "queued", "plan_approved_at": datetime.now(timezone.utc).isoformat()}).eq("id", run_id).execute()
 
 
 def update_run_status(run_id: str, status: str, error: str | None = None) -> None:

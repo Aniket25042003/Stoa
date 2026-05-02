@@ -52,6 +52,14 @@ over stdio MCP. Configure `GTM_AGENT_MODEL` plus a provider key such as
 product. Without a model, the app uses a conservative broad web-research fallback
 instead of fabricating platform-specific findings.
 
+### User-approved master plan
+
+Creating a run now drafts the main agent's master plan and leaves the run in
+`awaiting_plan_approval`. Review or revise the plan in the run detail page, then
+approve it to enqueue the Celery pipeline. During execution, main-agent rejection
+of research, reasoning, or writing produces revised layer instructions and retries
+that layer before failing the run.
+
 ## Layout
 
 - `apps/web` — Next.js (Vercel)
