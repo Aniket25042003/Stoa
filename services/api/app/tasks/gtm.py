@@ -44,6 +44,7 @@ def run_pipeline_task(run_id: str, user_id: str) -> dict[str, Any]:
         os.environ.setdefault("LANGCHAIN_TRACING_V2", "true")
 
     from gtm_agents.graph import build_graph
+    from gtm_agents.memory import read_memory
 
     _emit(run_id, "celery", "research", "Starting GTM pipeline")
     supabase_db.update_run_status(run_id, "running")
@@ -61,7 +62,16 @@ def run_pipeline_task(run_id: str, user_id: str) -> dict[str, Any]:
         _record_task(run_id, "orchestrator", "running", payload=inp)
         app = build_graph()
         result = app.invoke(initial)
-        _record_task(run_id, "orchestrator", "completed", result={"research_plan": result.get("research_plan")})
+        _record_task(
+            run_id,
+            "orchestrator",
+            "completed",
+            result={"master_plan": result.get("master_plan"), "approvals": result.get("approvals")},
+        )
+        _record_artifact(run_id, "master_plan", result.get("master_plan") or {})
+        _record_artifact(run_id, "agent_plans", result.get("agent_plans") or {})
+        _record_artifact(run_id, "approvals", result.get("approvals") or {})
+        _record_artifact(run_id, "redis_memory_tail", {"memory": read_memory(run_id, 100)})
         _record_artifact(run_id, "research_plan", result.get("research_plan") or {})
 
         items = result.get("research_items") or []
@@ -80,7 +90,11 @@ def run_pipeline_task(run_id: str, user_id: str) -> dict[str, Any]:
         _record_artifact(
             run_id,
             "research_bundle",
-            {"research_bundle": result.get("research_bundle") or {}, "warnings": tool_errors},
+            {
+                "research_bundle": result.get("research_bundle") or {},
+                "tool_results": result.get("tool_results") or [],
+                "warnings": tool_errors,
+            },
         )
 
         for artifact_type, agent_name, message in (
