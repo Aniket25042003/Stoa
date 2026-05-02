@@ -22,9 +22,14 @@ class GTMState(TypedDict, total=False):
     run_id: str
     user_id: str
     input: dict[str, Any]
+    master_plan: dict[str, Any]
+    agent_plans: dict[str, Any]
+    approvals: dict[str, Any]
+    memory_context: list[dict[str, Any]]
     research_plan: dict[str, Any]
     research_items: Annotated[list[ResearchItem], operator.add]
     research_bundle: dict[str, Any]
+    tool_results: list[dict[str, Any]]
     tool_errors: Annotated[list[str], operator.add]
     segmentation: dict[str, Any]
     positioning: dict[str, Any]

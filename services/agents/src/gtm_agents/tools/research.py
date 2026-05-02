@@ -63,10 +63,21 @@ def _result(source_type: SourceType, items: list[ResearchItem], warnings: list[s
 
 
 def _source_query(plan: dict[str, Any], source: str) -> str:
+    if plan.get("query"):
+        return str(plan["query"])
     queries = (plan.get("queries") or {}).get(source) or []
     if queries:
         return str(queries[0])
     return str(plan.get("product_summary") or "")
+
+
+def research_plan(source: str, query: str, product_context: str = "") -> dict[str, Any]:
+    """Build the compact plan object understood by the underlying integrations."""
+    return {
+        "product_summary": product_context or query,
+        "query": query,
+        "queries": {source: [query]},
+    }
 
 
 def research_reddit(plan: dict[str, Any], max_results: int = 8) -> ResearchToolResult:

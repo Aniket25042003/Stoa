@@ -16,4 +16,9 @@ Available tools:
 - `competitor_research`
 - `full_research_suite`
 
+Each tool accepts `query`, optional `product_context`, and optional `max_results`.
 Each tool returns the normalized source schema documented in `AGENT.md`.
+
+The LangGraph research supervisor lists these tools at runtime and lets the
+configured model choose which tools to call. Set `GTM_AGENT_MODEL` and the
+provider key (for example `OPENAI_API_KEY`) to enable model-driven tool choice.
