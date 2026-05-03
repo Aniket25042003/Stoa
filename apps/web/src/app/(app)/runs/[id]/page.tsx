@@ -12,14 +12,14 @@ export default async function RunDetailPage({ params }: { params: Promise<{ id: 
   if (!session) redirect("/login");
 
   return (
-    <main>
-      <div className="card">
-        <p>
-          <Link href="/dashboard">← Dashboard</Link>
-        </p>
-        <h1>Run {id.slice(0, 8)}…</h1>
-        <RunDetail runId={id} accessToken={session.access_token} />
+    <div className="space-y-6">
+      <div>
+        <Link href="/dashboard" className="text-sm font-medium text-slate hover:underline">
+          ← Dashboard
+        </Link>
+        <h1 className="mt-4 font-mono text-2xl font-semibold tracking-tight text-ink md:text-3xl">Run {id.slice(0, 8)}…</h1>
       </div>
-    </main>
+      <RunDetail runId={id} accessToken={session.access_token} />
+    </div>
   );
 }
