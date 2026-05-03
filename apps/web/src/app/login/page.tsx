@@ -16,6 +16,8 @@ function LoginForm() {
   useEffect(() => {
     const e = searchParams.get("email");
     if (e) setEmail(e);
+    const err = searchParams.get("error");
+    if (err) setMsg(err);
   }, [searchParams]);
 
   async function onSubmit(e: React.FormEvent) {
@@ -23,9 +25,11 @@ function LoginForm() {
     setMsg(null);
     setLoading(true);
     const supabase = createClient();
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const emailRedirectTo = origin ? `${origin}/auth/callback?next=${encodeURIComponent("/dashboard")}` : undefined;
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: typeof window !== "undefined" ? `${window.location.origin}/dashboard` : undefined },
+      options: { emailRedirectTo },
     });
     setLoading(false);
     if (error) setMsg(error.message);
