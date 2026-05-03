@@ -32,7 +32,7 @@ const faqs: { id: string; cat: Cat; q: string; a: string }[] = [
     id: "a2",
     cat: "Agents",
     q: "How do agents share context?",
-    a: "Redis holds plans, observations, and cross-agent notes so a parent can nudge a sibling agent to mirror a better approach — for example when Reddit research outperforms an X pass.",
+    a: "Redis holds plans, observations, and cross-agent notes so a parent can nudge a sibling agent to mirror a better approach — for example when a deep crawl pass outperforms a shallow web search.",
   },
   {
     id: "pr1",

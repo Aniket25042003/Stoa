@@ -7,7 +7,7 @@ import operator
 
 class ResearchItem(TypedDict, total=False):
     source_url: str
-    source_type: Literal["reddit", "x", "web", "serp", "other"]
+    source_type: Literal["web", "serp", "crawl", "other"]
     query: str
     title: str
     raw_excerpt: str

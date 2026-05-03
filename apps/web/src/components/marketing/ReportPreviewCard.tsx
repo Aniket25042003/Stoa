@@ -8,7 +8,7 @@ const excerpt = `# GTM Strategy — Acme
 ## Executive summary
 - ICP: Seed-stage B2B founders replacing spreadsheets with AI workflows
 - Wedge: onboarding in under 10 minutes with a guided template library
-- Launch: founder communities + Reddit + targeted outbound to design partners
+- Launch: founder communities + web crawl signals + targeted outbound to design partners
 
 ## Positioning
 **For** technical founders **who** need repeatable GTM narrative **we** ship a living strategy doc **unlike** static consultants **because** agents refresh research every run.

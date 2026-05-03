@@ -223,7 +223,7 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
             rows={5}
             value={planFeedback}
             onChange={(e) => setPlanFeedback(e.target.value)}
-            placeholder="Example: focus more on SMB founders, skip X research unless Reddit and web are inconclusive..."
+            placeholder="Example: focus more on SMB founders, skip deep crawl unless web search and competitor SERP are inconclusive..."
             className="mt-2 w-full rounded-lg border border-mist bg-cream px-3 py-2.5 text-sm text-ink focus:border-slate focus:outline-none focus:ring-2 focus:ring-slate/25"
           />
           <div className="mt-4 flex flex-wrap gap-3">

@@ -2,8 +2,8 @@ export const ACTIVITY_MESSAGES = {
   planning: ["Reading your approved master plan", "Preparing the agent hierarchy", "Loading shared Redis context"],
   queued: ["Waiting for a worker to pick up the run", "Preparing the GTM pipeline", "Getting the agent team ready"],
   research: [
-    "Researching Reddit discussions",
-    "Checking X/Twitter market signals",
+    "Running web research passes",
+    "Deep-crawling priority URLs with Playwright",
     "Searching the web for problem and competitor signals",
     "Looking for competitor positioning and pricing clues",
     "Reviewing sources before the research parent asks for approval",

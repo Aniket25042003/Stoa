@@ -27,7 +27,8 @@
 - `CELERY_BROKER_URL`, `CELERY_RESULT_BACKEND`
 - `CORS_ORIGINS` — include `https://<your-vercel-domain>`
 - Optional LangSmith (worker only): `LANGSMITH_TRACING=true`, `LANGSMITH_API_KEY`, `LANGSMITH_PROJECT` — see [LangGraph observability](https://docs.langchain.com/oss/python/langgraph/observability). Legacy `LANGCHAIN_TRACING_V2` / `LANGCHAIN_API_KEY` / `LANGCHAIN_PROJECT` are still mapped when `LANGSMITH_*` is unset.
-- Optional research: `TAVILY_API_KEY`, `SERPAPI_API_KEY`, Reddit/X keys
+- Optional research: `TAVILY_API_KEY`, `JINA_API_KEY`, `SERPAPI_API_KEY`, and crawler envs (`GTM_CRAWLER_*`, `CRAWLEE_STORAGE_DIR`) — see `services/api/.env.example`
+- **Playwright browsers (API + worker):** after `pip install -r requirements.txt`, run `playwright install chromium --with-deps` locally or rely on `services/api/nixpacks.toml` on Railway so the Celery worker can run `PlaywrightCrawler`.
 
 ## Supabase
 

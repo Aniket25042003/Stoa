@@ -13,7 +13,7 @@ const steps = [
   },
   {
     title: "Research layer",
-    body: "The research parent plans steps, calls sub-agents (Reddit, X, web, competitors), stores observations in Redis, and seeks approval from the main agent. Rejections become targeted revision instructions instead of hard stops.",
+    body: "The research parent plans steps, calls sub-agents (web search, Playwright crawl, competitors), stores observations in Redis, and seeks approval from the main agent. Rejections become targeted revision instructions instead of hard stops.",
   },
   {
     title: "Reasoning layer",

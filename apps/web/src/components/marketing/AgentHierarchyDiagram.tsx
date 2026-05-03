@@ -5,7 +5,7 @@ import { cn } from "@/lib/cn";
 
 const layers = [
   { title: "Main agent", sub: "User-approved plan + supervision" },
-  { title: "Research", sub: "Reddit · X · Web · Competitors" },
+  { title: "Research", sub: "Web · Crawler · Competitors" },
   { title: "Reasoning", sub: "ICP · Positioning · Channels" },
   { title: "Writing", sub: "GTM doc + PDF" },
 ];

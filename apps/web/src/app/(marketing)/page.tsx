@@ -14,8 +14,7 @@ import { SectionHeader } from "@/components/marketing/SectionHeader";
 import { BookOpen, PenLine, Radar } from "lucide-react";
 
 const sources = [
-  "Reddit",
-  "X",
+  "Crawler",
   "Tavily",
   "Jina",
   "SerpAPI",
@@ -72,7 +71,7 @@ export default function LandingPage() {
             <FeatureCard
               icon={Radar}
               title="Research"
-              description="Reddit, X, web, and competitor signals — chosen autonomously based on your product context."
+              description="Web search, Playwright crawl, and competitor signals — chosen autonomously based on your product context."
             />
           </RevealOnScroll>
           <RevealOnScroll delay={0.1}>

@@ -401,17 +401,31 @@ def _plan_research_calls_impl(user_input: dict[str, Any], tools: list[dict[str, 
     prompt = """You are the autonomous research supervisor for a GTM multi-agent system.
 Choose only the MCP tools that are likely to produce useful evidence for this specific product.
 Do not call every tool by default. For example:
-- Internet/software/devtools products may justify Reddit, X, web, and competitor search.
-- Physical products, food, local services, healthcare, or regulated categories may rely more on web/competitor research.
-- Use social/forum tools only when the target buyers likely discuss this category there.
+- Internet/software/devtools products may justify web_research, competitor_research, and crawl_search_results (or crawl_web when you already have high-value URLs like docs/pricing pages).
+- Physical products, food, local services, healthcare, or regulated categories may rely more on web_research/competitor_research and shallow crawl_search_results for public pages — avoid aggressive crawling when robots disallow it.
+- Use crawl_web with explicit start_urls when you need rendered HTML depth (help centers, changelogs, forums, blogs). Use crawl_search_results when you need discovery + fetch in one step.
 Create focused, source-specific queries. Return:
 {
   "research_strategy": "short rationale",
   "calls": [
-    {"tool_name": "...", "arguments": {"query": "...", "product_context": "...", "max_results": 5}, "reason": "..."}
+    {
+      "tool_name": "...",
+      "arguments": {
+        "query": "...",
+        "product_context": "...",
+        "max_results": 5,
+        "start_urls": ["https://..."],
+        "max_pages": 10,
+        "max_depth": 2,
+        "same_domain_only": true,
+        "respect_robots": true
+      },
+      "reason": "..."
+    }
   ],
   "skipped_tools": [{"tool_name": "...", "reason": "..."}]
 }
+Include only arguments relevant to each tool (e.g. crawl_web requires start_urls; crawl_search_results requires query).
 """
     planned = _llm_json(prompt, {"user_input": user_input, "available_tools": tools, "shared_memory": read_memory(str(user_input.get("run_id") or ""), 50)})
     if planned and isinstance(planned.get("calls"), list):

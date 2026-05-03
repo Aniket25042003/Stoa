@@ -263,7 +263,7 @@ Research confidence: **{report_confidence}**.
 
 ## Appendix
 ### Sources
-{chr(10).join(f"- {ref}" for ref in refs) if refs else "- No external sources were collected. Configure Tavily/Reddit/X/SerpAPI credentials or allow Jina egress, then rerun."}
+{chr(10).join(f"- {ref}" for ref in refs) if refs else "- No external sources were collected. Configure Tavily/SerpAPI (and Playwright/Chromium for crawl tools) or allow Jina egress, then rerun."}
 
 ### Validation
 ```json

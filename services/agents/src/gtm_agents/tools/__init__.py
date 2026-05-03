@@ -1,17 +1,17 @@
+from gtm_agents.tools.crawler import crawl_search_results, crawl_web, research_crawl_from_urls
 from gtm_agents.tools.research import (
     merge_research,
     research_competitors,
-    research_reddit,
     research_web,
-    research_x,
     run_research_suite,
 )
 
 __all__ = [
+    "crawl_search_results",
+    "crawl_web",
     "merge_research",
     "research_competitors",
-    "research_reddit",
+    "research_crawl_from_urls",
     "research_web",
-    "research_x",
     "run_research_suite",
 ]
