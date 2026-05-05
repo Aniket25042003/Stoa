@@ -40,7 +40,7 @@ export function AuthCallbackClient() {
       } = await supabase.auth.getSession();
 
       if (sessionError || !session) {
-        setMessage("Could not establish a session. Try the magic link again.");
+        setMessage("Could not establish a session. Try signing in again.");
         router.replace("/login?error=session");
         return;
       }

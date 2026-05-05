@@ -47,10 +47,26 @@ Set `PYTHONPATH` to include `services/agents` (see `services/api/.env.example`).
 ### Autonomous research
 
 The LangGraph research supervisor talks to `services/mcp/research_server.py`
-over stdio MCP. Configure `GTM_AGENT_MODEL` plus a provider key such as
-`OPENAI_API_KEY` to let the agent decide which MCP tools to call for each
-product. Without a model, the app uses a conservative broad web-research fallback
+over stdio MCP. Configure an LLM provider (Vertex AI by default, OpenAI as
+fallback) so the agent can decide which MCP tools to call for each product.
+Without any provider, the app uses a conservative broad web-research fallback
 instead of fabricating platform-specific findings.
+
+### LLM providers (Vertex primary, OpenAI fallback)
+
+Both providers live behind a single abstraction in
+`services/agents/src/gtm_agents/llm.py`. The config is env-driven (see
+`services/api/.env.example`):
+
+- `GTM_LLM_PROVIDER` — `vertex` (default) or `openai`. **Manual** switch.
+  Change this when you want to move between providers for *quality* reasons.
+- `GTM_LLM_AUTO_FAILOVER` — when `true` (default) the app will fall through
+  to the other provider **only if the primary raises an error**
+  (auth / quota / 5xx / network). Quality-based switching is never automatic.
+- Vertex: `GTM_VERTEX_MODEL` (e.g. `gemini-2.5-pro`), `GTM_VERTEX_PROJECT`,
+  `GTM_VERTEX_LOCATION`, plus `GOOGLE_APPLICATION_CREDENTIALS` pointing to a
+  service-account JSON (or `gcloud auth application-default login` for local).
+- OpenAI: `GTM_OPENAI_MODEL` (or legacy `GTM_AGENT_MODEL`) and `OPENAI_API_KEY`.
 
 ### LangSmith tracing
 

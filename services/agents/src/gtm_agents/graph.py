@@ -259,7 +259,7 @@ Research confidence: **{report_confidence}**.
 
 ## Risks & assumptions
 {chr(10).join(f"- {w}" for w in warnings) if warnings else "- External research ran without integration warnings."}
-- Configure `GTM_AGENT_MODEL` and `OPENAI_API_KEY` for fully autonomous long-form strategy writing.
+- Configure `GTM_LLM_PROVIDER` (vertex or openai) with credentials for fully autonomous long-form strategy writing.
 
 ## Appendix
 ### Sources

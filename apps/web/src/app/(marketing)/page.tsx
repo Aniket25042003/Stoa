@@ -149,7 +149,7 @@ export default function LandingPage() {
             <p className="font-mono text-xs uppercase tracking-[0.25em] text-cream/60">Ready</p>
             <h2 className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl">Run your first GTM pipeline</h2>
             <p className="mt-3 text-sm leading-relaxed text-cream/75">
-              Magic link sign-in. Approve the master plan. Watch the agents work.
+              Google sign-in. Approve the master plan. Watch the agents work.
             </p>
           </div>
           <EmailCta />

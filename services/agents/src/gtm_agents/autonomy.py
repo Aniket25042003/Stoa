@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import json
 import os
 from typing import Any
 
+from gtm_agents.llm import invoke_json, load_config
 from gtm_agents.memory import append_memory, read_memory, write_context_snapshot
 from gtm_agents.mcp_client import call_research_tools, list_research_tools
 from gtm_agents.observability import span
@@ -12,38 +12,31 @@ from gtm_agents.tools.research import merge_research
 
 
 def _llm_json(system: str, payload: dict[str, Any], max_chars: int = 16000) -> dict[str, Any] | None:
-    model = os.getenv("GTM_AGENT_MODEL") or os.getenv("GTM_SYNTHESIS_MODEL")
-    if not model or not os.getenv("OPENAI_API_KEY"):
-        return None
+    cfg = load_config()
     payload_keys = list(payload.keys()) if isinstance(payload, dict) else []
     with span(
         "llm_json",
         "llm",
         {
-            "model": model,
+            "primary_provider": cfg.primary,
+            "auto_failover": cfg.auto_failover,
+            "vertex_model": cfg.vertex_model,
+            "openai_model": cfg.openai_model,
             "system_preview": (system[:400] + "…") if len(system) > 400 else system,
             "payload_keys": payload_keys,
             "max_chars": max_chars,
         },
     ):
-        try:
-            from langchain_openai import ChatOpenAI
-
-            llm = ChatOpenAI(model=model, temperature=0.25)
-            msg = llm.invoke(
-                [
-                    ("system", system + "\nReturn only valid JSON. Do not wrap it in markdown."),
-                    ("human", json.dumps(payload, default=str)[:max_chars]),
-                ]
-            )
-            content = str(getattr(msg, "content", "")).strip()
-            if content.startswith("```"):
-                content = content.strip("`")
-                content = content.removeprefix("json").strip()
-            parsed = json.loads(content)
-            return parsed if isinstance(parsed, dict) else None
-        except Exception:
-            return None
+        parsed, provider_used = invoke_json(system, payload, max_chars=max_chars, config=cfg)
+        if provider_used and provider_used != cfg.primary:
+            # Surface failover events into the trace so operators see when Vertex went down.
+            with span(
+                "llm_failover",
+                "llm",
+                {"primary": cfg.primary, "fallback_used": provider_used},
+            ):
+                pass
+        return parsed
 
 
 def _product_context(user_input: dict[str, Any]) -> str:
@@ -363,7 +356,9 @@ def _fallback_research_calls(user_input: dict[str, Any], tools: list[dict[str, A
     """Minimal non-LLM fallback: choose broad web research only.
 
     This keeps tests/local runs deterministic without pretending to be an
-    autonomous strategist. Real autonomy requires GTM_AGENT_MODEL.
+    autonomous strategist. Real autonomy requires an LLM provider
+    (GTM_LLM_PROVIDER=vertex with GOOGLE_APPLICATION_CREDENTIALS, or
+    GTM_LLM_PROVIDER=openai with OPENAI_API_KEY).
     """
     available = {tool["name"] for tool in tools}
     query = " ".join(
@@ -433,7 +428,7 @@ Include only arguments relevant to each tool (e.g. crawl_web requires start_urls
         return planned
     return {
         "autonomy_mode": "fallback",
-        "research_strategy": "No GTM_AGENT_MODEL/OPENAI_API_KEY configured; using conservative broad web research fallback.",
+        "research_strategy": "No LLM provider configured (GTM_LLM_PROVIDER + Vertex/OpenAI creds); using conservative broad web research fallback.",
         "calls": _fallback_research_calls(user_input, tools),
         "skipped_tools": [{"tool_name": "llm_planner", "reason": "Autonomous LLM planner not configured."}],
     }
@@ -656,7 +651,7 @@ Return a JSON object with your chosen structure."""
         "section": section_name,
         "evidence_count": len(items),
         "evidence_summary": [item.get("summary") or item.get("title") for item in items[:5]],
-        "next_step": f"Configure GTM_AGENT_MODEL and OPENAI_API_KEY for autonomous {section_name} synthesis.",
+        "next_step": f"Configure GTM_LLM_PROVIDER (vertex or openai) with credentials for autonomous {section_name} synthesis.",
     }
 
 

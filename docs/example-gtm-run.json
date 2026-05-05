@@ -1,0 +1,16 @@
+{
+  "product_name": "Northwind Recall",
+  "website_url": "https://slack.com/features",
+  "product_description": "Northwind Recall is an AI teammate for customer support queues. It summarizes long ticket threads, suggests replies grounded in your help center and past resolved tickets, and flags when a customer is at risk of churn. We sell to mid-market SaaS teams (50–500 employees) already on Zendesk or Intercom. Differentiators vs generic chatbots: deep CRM + billing context connectors, SOC2 roadmap, and human-in-the-loop approval before replies go out.",
+  "target_customers": "Director of Customer Experience and VP Support at B2B SaaS; teams drowning in backlog after rapid hiring",
+  "geography": "North America first; UK and DACH expansion in 6 months",
+  "known_competitors": ["Zendesk AI", "Intercom Fin", "Ada", "Forethought"],
+  "business_model": "Seat-based SaaS (~$49–149/agent/month) plus overage on AI resolution volumes",
+  "stage": "Private beta (~15 design partners); targeting seed raise after repeatable 6-week pilots",
+  "constraints": [
+    "No unsubstantiated revenue claims—we only want messaging we can cite",
+    "Primary motion is inbound + partner referrals; outbound is secondary this quarter",
+    "Must emphasize security posture and audit logs for enterprise buyers"
+  ],
+  "horizon_days": 90
+}
