@@ -12,6 +12,7 @@ const nav = [
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
     onScroll();
@@ -20,39 +21,41 @@ export function Navbar() {
   }, []);
 
   return (
-    <header
-      className={cn(
-        "sticky top-0 z-50 border-b transition-[background,border-color,backdrop-filter] duration-300",
-        scrolled ? "border-mist/90 bg-cream/80 backdrop-blur-md" : "border-transparent bg-cream/40 backdrop-blur-sm"
-      )}
-    >
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-6 px-4 py-4 md:px-6">
-        <Link href="/" className="text-lg font-semibold tracking-tight text-ink">
-          GTM Agent
+    <header className="sticky top-0 z-50 px-4 py-3 md:px-6">
+      <div
+        className={cn(
+          "mx-auto flex max-w-7xl items-center justify-between gap-6 rounded-2xl border px-4 py-3 transition-all duration-300 md:px-5",
+          scrolled
+            ? "border-white/70 bg-white/72 shadow-soft backdrop-blur-xl"
+            : "border-white/40 bg-white/42 backdrop-blur-md"
+        )}
+      >
+        <Link href="/" className="group inline-flex items-center gap-3" aria-label="GTM Agent home">
+          <span className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-primary via-indigo-pulse to-violet-pulse shadow-glow">
+            <span className="absolute inset-0 bg-[radial-gradient(circle_at_35%_20%,rgb(255_255_255_/_0.55),transparent_34%)]" />
+            <span className="relative font-mono text-sm font-semibold text-white">G</span>
+          </span>
+          <span className="font-display text-lg font-extrabold tracking-[-0.03em] text-slate-deep">GTM Agent</span>
         </Link>
-        <nav className="hidden items-center gap-8 md:flex" aria-label="Primary">
+
+        <nav className="hidden items-center gap-7 md:flex" aria-label="Primary">
           {nav.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="group relative text-sm font-medium text-ink/80 transition-colors hover:text-ink"
+              className="group relative font-mono text-xs font-semibold uppercase tracking-[0.1em] text-on-surface-variant transition-colors hover:text-primary"
             >
               {item.label}
-              <span className="absolute -bottom-1 left-0 h-px w-0 bg-slate transition-all duration-300 group-hover:w-full" />
+              <span className="absolute -bottom-2 left-0 h-0.5 w-0 rounded-full bg-gradient-to-r from-primary to-secondary transition-all duration-300 group-hover:w-full" />
             </Link>
           ))}
         </nav>
+
         <div className="flex items-center gap-2">
-          <Link
-            href="/login"
-            className="rounded-lg border border-mist px-3 py-2 text-sm font-semibold text-ink transition-colors hover:border-slate/50"
-          >
+          <Link href="/login" className="btn-secondary px-3 py-2 text-sm">
             Sign in
           </Link>
-          <Link
-            href="/login"
-            className="hidden rounded-lg bg-slate px-3 py-2 text-sm font-semibold text-cream shadow-glow sm:inline-flex"
-          >
+          <Link href="/login" className="btn-primary hidden px-4 py-2 text-sm sm:inline-flex">
             Start free
           </Link>
         </div>

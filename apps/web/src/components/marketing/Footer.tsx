@@ -21,32 +21,27 @@ const cols = [
 
 export function Footer() {
   return (
-    <footer className="relative mt-24 border-t border-mist bg-ink text-cream">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.08]"
-        style={{
-          backgroundImage:
-            "linear-gradient(to right, rgb(203 203 203 / 35%) 1px, transparent 1px), linear-gradient(to bottom, rgb(203 203 203 / 35%) 1px, transparent 1px)",
-          backgroundSize: "40px 40px",
-        }}
-      />
-      <div className="relative mx-auto max-w-6xl px-4 py-16 md:px-6">
+    <footer className="relative mt-28 overflow-hidden bg-slate-deep text-inverse-on-surface">
+      <div className="absolute inset-0 opacity-30 [background-image:linear-gradient(to_right,rgb(255_255_255_/_0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgb(255_255_255_/_0.08)_1px,transparent_1px)] [background-size:40px_40px]" />
+      <div className="absolute left-1/2 top-0 h-72 w-[min(760px,90vw)] -translate-x-1/2 rounded-full bg-gradient-to-r from-primary/30 via-violet-pulse/20 to-transparent blur-3xl" />
+      <div className="container-page relative py-16 md:py-20">
         <div className="grid gap-12 md:grid-cols-4">
           <div className="md:col-span-2">
-            <p className="text-lg font-semibold tracking-tight">GTM Agent</p>
-            <p className="mt-3 max-w-md text-sm leading-relaxed text-cream/75">
-              Autonomous research, layered reasoning, and a founder-ready GTM document — with full transparency and
-              traces you can debug.
+            <div className="inline-flex items-center gap-3">
+              <span className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-violet-pulse shadow-glow" />
+              <p className="font-display text-xl font-extrabold tracking-[-0.03em]">GTM Agent</p>
+            </div>
+            <p className="mt-4 max-w-md text-sm leading-7 text-inverse-on-surface/72">
+              Autonomous research, layered reasoning, and founder-ready GTM reports with transparent agent activity and review gates.
             </p>
           </div>
           {cols.map((col) => (
             <div key={col.title}>
-              <p className="font-mono text-xs uppercase tracking-[0.2em] text-cream/60">{col.title}</p>
-              <ul className="mt-4 space-y-2 text-sm">
+              <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-inverse-primary">{col.title}</p>
+              <ul className="mt-4 space-y-3 text-sm">
                 {col.links.map((l) => (
                   <li key={l.href}>
-                    <Link href={l.href} className="text-cream/85 transition-colors hover:text-cream">
+                    <Link href={l.href} className="text-inverse-on-surface/78 transition-colors hover:text-white">
                       {l.label}
                     </Link>
                   </li>
@@ -55,8 +50,8 @@ export function Footer() {
             </div>
           ))}
         </div>
-        <p className="mt-12 border-t border-mist/40 pt-8 font-mono text-xs text-cream/50">
-          © {new Date().getFullYear()} GTM Agent. Built for founders.
+        <p className="mt-12 border-t border-white/10 pt-8 font-mono text-xs text-inverse-on-surface/48">
+          © {new Date().getFullYear()} GTM Agent. High-performance GTM workflows for focused teams.
         </p>
       </div>
     </footer>

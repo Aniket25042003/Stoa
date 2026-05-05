@@ -15,9 +15,11 @@ export function SectionHeader({
 }) {
   return (
     <div className={cn("max-w-3xl", className)}>
-      <p className="font-mono text-xs uppercase tracking-[0.2em] text-slate">{eyebrow}</p>
-      <h2 className="mt-3 text-4xl font-semibold tracking-tight text-ink md:text-6xl md:leading-[1.05]">{title}</h2>
-      {lead ? <p className="mt-4 text-lg leading-relaxed text-ink/70 md:text-xl">{lead}</p> : null}
+      <p className="eyebrow">{eyebrow}</p>
+      <h2 className="mt-4 font-display text-4xl font-bold leading-[1.08] tracking-[-0.035em] text-slate-deep md:text-6xl">
+        {title}
+      </h2>
+      {lead ? <p className="mt-5 text-lg leading-8 text-on-surface-variant md:text-xl">{lead}</p> : null}
     </div>
   );
 }

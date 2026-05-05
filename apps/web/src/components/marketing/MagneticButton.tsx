@@ -20,17 +20,14 @@ export function MagneticButton({
   const sy = useSpring(y, { stiffness: 200, damping: 20 });
   const transform = useMotionTemplate`translate(${sx}px, ${sy}px)`;
 
-  const base =
-    "relative inline-flex items-center justify-center rounded-lg px-5 py-2.5 text-sm font-semibold transition-shadow focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate";
-  const styles =
-    variant === "primary"
-      ? "bg-slate text-cream shadow-glow hover:shadow-[0_24px_64px_-20px_rgb(109_129_150_/_45%)]"
-      : "border border-mist bg-cream/80 text-ink hover:border-slate/60";
-
   return (
     <motion.button
       type={type}
-      className={cn(base, styles, className)}
+      className={cn(
+        "px-5 py-2.5 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+        variant === "primary" ? "btn-primary" : "btn-secondary",
+        className
+      )}
       style={reduce ? undefined : { transform }}
       onMouseMove={(e) => {
         if (reduce) return;

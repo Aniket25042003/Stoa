@@ -15,14 +15,14 @@ export function FaqItem({
   onToggle: () => void;
 }) {
   return (
-    <div className={cn("border-b border-mist", open && "bg-cream")}>
+    <div className={cn("border-b border-outline-variant/55 last:border-b-0", open && "bg-white/50")}>
       <button
         type="button"
         onClick={onToggle}
-        className="flex w-full items-center justify-between gap-4 py-5 text-left text-base font-medium text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate"
+        className="flex w-full items-center justify-between gap-4 py-6 text-left font-display text-base font-bold tracking-[-0.01em] text-slate-deep focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       >
         {question}
-        <motion.span animate={{ rotate: open ? 45 : 0 }} className="font-mono text-slate">
+        <motion.span animate={{ rotate: open ? 45 : 0 }} className="font-mono text-xl text-primary">
           +
         </motion.span>
       </button>
@@ -35,7 +35,7 @@ export function FaqItem({
             transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
             className="overflow-hidden"
           >
-            <p className="pb-5 pr-8 text-sm leading-relaxed text-ink/75">{answer}</p>
+            <p className="pb-6 pr-8 text-sm leading-7 text-on-surface-variant">{answer}</p>
           </motion.div>
         ) : null}
       </AnimatePresence>

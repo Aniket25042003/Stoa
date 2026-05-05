@@ -18,18 +18,16 @@ export function FeatureCard({
   const reduce = useReducedMotion();
   return (
     <motion.div
-      className={cn(
-        "rounded-2xl border border-mist/80 bg-cream/90 p-8 shadow-sm transition-shadow",
-        className
-      )}
-      whileHover={reduce ? undefined : { y: -4, boxShadow: "var(--shadow-glow)" }}
-      transition={{ type: "spring", stiffness: 260, damping: 22 }}
+      className={cn("group relative overflow-hidden rounded-2xl p-8 card-glass", className)}
+      whileHover={reduce ? undefined : { y: -6, boxShadow: "var(--shadow-glow)" }}
+      transition={{ type: "spring", stiffness: 260, damping: 24 }}
     >
-      <div className="mb-4 inline-flex rounded-xl border border-mist bg-cream p-3 text-slate">
-        <Icon className="h-6 w-6" strokeWidth={1.5} />
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+      <div className="mb-6 inline-flex rounded-2xl border border-white/70 bg-white/70 p-3 text-primary shadow-soft backdrop-blur-md transition-transform duration-300 group-hover:scale-105">
+        <Icon className="h-6 w-6" strokeWidth={1.7} />
       </div>
-      <h3 className="text-2xl font-medium tracking-tight text-ink">{title}</h3>
-      <p className="mt-2 text-base leading-7 text-ink/75">{description}</p>
+      <h3 className="font-display text-2xl font-bold tracking-[-0.02em] text-slate-deep">{title}</h3>
+      <p className="mt-3 text-base leading-7 text-on-surface-variant">{description}</p>
     </motion.div>
   );
 }

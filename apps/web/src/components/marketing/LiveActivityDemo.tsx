@@ -5,6 +5,8 @@ import { motion } from "framer-motion";
 import { ACTIVITY_MESSAGES } from "@/lib/activity-messages";
 import { cn } from "@/lib/cn";
 
+const phases = ["Plan", "Research", "Reason", "Write"];
+
 export function LiveActivityDemo({ className }: { className?: string }) {
   const messages = useMemo(() => Object.values(ACTIVITY_MESSAGES).flat(), []);
   const [index, setIndex] = useState(0);
@@ -17,38 +19,46 @@ export function LiveActivityDemo({ className }: { className?: string }) {
   const msg = messages[index % messages.length];
 
   return (
-    <div
-      className={cn(
-        "grid gap-8 rounded-2xl border border-mist bg-cream/90 p-6 md:grid-cols-2 md:p-10",
-        className
-      )}
-    >
-      <div>
-        <p className="font-mono text-xs uppercase tracking-[0.2em] text-slate">Live activity</p>
-        <h3 className="mt-2 text-2xl font-semibold tracking-tight text-ink md:text-3xl">What founders see while agents work</h3>
-        <p className="mt-3 text-sm leading-relaxed text-ink/75">
-          The same rotating status copy you get on a real run — research, reasoning, and writing phases stay legible
-          while the pipeline streams events.
-        </p>
-        <div className="mt-6 rounded-xl border border-mist bg-cream p-4 font-mono text-xs text-ink/80">
-          <p className="text-slate">Product input</p>
-          <p className="mt-2 leading-relaxed">
-            &quot;AI-native CRM for seed teams…&quot; <span className="text-mist">(sample)</span>
+    <div className={cn("relative overflow-hidden rounded-3xl p-6 card-glass md:p-10", className)}>
+      <div className="absolute right-0 top-0 h-64 w-64 translate-x-1/3 -translate-y-1/3 rounded-full bg-violet-pulse/18 blur-3xl" />
+      <div className="relative grid gap-10 md:grid-cols-[0.9fr_1.1fr] md:items-center">
+        <div>
+          <p className="eyebrow">Live activity</p>
+          <h3 className="mt-3 font-display text-3xl font-bold leading-tight tracking-[-0.03em] text-slate-deep md:text-4xl">
+            A transparent cockpit while agents execute.
+          </h3>
+          <p className="mt-4 text-sm leading-7 text-on-surface-variant">
+            The UI keeps backend progress readable with phase labels, live event copy, and lightweight evidence previews.
           </p>
+          <div className="mt-7 grid grid-cols-4 gap-2">
+            {phases.map((phase, i) => (
+              <div key={phase} className="rounded-xl border border-outline-variant/50 bg-white/62 p-3 backdrop-blur-md">
+                <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-on-surface-variant">{phase}</p>
+                <div className="mt-3 h-1 rounded-full bg-surface-container-high">
+                  <div className={cn("h-full rounded-full", i <= index % phases.length ? "progress-shimmer animate-shimmer" : "bg-outline-variant")} />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
-      <div className="flex flex-col justify-center">
-        <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-slate">Current backend activity</p>
-        <motion.div
-          key={msg}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35 }}
-          className="mt-3 rounded-2xl border border-slate/40 bg-ink px-5 py-4 text-cream shadow-glow"
-        >
-          <p className="text-base font-medium leading-snug">{msg}</p>
-          <p className="mt-2 font-mono text-[11px] text-cream/60">Mirrors run detail UI</p>
-        </motion.div>
+        <div className="relative rounded-3xl bg-slate-deep p-5 text-white shadow-card">
+          <div className="absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-inverse-primary to-transparent" />
+          <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-inverse-primary">Current backend activity</p>
+          <motion.div
+            key={msg}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35 }}
+            className="mt-4 rounded-2xl border border-white/10 bg-white/8 px-5 py-4 backdrop-blur-md"
+          >
+            <p className="text-base font-semibold leading-snug">{msg}</p>
+            <p className="mt-3 font-mono text-[11px] text-white/48">Mirrors run detail UI</p>
+          </motion.div>
+          <div className="mt-5 rounded-2xl border border-white/10 bg-white/6 p-4 font-mono text-xs text-white/70">
+            <p className="text-inverse-primary">Product input</p>
+            <p className="mt-2 leading-relaxed">&quot;AI-native CRM for seed teams...&quot;</p>
+          </div>
+        </div>
       </div>
     </div>
   );

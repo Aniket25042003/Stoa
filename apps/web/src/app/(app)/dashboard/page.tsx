@@ -24,32 +24,29 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-10">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-ink md:text-4xl">Your GTM runs</h1>
-          <p className="mt-2 text-sm text-ink/65">Signed in as {session.user.email}</p>
+      <div className="rounded-[2rem] bg-slate-deep p-7 text-white shadow-card md:p-10">
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="eyebrow text-inverse-primary">Workspace</p>
+            <h1 className="mt-4 font-display text-4xl font-extrabold tracking-[-0.045em] md:text-5xl">Your GTM runs</h1>
+            <p className="mt-3 text-sm text-white/62">Signed in as {session.user.email}</p>
+          </div>
+          <Link href="/runs/new" className="btn-primary px-5 py-3 text-sm">
+            New run
+          </Link>
         </div>
-        <Link
-          href="/runs/new"
-          className="inline-flex items-center justify-center rounded-lg bg-slate px-5 py-2.5 text-sm font-semibold text-cream shadow-glow transition-opacity hover:opacity-90"
-        >
-          New run
-        </Link>
       </div>
 
       {runs.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-mist bg-cream/80 px-6 py-16 text-center">
-          <p className="text-lg font-medium text-ink">No runs yet</p>
-          <p className="mt-2 text-sm text-ink/65">Create a master plan when your API and Supabase session are configured.</p>
-          <Link
-            href="/runs/new"
-            className="mt-6 inline-flex rounded-lg bg-slate px-5 py-2.5 text-sm font-semibold text-cream shadow-glow transition-opacity hover:opacity-90"
-          >
+        <div className="rounded-3xl border border-dashed border-primary/28 bg-white/64 px-6 py-16 text-center shadow-soft backdrop-blur-md">
+          <p className="font-display text-2xl font-bold text-slate-deep">No runs yet</p>
+          <p className="mt-3 text-sm text-on-surface-variant">Create a master plan when your API and Supabase session are configured.</p>
+          <Link href="/runs/new" className="btn-primary mt-7 px-5 py-3 text-sm">
             Create your first run
           </Link>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {runs.map((r) => (
             <RunCard key={r.id} id={r.id} status={r.status} createdAt={r.created_at} />
           ))}

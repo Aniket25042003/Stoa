@@ -11,18 +11,17 @@ export default async function NewRunPage() {
   if (!session) redirect("/login");
 
   return (
-    <div className="space-y-6">
-      <div>
-        <Link href="/dashboard" className="text-sm font-medium text-slate hover:underline">
-          ← Dashboard
+    <div className="space-y-7">
+      <div className="rounded-[2rem] bg-slate-deep p-7 text-white shadow-card md:p-10">
+        <Link href="/dashboard" className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-inverse-primary hover:text-white">
+          Back to dashboard
         </Link>
-        <h1 className="mt-4 text-3xl font-semibold tracking-tight text-ink md:text-4xl">New GTM run</h1>
-        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink/70">
-          Describe your product. The multi-agent pipeline will draft a master plan for your approval, then research,
-          reason, and write your GTM document.
+        <h1 className="mt-5 font-display text-4xl font-extrabold tracking-[-0.045em] md:text-5xl">New GTM run</h1>
+        <p className="mt-4 max-w-2xl text-sm leading-7 text-white/68">
+          Describe your product. The multi-agent pipeline will draft a master plan for your approval, then research, reason, and write your GTM document.
         </p>
       </div>
-      <div className="rounded-2xl border border-mist bg-cream/95 p-6 shadow-sm md:p-8">
+      <div className="rounded-3xl p-6 card-glass md:p-8">
         <NewRunForm accessToken={session.access_token} />
       </div>
     </div>

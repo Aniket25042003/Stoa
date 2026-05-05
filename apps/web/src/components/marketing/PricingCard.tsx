@@ -28,38 +28,32 @@ export function PricingCard({
   return (
     <motion.div
       className={cn(
-        "relative flex flex-col rounded-2xl border bg-cream/95 p-8",
-        highlighted ? "border-slate shadow-glow ring-2 ring-slate/30" : "border-mist"
+        "relative flex min-h-full flex-col rounded-3xl p-8",
+        highlighted ? "border border-primary/35 bg-white shadow-glow ring-4 ring-primary/10" : "card-glass"
       )}
-      whileHover={reduce ? undefined : { y: -4, boxShadow: "var(--shadow-glow)" }}
-      transition={{ type: "spring", stiffness: 260, damping: 22 }}
+      whileHover={reduce ? undefined : { y: -6, boxShadow: "var(--shadow-glow)" }}
+      transition={{ type: "spring", stiffness: 260, damping: 24 }}
     >
       {highlighted ? (
-        <span className="absolute -top-3 left-6 rounded-full bg-slate px-3 py-0.5 font-mono text-[10px] uppercase tracking-widest text-cream">
+        <span className="absolute -top-3 left-6 rounded-full bg-gradient-to-r from-primary to-violet-pulse px-3 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-white shadow-glow">
           Popular
         </span>
       ) : null}
-      <h3 className="text-xl font-semibold text-ink">{name}</h3>
-      <p className="mt-2 text-sm text-ink/70">{description}</p>
-      <div className="mt-6 flex items-baseline gap-1">
-        <span className="font-mono text-4xl font-semibold tracking-tight text-ink">{price}</span>
-        <span className="font-mono text-sm text-slate">{period}</span>
+      <h3 className="font-display text-2xl font-bold tracking-[-0.03em] text-slate-deep">{name}</h3>
+      <p className="mt-3 text-sm leading-6 text-on-surface-variant">{description}</p>
+      <div className="mt-7 flex items-baseline gap-1">
+        <span className="font-display text-5xl font-extrabold tracking-[-0.04em] text-slate-deep">{price}</span>
+        <span className="font-mono text-sm font-semibold text-primary">{period}</span>
       </div>
-      <ul className="mt-8 flex flex-1 flex-col gap-3 text-sm text-ink/85">
+      <ul className="mt-8 flex flex-1 flex-col gap-3 text-sm text-on-surface-variant">
         {features.map((f) => (
-          <li key={f} className="flex gap-2">
-            <Check className="mt-0.5 h-4 w-4 shrink-0 text-slate" strokeWidth={2} />
+          <li key={f} className="flex gap-3">
+            <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" strokeWidth={2.3} />
             <span>{f}</span>
           </li>
         ))}
       </ul>
-      <Link
-        href={href}
-        className={cn(
-          "mt-8 inline-flex items-center justify-center rounded-lg px-4 py-2.5 text-center text-sm font-semibold transition-opacity hover:opacity-90",
-          highlighted ? "bg-slate text-cream" : "border border-mist bg-cream text-ink hover:border-slate/50"
-        )}
-      >
+      <Link href={href} className={cn("mt-8 px-4 py-3 text-center text-sm", highlighted ? "btn-primary" : "btn-secondary")}>
         {cta}
       </Link>
     </motion.div>

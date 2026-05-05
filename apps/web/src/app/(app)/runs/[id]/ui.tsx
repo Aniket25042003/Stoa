@@ -29,13 +29,13 @@ function activityPhase(status: string, events: EventRow[]): ActivityPhase {
   return "research";
 }
 
-const card = "rounded-2xl border border-mist bg-cream/95 p-5 shadow-sm md:p-6";
-const btn =
-  "rounded-lg border border-mist bg-cream px-4 py-2 text-sm font-semibold text-ink transition-colors hover:border-slate/50 disabled:opacity-50";
-const btnPrimary = "rounded-lg bg-slate px-4 py-2 text-sm font-semibold text-cream shadow-glow transition-opacity hover:opacity-90 disabled:opacity-50";
+const card = "rounded-3xl p-5 shadow-soft card-glass md:p-6";
+const btn = "btn-secondary px-4 py-2 text-sm disabled:opacity-50";
+const btnPrimary = "btn-primary px-4 py-2 text-sm disabled:opacity-50";
+const codePanel = "rounded-2xl border border-outline-variant/55 bg-slate-deep p-4 font-mono text-xs leading-6 text-white/78";
 
 export function RunDetail({ runId, accessToken }: { runId: string; accessToken: string }) {
-  const [status, setStatus] = useState<string>("…");
+  const [status, setStatus] = useState<string>("...");
   const [events, setEvents] = useState<EventRow[]>([]);
   const [markdown, setMarkdown] = useState<string | null>(null);
   const [sources, setSources] = useState<SourceRow[]>([]);
@@ -78,7 +78,7 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
 
   useEffect(() => {
     const base = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
-    if (status === "…" || status === "awaiting_plan_approval") return;
+    if (status === "..." || status === "awaiting_plan_approval") return;
     if (!base) return;
     const ac = new AbortController();
     const url = `${base}/v1/runs/${runId}/events`;
@@ -190,32 +190,35 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-center gap-3">
-        <span className="text-sm text-ink/70">Status</span>
+        <span className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-on-surface-variant">Status</span>
         <StatusPill status={status} />
       </div>
 
-      <section className={card} aria-live="polite">
-        <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-slate">Current backend activity</p>
-        <p className="mt-2 text-base font-medium text-ink">{currentActivity}</p>
+      <section className={`${card} ai-insight-card`} aria-live="polite">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <p className="eyebrow text-[10px]">Current backend activity</p>
+          <div className="h-1 w-28 overflow-hidden rounded-full bg-surface-container-high">
+            <div className="h-full w-3/4 animate-shimmer rounded-full progress-shimmer" />
+          </div>
+        </div>
+        <p className="mt-3 font-display text-xl font-bold tracking-[-0.02em] text-slate-deep">{currentActivity}</p>
         {latestEvent ? (
-          <p className="mt-2 font-mono text-xs text-ink/60">
-            Latest: [{latestEvent.phase ?? "system"}] {latestEvent.agent ?? "agent"} — {latestEvent.message ?? "Working"}
+          <p className="mt-3 font-mono text-xs text-on-surface-variant">
+            Latest: [{latestEvent.phase ?? "system"}] {latestEvent.agent ?? "agent"} - {latestEvent.message ?? "Working"}
           </p>
         ) : (
-          <p className="mt-2 text-sm text-ink/55">Waiting for the first backend event.</p>
+          <p className="mt-3 text-sm text-on-surface-variant">Waiting for the first backend event.</p>
         )}
       </section>
 
       {status === "awaiting_plan_approval" && (
         <section className={card}>
-          <h2 className="text-xl font-semibold text-ink">User approval required</h2>
-          <p className="mt-2 text-sm text-ink/70">
+          <h2 className="font-display text-2xl font-bold tracking-[-0.03em] text-slate-deep">User approval required</h2>
+          <p className="mt-3 text-sm leading-7 text-on-surface-variant">
             Review the main agent&apos;s master plan. You can request edits; the main agent will regenerate the plan before any layer starts.
           </p>
-          <pre className="mt-4 max-h-[360px] overflow-auto rounded-xl border border-mist bg-cream p-4 font-mono text-xs text-ink/85 whitespace-pre-wrap">
-            {JSON.stringify(masterPlan, null, 2)}
-          </pre>
-          <label htmlFor="plan-feedback" className="mt-4 block text-xs font-medium uppercase tracking-wide text-slate">
+          <pre className={`mt-5 max-h-[360px] overflow-auto whitespace-pre-wrap ${codePanel}`}>{JSON.stringify(masterPlan, null, 2)}</pre>
+          <label htmlFor="plan-feedback" className="mt-5 block eyebrow text-[11px]">
             Plan edits or updates
           </label>
           <textarea
@@ -224,9 +227,9 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
             value={planFeedback}
             onChange={(e) => setPlanFeedback(e.target.value)}
             placeholder="Example: focus more on SMB founders, skip deep crawl unless web search and competitor SERP are inconclusive..."
-            className="mt-2 w-full rounded-lg border border-mist bg-cream px-3 py-2.5 text-sm text-ink focus:border-slate focus:outline-none focus:ring-2 focus:ring-slate/25"
+            className="mt-2 input-field px-3 py-3 text-sm"
           />
-          <div className="mt-4 flex flex-wrap gap-3">
+          <div className="mt-5 flex flex-wrap gap-3">
             <button type="button" className={btn} onClick={() => void revisePlan()} disabled={planBusy || !planFeedback.trim()}>
               Regenerate plan with edits
             </button>
@@ -237,47 +240,47 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
         </section>
       )}
 
-      <section>
-        <h2 className="text-lg font-semibold text-ink">Live events</h2>
-        <pre className="mt-3 max-h-[280px] overflow-auto rounded-xl border border-mist bg-cream p-4 font-mono text-xs text-ink/85">
+      <section className={card}>
+        <h2 className="font-display text-xl font-bold tracking-[-0.02em] text-slate-deep">Live events</h2>
+        <pre className={`mt-4 max-h-[280px] overflow-auto ${codePanel}`}>
           {events.map((e) => `[${e.phase ?? ""}] ${e.agent ?? ""}: ${e.message ?? JSON.stringify(e)}`).join("\n")}
         </pre>
       </section>
 
-      <section>
-        <h2 className="text-lg font-semibold text-ink">Sources</h2>
+      <section className={card}>
+        <h2 className="font-display text-xl font-bold tracking-[-0.02em] text-slate-deep">Sources</h2>
         {sources.length === 0 ? (
-          <p className="mt-2 text-sm text-ink/60">No persisted research sources yet.</p>
+          <p className="mt-3 text-sm text-on-surface-variant">No persisted research sources yet.</p>
         ) : (
-          <div className="mt-4 space-y-3">
+          <div className="mt-5 space-y-3">
             {sources.map((s) => (
-              <div key={s.id} className={card}>
-                <strong className="text-ink">{s.source_type}</strong>{" "}
+              <div key={s.id} className="rounded-2xl border border-outline-variant/55 bg-white/62 p-5 backdrop-blur-md">
+                <strong className="font-mono text-xs uppercase tracking-[0.12em] text-primary">{s.source_type}</strong>{" "}
                 {s.source_url ? (
-                  <a href={s.source_url} target="_blank" rel="noreferrer" className="text-slate underline-offset-2 hover:underline">
+                  <a href={s.source_url} target="_blank" rel="noreferrer" className="font-semibold text-slate-deep underline-offset-4 hover:text-primary hover:underline">
                     {s.title || s.source_url}
                   </a>
                 ) : (
-                  <span className="text-ink/80">{s.title || "Untitled source"}</span>
+                  <span className="font-semibold text-slate-deep">{s.title || "Untitled source"}</span>
                 )}
-                <p className="mt-2 text-sm text-ink/65">{s.excerpt}</p>
+                <p className="mt-2 text-sm leading-7 text-on-surface-variant">{s.excerpt}</p>
               </div>
             ))}
           </div>
         )}
       </section>
 
-      <section>
-        <h2 className="text-lg font-semibold text-ink">Report</h2>
+      <section className={card}>
+        <h2 className="font-display text-xl font-bold tracking-[-0.02em] text-slate-deep">Report</h2>
         {markdown ? (
-          <div className="mt-4 space-y-4">
+          <div className="mt-5 space-y-4">
             <button type="button" className={btnPrimary} onClick={() => void downloadPdf()}>
               Download PDF
             </button>
-            <pre className="whitespace-pre-wrap rounded-xl border border-mist bg-cream p-4 font-mono text-xs text-ink/85">{markdown}</pre>
+            <pre className={`whitespace-pre-wrap ${codePanel}`}>{markdown}</pre>
           </div>
         ) : (
-          <p className="mt-2 text-sm text-ink/60">Report will appear when the run completes…</p>
+          <p className="mt-3 text-sm text-on-surface-variant">Report will appear when the run completes...</p>
         )}
       </section>
     </div>

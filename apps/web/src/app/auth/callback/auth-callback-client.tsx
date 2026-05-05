@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 export function AuthCallbackClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [message, setMessage] = useState("Signing you in…");
+  const [message, setMessage] = useState("Signing you in...");
 
   useEffect(() => {
     const rawNext = searchParams.get("next") ?? "/dashboard";
@@ -50,6 +50,6 @@ export function AuthCallbackClient() {
   }, [router, searchParams]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4 text-sm text-ink/70">{message}</div>
+    <div className="flex min-h-screen items-center justify-center px-4 text-sm text-on-surface-variant">{message}</div>
   );
 }

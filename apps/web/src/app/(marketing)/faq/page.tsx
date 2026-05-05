@@ -10,54 +10,14 @@ import { cn } from "@/lib/cn";
 type Cat = "Product" | "Agents" | "Pricing" | "Privacy";
 
 const faqs: { id: string; cat: Cat; q: string; a: string }[] = [
-  {
-    id: "p1",
-    cat: "Product",
-    q: "What do I get at the end of a run?",
-    a: "A structured GTM Markdown report and optional PDF export. Research sources are persisted so you can audit claims.",
-  },
-  {
-    id: "p2",
-    cat: "Product",
-    q: "Why do I approve a master plan first?",
-    a: "So you stay the top boss: the main agent proposes how research, reasoning, and writing will unfold. Nothing hits external tools until you approve or revise that plan.",
-  },
-  {
-    id: "a1",
-    cat: "Agents",
-    q: "What happens if the main agent rejects a layer?",
-    a: "The graph does not stop. Revision instructions are written for that layer’s parent and the layer retries (bounded attempts) until requirements are met or the run fails explicitly.",
-  },
-  {
-    id: "a2",
-    cat: "Agents",
-    q: "How do agents share context?",
-    a: "Redis holds plans, observations, and cross-agent notes so a parent can nudge a sibling agent to mirror a better approach — for example when a deep crawl pass outperforms a shallow web search.",
-  },
-  {
-    id: "pr1",
-    cat: "Pricing",
-    q: "Is the pricing on /pricing final?",
-    a: "No — tiers are illustrative for now. You can run the OSS-style stack locally and swap in your own billing when you connect Stripe or a marketplace.",
-  },
-  {
-    id: "pr2",
-    cat: "Pricing",
-    q: "Do I need my own API keys?",
-    a: "For full web and social research you will configure provider keys on the API service. You can disable external research for dry runs while you iterate on the UI.",
-  },
-  {
-    id: "pv1",
-    cat: "Privacy",
-    q: "Where does my product description live?",
-    a: "Runs are stored in your Supabase project with RLS scoped to the authenticated user. Redis streams hold ephemeral progress events for the UI.",
-  },
-  {
-    id: "pv2",
-    cat: "Privacy",
-    q: "What gets sent to LangSmith?",
-    a: "When enabled, traces include run metadata and sanitized tool spans — secrets are redacted in the observability helpers. Disable tracing by omitting LANGSMITH credentials.",
-  },
+  { id: "p1", cat: "Product", q: "What do I get at the end of a run?", a: "A structured GTM Markdown report and optional PDF export. Research sources are persisted so you can audit claims." },
+  { id: "p2", cat: "Product", q: "Why do I approve a master plan first?", a: "So you stay the top boss: the main agent proposes how research, reasoning, and writing will unfold. Nothing hits external tools until you approve or revise that plan." },
+  { id: "a1", cat: "Agents", q: "What happens if the main agent rejects a layer?", a: "The graph does not stop. Revision instructions are written for that layer's parent and the layer retries until requirements are met or the run fails explicitly." },
+  { id: "a2", cat: "Agents", q: "How do agents share context?", a: "Redis holds plans, observations, and cross-agent notes so parent agents can keep sibling work aligned." },
+  { id: "pr1", cat: "Pricing", q: "Is the pricing on /pricing final?", a: "No - tiers are illustrative for now. You can run the stack locally and swap in your own billing when you connect Stripe or a marketplace." },
+  { id: "pr2", cat: "Pricing", q: "Do I need my own API keys?", a: "For full web and social research you will configure provider keys on the API service. You can disable external research for dry runs while you iterate on the UI." },
+  { id: "pv1", cat: "Privacy", q: "Where does my product description live?", a: "Runs are stored in your Supabase project with RLS scoped to the authenticated user. Redis streams hold ephemeral progress events for the UI." },
+  { id: "pv2", cat: "Privacy", q: "What gets sent to LangSmith?", a: "When enabled, traces include run metadata and sanitized tool spans - secrets are redacted in the observability helpers." },
 ];
 
 const categories: Cat[] = ["Product", "Agents", "Pricing", "Privacy"];
@@ -69,19 +29,15 @@ export default function FaqPage() {
   const filtered = useMemo(() => faqs.filter((f) => f.cat === activeCat), [activeCat]);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-16 md:px-6 md:py-24">
+    <div className="container-page py-16 md:py-24">
       <RevealOnScroll>
-        <SectionHeader
-          eyebrow="FAQ"
-          title="Answers for builders."
-          lead="Still curious after this? Sign in and run a pipeline on your own product description."
-        />
+        <SectionHeader eyebrow="FAQ" title="Answers for builders." lead="Still curious after this? Sign in and run a pipeline on your own product description." />
       </RevealOnScroll>
 
-      <div className="mt-14 lg:grid lg:grid-cols-[220px_1fr] lg:gap-12">
+      <div className="mt-14 lg:grid lg:grid-cols-[240px_1fr] lg:gap-12">
         <aside className="mb-8 lg:sticky lg:top-28 lg:mb-0 lg:self-start">
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-slate">Categories</p>
-          <nav className="mt-4 flex flex-wrap gap-2 lg:flex-col lg:gap-1" aria-label="FAQ categories">
+          <p className="eyebrow">Categories</p>
+          <nav className="mt-4 flex flex-wrap gap-2 lg:flex-col" aria-label="FAQ categories">
             {categories.map((c) => (
               <button
                 key={c}
@@ -92,8 +48,8 @@ export default function FaqPage() {
                   setOpenId(first?.id ?? null);
                 }}
                 className={cn(
-                  "rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors",
-                  activeCat === c ? "bg-mist/70 text-ink" : "text-ink/60 hover:bg-mist/40 hover:text-ink"
+                  "rounded-2xl px-4 py-3 text-left text-sm font-bold transition-colors",
+                  activeCat === c ? "bg-slate-deep text-white shadow-soft" : "bg-white/58 text-on-surface-variant hover:bg-white hover:text-slate-deep"
                 )}
               >
                 {c}
@@ -101,27 +57,18 @@ export default function FaqPage() {
             ))}
           </nav>
         </aside>
-        <div className="rounded-2xl border border-mist bg-cream/95 px-4 py-2 md:px-6">
+        <div className="rounded-3xl px-5 py-2 card-glass md:px-7">
           {filtered.map((item) => (
-            <FaqItem
-              key={item.id}
-              question={item.q}
-              answer={item.a}
-              open={openId === item.id}
-              onToggle={() => setOpenId((cur) => (cur === item.id ? null : item.id))}
-            />
+            <FaqItem key={item.id} question={item.q} answer={item.a} open={openId === item.id} onToggle={() => setOpenId((cur) => (cur === item.id ? null : item.id))} />
           ))}
         </div>
       </div>
 
       <RevealOnScroll>
-        <div className="mt-16 rounded-2xl border border-mist bg-cream/90 p-8 text-center">
-          <p className="text-lg font-medium text-ink">Still curious?</p>
-          <p className="mt-2 text-sm text-ink/65">Spin up a run — the UI shows live activity the whole way.</p>
-          <Link
-            href="/login"
-            className="mt-6 inline-flex rounded-lg bg-slate px-6 py-3 text-sm font-semibold text-cream shadow-glow transition-opacity hover:opacity-90"
-          >
+        <div className="mt-16 rounded-3xl p-8 text-center card-glass">
+          <p className="font-display text-xl font-bold text-slate-deep">Still curious?</p>
+          <p className="mt-2 text-sm text-on-surface-variant">Spin up a run - the UI shows live activity the whole way.</p>
+          <Link href="/login" className="btn-primary mt-6 px-6 py-3 text-sm">
             Sign up free
           </Link>
         </div>

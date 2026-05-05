@@ -9,15 +9,16 @@ export function GradientOrb({ className }: { className?: string }) {
     <motion.div
       aria-hidden
       className={cn(
-        "pointer-events-none absolute left-1/2 top-[-10%] h-[min(600px,80vw)] w-[min(600px,80vw)] -translate-x-1/2 rounded-full bg-gradient-to-br from-slate/35 via-ink/20 to-transparent blur-3xl",
+        "pointer-events-none absolute left-1/2 top-[-18%] h-[min(760px,92vw)] w-[min(760px,92vw)] -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_32%_30%,rgb(99_102_241_/_0.28),transparent_34%),radial-gradient(circle_at_66%_40%,rgb(139_92_246_/_0.22),transparent_36%),radial-gradient(circle_at_50%_55%,rgb(255_255_255_/_0.9),transparent_48%)] blur-3xl",
         className
       )}
       animate={
         reduce
           ? undefined
           : {
-              x: ["-5%", "5%", "-3%", "0%"],
-              y: ["0%", "4%", "-2%", "0%"],
+              x: ["-4%", "4%", "-2%", "0%"],
+              y: ["0%", "5%", "-2%", "0%"],
+              scale: [1, 1.04, 0.98, 1],
             }
       }
       transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}

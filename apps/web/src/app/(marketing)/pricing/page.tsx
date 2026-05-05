@@ -23,13 +23,7 @@ const tiers = (yearly: boolean) => [
     price: yearly ? "$190" : "$19",
     period: yearly ? "/ year" : "/ month",
     description: "For founders shipping weekly experiments.",
-    features: [
-      "20 runs / month",
-      "SSE live activity",
-      "PDF export",
-      "LangSmith correlation IDs",
-      "Email support",
-    ],
+    features: ["20 runs / month", "SSE live activity", "PDF export", "LangSmith correlation IDs", "Email support"],
     cta: "Get Pro",
     href: "/login",
     highlighted: true,
@@ -47,10 +41,10 @@ const tiers = (yearly: boolean) => [
 ];
 
 const rows = [
-  { label: "Master plan approval", starter: "✓", pro: "✓", team: "✓" },
-  { label: "Runs / month", starter: "1", pro: "20", team: "∞" },
-  { label: "PDF export", starter: "—", pro: "✓", team: "✓" },
-  { label: "LangSmith IDs in events", starter: "—", pro: "✓", team: "✓" },
+  { label: "Master plan approval", starter: "Yes", pro: "Yes", team: "Yes" },
+  { label: "Runs / month", starter: "1", pro: "20", team: "Unlimited" },
+  { label: "PDF export", starter: "No", pro: "Yes", team: "Yes" },
+  { label: "LangSmith IDs in events", starter: "No", pro: "Yes", team: "Yes" },
 ];
 
 export default function PricingPage() {
@@ -58,23 +52,23 @@ export default function PricingPage() {
   const list = tiers(yearly);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-16 md:px-6 md:py-24">
+    <div className="container-page py-16 md:py-24">
       <RevealOnScroll>
         <SectionHeader
           eyebrow="Pricing"
-          title="Simple tiers. Serious depth."
-          lead="Pricing shown is illustrative — wire your billing when you are ready. The product paths stay the same."
+          title="Simple tiers. Serious GTM depth."
+          lead="Pricing shown is illustrative - wire your billing when you are ready. The product paths stay the same."
         />
       </RevealOnScroll>
 
       <div className="mt-10 flex justify-center">
-        <div className="inline-flex rounded-full border border-mist bg-cream p-1">
+        <div className="inline-flex rounded-full border border-outline-variant/60 bg-white/72 p-1 shadow-soft backdrop-blur-md">
           <button
             type="button"
             onClick={() => setYearly(false)}
             className={cn(
-              "rounded-full px-5 py-2 text-sm font-semibold transition-colors",
-              !yearly ? "bg-mist/80 text-ink shadow-sm" : "text-ink/50 hover:text-ink/80"
+              "rounded-full px-5 py-2 text-sm font-bold transition-colors",
+              !yearly ? "bg-slate-deep text-white shadow-sm" : "text-on-surface-variant hover:text-slate-deep"
             )}
           >
             Monthly
@@ -83,8 +77,8 @@ export default function PricingPage() {
             type="button"
             onClick={() => setYearly(true)}
             className={cn(
-              "rounded-full px-5 py-2 text-sm font-semibold transition-colors",
-              yearly ? "bg-mist/80 text-ink shadow-sm" : "text-ink/50 hover:text-ink/80"
+              "rounded-full px-5 py-2 text-sm font-bold transition-colors",
+              yearly ? "bg-slate-deep text-white shadow-sm" : "text-on-surface-variant hover:text-slate-deep"
             )}
           >
             Yearly
@@ -100,32 +94,32 @@ export default function PricingPage() {
         ))}
       </div>
 
-      <div className="mt-20 overflow-x-auto rounded-2xl border border-mist">
+      <div className="mt-20 overflow-x-auto rounded-3xl border border-outline-variant/60 bg-white/72 shadow-soft backdrop-blur-md">
         <table className="w-full min-w-[600px] text-left text-sm">
-          <thead className="border-b border-mist bg-cream/80 font-mono text-xs uppercase tracking-widest text-slate">
+          <thead className="border-b border-outline-variant/60 bg-surface-container-low font-mono text-xs font-semibold uppercase tracking-[0.14em] text-primary">
             <tr>
-              <th className="px-4 py-3">Compare</th>
-              <th className="px-4 py-3">Starter</th>
-              <th className="px-4 py-3">Pro</th>
-              <th className="px-4 py-3">Team</th>
+              <th className="px-5 py-4">Compare</th>
+              <th className="px-5 py-4">Starter</th>
+              <th className="px-5 py-4">Pro</th>
+              <th className="px-5 py-4">Team</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-mist">
+          <tbody className="divide-y divide-outline-variant/45">
             {rows.map((r) => (
-              <tr key={r.label} className="text-ink/85">
-                <td className="px-4 py-3 font-medium text-ink">{r.label}</td>
-                <td className="px-4 py-3">{r.starter}</td>
-                <td className="px-4 py-3">{r.pro}</td>
-                <td className="px-4 py-3">{r.team}</td>
+              <tr key={r.label} className="text-on-surface-variant">
+                <td className="px-5 py-4 font-semibold text-slate-deep">{r.label}</td>
+                <td className="px-5 py-4">{r.starter}</td>
+                <td className="px-5 py-4">{r.pro}</td>
+                <td className="px-5 py-4">{r.team}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      <p className="mt-10 text-center text-sm text-ink/65">
+      <p className="mt-10 text-center text-sm text-on-surface-variant">
         Questions?{" "}
-        <Link href="/faq" className="font-semibold text-slate underline-offset-4 hover:underline">
+        <Link href="/faq" className="font-bold text-primary underline-offset-4 hover:underline">
           Read the FAQ
         </Link>
         .
