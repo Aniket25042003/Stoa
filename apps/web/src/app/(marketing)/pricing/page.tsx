@@ -62,13 +62,13 @@ export default function PricingPage() {
       </RevealOnScroll>
 
       <div className="mt-10 flex justify-center">
-        <div className="inline-flex rounded-full border border-outline-variant/60 bg-white/72 p-1 shadow-soft backdrop-blur-md">
+        <div className="inline-flex rounded-full border border-outline-variant/60 bg-surface-container-low/80 p-1 shadow-soft backdrop-blur-md">
           <button
             type="button"
             onClick={() => setYearly(false)}
             className={cn(
               "rounded-full px-5 py-2 text-sm font-bold transition-colors",
-              !yearly ? "bg-slate-deep text-white shadow-sm" : "text-on-surface-variant hover:text-slate-deep"
+              !yearly ? "bg-slate-deep text-white shadow-sm" : "text-on-surface-variant hover:text-on-surface"
             )}
           >
             Monthly
@@ -78,7 +78,7 @@ export default function PricingPage() {
             onClick={() => setYearly(true)}
             className={cn(
               "rounded-full px-5 py-2 text-sm font-bold transition-colors",
-              yearly ? "bg-slate-deep text-white shadow-sm" : "text-on-surface-variant hover:text-slate-deep"
+              yearly ? "bg-slate-deep text-white shadow-sm" : "text-on-surface-variant hover:text-on-surface"
             )}
           >
             Yearly
@@ -94,7 +94,7 @@ export default function PricingPage() {
         ))}
       </div>
 
-      <div className="mt-20 overflow-x-auto rounded-3xl border border-outline-variant/60 bg-white/72 shadow-soft backdrop-blur-md">
+      <div className="mt-20 overflow-x-auto rounded-3xl border border-outline-variant/60 bg-surface-container-low/80 shadow-soft backdrop-blur-md">
         <table className="w-full min-w-[600px] text-left text-sm">
           <thead className="border-b border-outline-variant/60 bg-surface-container-low font-mono text-xs font-semibold uppercase tracking-[0.14em] text-primary">
             <tr>
@@ -107,7 +107,7 @@ export default function PricingPage() {
           <tbody className="divide-y divide-outline-variant/45">
             {rows.map((r) => (
               <tr key={r.label} className="text-on-surface-variant">
-                <td className="px-5 py-4 font-semibold text-slate-deep">{r.label}</td>
+                <td className="px-5 py-4 font-semibold text-on-surface">{r.label}</td>
                 <td className="px-5 py-4">{r.starter}</td>
                 <td className="px-5 py-4">{r.pro}</td>
                 <td className="px-5 py-4">{r.team}</td>

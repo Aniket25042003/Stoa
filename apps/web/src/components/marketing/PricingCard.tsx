@@ -29,7 +29,7 @@ export function PricingCard({
     <motion.div
       className={cn(
         "relative flex min-h-full flex-col rounded-3xl p-8",
-        highlighted ? "border border-primary/35 bg-white shadow-glow ring-4 ring-primary/10" : "card-glass"
+        highlighted ? "border border-primary/35 bg-surface-container-lowest shadow-glow ring-4 ring-primary/10 dark:bg-surface-container-low" : "card-glass"
       )}
       whileHover={reduce ? undefined : { y: -6, boxShadow: "var(--shadow-glow)" }}
       transition={{ type: "spring", stiffness: 260, damping: 24 }}
@@ -39,10 +39,10 @@ export function PricingCard({
           Popular
         </span>
       ) : null}
-      <h3 className="font-display text-2xl font-bold tracking-[-0.03em] text-slate-deep">{name}</h3>
+      <h3 className="font-display text-2xl font-bold tracking-[-0.03em] text-on-surface">{name}</h3>
       <p className="mt-3 text-sm leading-6 text-on-surface-variant">{description}</p>
       <div className="mt-7 flex items-baseline gap-1">
-        <span className="font-display text-5xl font-extrabold tracking-[-0.04em] text-slate-deep">{price}</span>
+        <span className="font-display text-5xl font-extrabold tracking-[-0.04em] text-on-surface">{price}</span>
         <span className="font-mono text-sm font-semibold text-primary">{period}</span>
       </div>
       <ul className="mt-8 flex flex-1 flex-col gap-3 text-sm text-on-surface-variant">

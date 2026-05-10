@@ -24,7 +24,7 @@ export function LiveActivityDemo({ className }: { className?: string }) {
       <div className="relative grid gap-10 md:grid-cols-[0.9fr_1.1fr] md:items-center">
         <div>
           <p className="eyebrow">Live activity</p>
-          <h3 className="mt-3 font-display text-3xl font-bold leading-tight tracking-[-0.03em] text-slate-deep md:text-4xl">
+          <h3 className="mt-3 font-display text-3xl font-bold leading-tight tracking-[-0.03em] text-on-surface md:text-4xl">
             A transparent cockpit while agents execute.
           </h3>
           <p className="mt-4 text-sm leading-7 text-on-surface-variant">
@@ -32,7 +32,7 @@ export function LiveActivityDemo({ className }: { className?: string }) {
           </p>
           <div className="mt-7 grid grid-cols-4 gap-2">
             {phases.map((phase, i) => (
-              <div key={phase} className="rounded-xl border border-outline-variant/50 bg-white/62 p-3 backdrop-blur-md">
+              <div key={phase} className="rounded-xl border border-outline-variant/50 bg-surface-container-low/70 p-3 backdrop-blur-md">
                 <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-on-surface-variant">{phase}</p>
                 <div className="mt-3 h-1 rounded-full bg-surface-container-high">
                   <div className={cn("h-full rounded-full", i <= index % phases.length ? "progress-shimmer animate-shimmer" : "bg-outline-variant")} />
@@ -49,12 +49,12 @@ export function LiveActivityDemo({ className }: { className?: string }) {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35 }}
-            className="mt-4 rounded-2xl border border-white/10 bg-white/8 px-5 py-4 backdrop-blur-md"
+            className="mt-4 rounded-2xl border border-white/10 bg-white/6 px-5 py-4 backdrop-blur-md"
           >
             <p className="text-base font-semibold leading-snug">{msg}</p>
             <p className="mt-3 font-mono text-[11px] text-white/48">Mirrors run detail UI</p>
           </motion.div>
-          <div className="mt-5 rounded-2xl border border-white/10 bg-white/6 p-4 font-mono text-xs text-white/70">
+          <div className="mt-5 rounded-2xl border border-white/10 bg-white/4 p-4 font-mono text-xs text-white/70">
             <p className="text-inverse-primary">Product input</p>
             <p className="mt-2 leading-relaxed">&quot;AI-native CRM for seed teams...&quot;</p>
           </div>

@@ -49,7 +49,7 @@ export default function FaqPage() {
                 }}
                 className={cn(
                   "rounded-2xl px-4 py-3 text-left text-sm font-bold transition-colors",
-                  activeCat === c ? "bg-slate-deep text-white shadow-soft" : "bg-white/58 text-on-surface-variant hover:bg-white hover:text-slate-deep"
+                  activeCat === c ? "bg-slate-deep text-white shadow-soft" : "bg-surface-container-low/70 text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
                 )}
               >
                 {c}
@@ -66,7 +66,7 @@ export default function FaqPage() {
 
       <RevealOnScroll>
         <div className="mt-16 rounded-3xl p-8 text-center card-glass">
-          <p className="font-display text-xl font-bold text-slate-deep">Still curious?</p>
+          <p className="font-display text-xl font-bold text-on-surface">Still curious?</p>
           <p className="mt-2 text-sm text-on-surface-variant">Spin up a run - the UI shows live activity the whole way.</p>
           <Link href="/login" className="btn-primary mt-6 px-6 py-3 text-sm">
             Sign up free

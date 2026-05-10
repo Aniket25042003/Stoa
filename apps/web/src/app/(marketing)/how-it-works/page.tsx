@@ -78,7 +78,7 @@ GTM report + PDF`}
               <article className="relative rounded-3xl p-7 card-glass md:p-8">
                 <div className="absolute left-0 top-8 h-10 w-1 rounded-r-full bg-gradient-to-b from-primary to-violet-pulse" />
                 <p className="eyebrow">Step {String(i + 1).padStart(2, "0")}</p>
-                <h2 className="mt-4 font-display text-3xl font-bold tracking-[-0.035em] text-slate-deep md:text-4xl">{s.title}</h2>
+                <h2 className="mt-4 font-display text-3xl font-bold tracking-[-0.035em] text-on-surface md:text-4xl">{s.title}</h2>
                 <p className="mt-4 text-base leading-8 text-on-surface-variant md:text-lg">{s.body}</p>
               </article>
             </RevealOnScroll>
@@ -88,7 +88,7 @@ GTM report + PDF`}
 
       <RevealOnScroll>
         <div className="mt-20 rounded-3xl p-8 text-center card-glass">
-          <p className="font-display text-xl font-bold text-slate-deep">Try it now</p>
+          <p className="font-display text-xl font-bold text-on-surface">Try it now</p>
           <p className="mt-2 text-sm text-on-surface-variant">Sign in, create a run, approve the plan, and watch the pipeline.</p>
           <Link href="/login" className="btn-primary mt-6 px-6 py-3 text-sm">
             Get started

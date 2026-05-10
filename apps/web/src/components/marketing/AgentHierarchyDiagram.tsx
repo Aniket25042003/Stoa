@@ -28,9 +28,9 @@ export function AgentHierarchyDiagram({ className }: { className?: string }) {
           initial={reduce ? false : { opacity: 0, y: 12 }}
           whileInView={reduce ? undefined : { opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="w-full max-w-sm rounded-2xl border border-primary/35 bg-white/80 px-5 py-4 text-center shadow-glow backdrop-blur-md"
+          className="w-full max-w-sm rounded-2xl border border-primary/35 bg-surface-container-low/80 px-5 py-4 text-center shadow-glow backdrop-blur-md"
         >
-          <p className="font-display text-base font-bold text-slate-deep">Master plan</p>
+          <p className="font-display text-base font-bold text-on-surface">Master plan</p>
           <p className="mt-1 text-xs text-on-surface-variant">Approved before any sub-agent runs</p>
         </motion.div>
         <div className="h-7 w-px bg-gradient-to-b from-primary/55 to-outline-variant" />
@@ -41,11 +41,11 @@ export function AgentHierarchyDiagram({ className }: { className?: string }) {
               whileInView={reduce ? undefined : { opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.08 * (idx + 1) }}
-              className="w-full max-w-md rounded-2xl border border-white/70 bg-white/62 px-5 py-4 backdrop-blur-md"
+              className="w-full max-w-md rounded-2xl border border-outline-variant/70 bg-surface-container-low/70 px-5 py-4 backdrop-blur-md"
             >
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="font-display text-sm font-bold text-slate-deep">{layer.title}</p>
+                  <p className="font-display text-sm font-bold text-on-surface">{layer.title}</p>
                   <p className="mt-1 text-xs text-on-surface-variant">{layer.sub}</p>
                 </div>
                 <span className="font-mono text-xs font-semibold text-primary">{layer.progress}</span>

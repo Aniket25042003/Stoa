@@ -57,17 +57,17 @@ function LoginForm() {
 
   return (
     <div className="relative min-h-screen overflow-hidden px-4 py-10 md:px-6">
-      <div className="absolute inset-0 -z-10 grid-bg" />
+      <div className="absolute inset-0 -z-10 grid-bg dark:starfield" />
       <div className="absolute left-1/2 top-0 -z-10 h-[520px] w-[min(760px,92vw)] -translate-x-1/2 rounded-full bg-gradient-to-r from-primary/20 via-violet-pulse/18 to-transparent blur-3xl" />
       <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-7xl flex-col gap-10 lg:flex-row lg:items-center lg:gap-16">
         <div className="flex-1 space-y-7 lg:max-w-lg">
           <Link href="/" className="inline-flex items-center gap-3">
             <span className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-violet-pulse shadow-glow" />
-            <span className="font-display text-xl font-extrabold tracking-[-0.03em] text-slate-deep">GTM Agent</span>
+            <span className="font-display text-xl font-extrabold tracking-[-0.03em] text-on-surface">GTM Agent</span>
           </Link>
           <div>
             <p className="eyebrow">Secure workspace</p>
-            <h1 className="mt-4 font-display text-4xl font-extrabold leading-tight tracking-[-0.045em] text-slate-deep md:text-6xl">
+            <h1 className="mt-4 font-display text-4xl font-extrabold leading-tight tracking-[-0.045em] text-on-surface md:text-6xl">
               Sign in to launch your GTM pipeline.
             </h1>
             <p className="mt-5 text-base leading-8 text-on-surface-variant">

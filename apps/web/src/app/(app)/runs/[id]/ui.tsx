@@ -201,7 +201,7 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
             <div className="h-full w-3/4 animate-shimmer rounded-full progress-shimmer" />
           </div>
         </div>
-        <p className="mt-3 font-display text-xl font-bold tracking-[-0.02em] text-slate-deep">{currentActivity}</p>
+        <p className="mt-3 font-display text-xl font-bold tracking-[-0.02em] text-on-surface">{currentActivity}</p>
         {latestEvent ? (
           <p className="mt-3 font-mono text-xs text-on-surface-variant">
             Latest: [{latestEvent.phase ?? "system"}] {latestEvent.agent ?? "agent"} - {latestEvent.message ?? "Working"}
@@ -213,7 +213,7 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
 
       {status === "awaiting_plan_approval" && (
         <section className={card}>
-          <h2 className="font-display text-2xl font-bold tracking-[-0.03em] text-slate-deep">User approval required</h2>
+          <h2 className="font-display text-2xl font-bold tracking-[-0.03em] text-on-surface">User approval required</h2>
           <p className="mt-3 text-sm leading-7 text-on-surface-variant">
             Review the main agent&apos;s master plan. You can request edits; the main agent will regenerate the plan before any layer starts.
           </p>
@@ -241,27 +241,27 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
       )}
 
       <section className={card}>
-        <h2 className="font-display text-xl font-bold tracking-[-0.02em] text-slate-deep">Live events</h2>
+        <h2 className="font-display text-xl font-bold tracking-[-0.02em] text-on-surface">Live events</h2>
         <pre className={`mt-4 max-h-[280px] overflow-auto ${codePanel}`}>
           {events.map((e) => `[${e.phase ?? ""}] ${e.agent ?? ""}: ${e.message ?? JSON.stringify(e)}`).join("\n")}
         </pre>
       </section>
 
       <section className={card}>
-        <h2 className="font-display text-xl font-bold tracking-[-0.02em] text-slate-deep">Sources</h2>
+        <h2 className="font-display text-xl font-bold tracking-[-0.02em] text-on-surface">Sources</h2>
         {sources.length === 0 ? (
           <p className="mt-3 text-sm text-on-surface-variant">No persisted research sources yet.</p>
         ) : (
           <div className="mt-5 space-y-3">
             {sources.map((s) => (
-              <div key={s.id} className="rounded-2xl border border-outline-variant/55 bg-white/62 p-5 backdrop-blur-md">
+              <div key={s.id} className="rounded-2xl border border-outline-variant/55 bg-surface-container-low/75 p-5 backdrop-blur-md">
                 <strong className="font-mono text-xs uppercase tracking-[0.12em] text-primary">{s.source_type}</strong>{" "}
                 {s.source_url ? (
-                  <a href={s.source_url} target="_blank" rel="noreferrer" className="font-semibold text-slate-deep underline-offset-4 hover:text-primary hover:underline">
+                  <a href={s.source_url} target="_blank" rel="noreferrer" className="font-semibold text-on-surface underline-offset-4 hover:text-primary hover:underline">
                     {s.title || s.source_url}
                   </a>
                 ) : (
-                  <span className="font-semibold text-slate-deep">{s.title || "Untitled source"}</span>
+                  <span className="font-semibold text-on-surface">{s.title || "Untitled source"}</span>
                 )}
                 <p className="mt-2 text-sm leading-7 text-on-surface-variant">{s.excerpt}</p>
               </div>
@@ -271,7 +271,7 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
       </section>
 
       <section className={card}>
-        <h2 className="font-display text-xl font-bold tracking-[-0.02em] text-slate-deep">Report</h2>
+        <h2 className="font-display text-xl font-bold tracking-[-0.02em] text-on-surface">Report</h2>
         {markdown ? (
           <div className="mt-5 space-y-4">
             <button type="button" className={btnPrimary} onClick={() => void downloadPdf()}>

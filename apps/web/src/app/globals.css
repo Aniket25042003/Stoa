@@ -1,36 +1,105 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
-@theme {
-  --color-surface: #f7f9fb;
-  --color-surface-dim: #d8dadc;
-  --color-surface-bright: #f7f9fb;
-  --color-surface-container-lowest: #ffffff;
-  --color-surface-container-low: #f2f4f6;
-  --color-surface-container: #eceef0;
-  --color-surface-container-high: #e6e8ea;
-  --color-surface-container-highest: #e0e3e5;
-  --color-on-surface: #191c1e;
-  --color-on-surface-variant: #464554;
-  --color-inverse-surface: #2d3133;
-  --color-inverse-on-surface: #eff1f3;
-  --color-outline: #767586;
-  --color-outline-variant: #c7c4d7;
-  --color-surface-tint: #494bd6;
-  --color-primary: #4648d4;
-  --color-on-primary: #ffffff;
-  --color-primary-container: #6063ee;
-  --color-on-primary-container: #fffbff;
-  --color-inverse-primary: #c0c1ff;
-  --color-secondary: #6b38d4;
-  --color-on-secondary: #ffffff;
-  --color-secondary-container: #8455ef;
-  --color-tertiary: #545c72;
-  --color-error: #ba1a1a;
-  --color-error-container: #ffdad6;
-  --color-slate-deep: #0f172a;
-  --color-slate-soft: #334155;
-  --color-indigo-pulse: #6366f1;
-  --color-violet-pulse: #8b5cf6;
+:root {
+  --surface: #f7f9fb;
+  --surface-dim: #d8dadc;
+  --surface-bright: #f7f9fb;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f2f4f6;
+  --surface-container: #eceef0;
+  --surface-container-high: #e6e8ea;
+  --surface-container-highest: #e0e3e5;
+  --on-surface: #191c1e;
+  --on-surface-variant: #464554;
+  --inverse-surface: #2d3133;
+  --inverse-on-surface: #eff1f3;
+  --outline: #767586;
+  --outline-variant: #c7c4d7;
+  --surface-tint: #494bd6;
+  --primary: #4648d4;
+  --on-primary: #ffffff;
+  --primary-container: #6063ee;
+  --on-primary-container: #fffbff;
+  --inverse-primary: #c0c1ff;
+  --secondary: #6b38d4;
+  --on-secondary: #ffffff;
+  --secondary-container: #8455ef;
+  --tertiary: #545c72;
+  --error: #ba1a1a;
+  --error-container: #ffdad6;
+  --slate-deep: #0f172a;
+  --slate-soft: #334155;
+  --indigo-pulse: #6366f1;
+  --violet-pulse: #8b5cf6;
+  --gradient-text-head: #191c1e;
+}
+
+html.dark {
+  --surface: #05060d;
+  --surface-dim: #0b0f1d;
+  --surface-bright: #141a2b;
+  --surface-container-lowest: #090f1c;
+  --surface-container-low: #10172a;
+  --surface-container: #141d32;
+  --surface-container-high: #1a2438;
+  --surface-container-highest: #202a3e;
+  --on-surface: #e8eaf2;
+  --on-surface-variant: #a3a8c0;
+  --inverse-surface: #d9deef;
+  --inverse-on-surface: #10162a;
+  --outline: #5e698a;
+  --outline-variant: rgb(255 255 255 / 10%);
+  --surface-tint: #8285ff;
+  --primary: #7577ff;
+  --on-primary: #f4f5ff;
+  --primary-container: #5759e2;
+  --on-primary-container: #f0efff;
+  --inverse-primary: #c8c9ff;
+  --secondary: #9a78ff;
+  --on-secondary: #f8f4ff;
+  --secondary-container: #7652e3;
+  --tertiary: #96a3c9;
+  --error: #ff8f8f;
+  --error-container: #7d3a3a;
+  --slate-deep: #070b16;
+  --slate-soft: #1b243d;
+  --indigo-pulse: #6366f1;
+  --violet-pulse: #8b5cf6;
+  --gradient-text-head: #ffffff;
+}
+
+@theme inline {
+  --color-surface: var(--surface);
+  --color-surface-dim: var(--surface-dim);
+  --color-surface-bright: var(--surface-bright);
+  --color-surface-container-lowest: var(--surface-container-lowest);
+  --color-surface-container-low: var(--surface-container-low);
+  --color-surface-container: var(--surface-container);
+  --color-surface-container-high: var(--surface-container-high);
+  --color-surface-container-highest: var(--surface-container-highest);
+  --color-on-surface: var(--on-surface);
+  --color-on-surface-variant: var(--on-surface-variant);
+  --color-inverse-surface: var(--inverse-surface);
+  --color-inverse-on-surface: var(--inverse-on-surface);
+  --color-outline: var(--outline);
+  --color-outline-variant: var(--outline-variant);
+  --color-surface-tint: var(--surface-tint);
+  --color-primary: var(--primary);
+  --color-on-primary: var(--on-primary);
+  --color-primary-container: var(--primary-container);
+  --color-on-primary-container: var(--on-primary-container);
+  --color-inverse-primary: var(--inverse-primary);
+  --color-secondary: var(--secondary);
+  --color-on-secondary: var(--on-secondary);
+  --color-secondary-container: var(--secondary-container);
+  --color-tertiary: var(--tertiary);
+  --color-error: var(--error);
+  --color-error-container: var(--error-container);
+  --color-slate-deep: var(--slate-deep);
+  --color-slate-soft: var(--slate-soft);
+  --color-indigo-pulse: var(--indigo-pulse);
+  --color-violet-pulse: var(--violet-pulse);
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
@@ -136,9 +205,9 @@
     align-items: center;
     justify-content: center;
     border-radius: 1rem;
-    border: 1px solid rgb(199 196 215 / 72%);
-    background: rgb(255 255 255 / 58%);
-    color: var(--color-slate-deep);
+    border: 1px solid color-mix(in oklab, var(--color-outline-variant) 88%, transparent);
+    background: color-mix(in oklab, var(--color-surface-container-lowest) 66%, transparent);
+    color: var(--color-on-surface);
     font-weight: 700;
     backdrop-filter: blur(12px);
     transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
@@ -146,51 +215,59 @@
 
   .btn-secondary:hover {
     transform: translateY(-1px);
-    border-color: rgb(73 75 214 / 44%);
-    background: rgb(255 255 255 / 82%);
+    border-color: color-mix(in oklab, var(--color-primary) 44%, transparent);
+    background: color-mix(in oklab, var(--color-surface-container-lowest) 86%, transparent);
   }
 
   .card-surface {
-    border: 1px solid rgb(199 196 215 / 58%);
-    background: rgb(255 255 255 / 82%);
+    border: 1px solid color-mix(in oklab, var(--color-outline-variant) 80%, transparent);
+    background: color-mix(in oklab, var(--color-surface-container-lowest) 84%, transparent);
     box-shadow: var(--shadow-soft);
   }
 
   .card-glass {
-    border: 1px solid rgb(255 255 255 / 68%);
-    background: linear-gradient(145deg, rgb(255 255 255 / 74%), rgb(255 255 255 / 42%));
+    border: 1px solid color-mix(in oklab, var(--color-outline-variant) 84%, transparent);
+    background: linear-gradient(
+      145deg,
+      color-mix(in oklab, var(--color-surface-container-lowest) 78%, transparent),
+      color-mix(in oklab, var(--color-surface-container-low) 52%, transparent)
+    );
     box-shadow: var(--shadow-card);
     backdrop-filter: blur(16px);
   }
 
   .ai-insight-card {
     border-left: 3px solid var(--color-secondary-container);
-    background: linear-gradient(135deg, rgb(255 255 255 / 78%), rgb(99 102 241 / 10%));
+    background: linear-gradient(
+      135deg,
+      color-mix(in oklab, var(--color-surface-container-lowest) 82%, transparent),
+      color-mix(in oklab, var(--color-primary) 12%, transparent)
+    );
     backdrop-filter: blur(14px);
   }
 
   .input-field {
     width: 100%;
     border-radius: 0.75rem;
-    border: 1px solid rgb(199 196 215 / 70%);
-    background: rgb(255 255 255 / 68%);
+    border: 1px solid color-mix(in oklab, var(--color-outline-variant) 92%, transparent);
+    background: color-mix(in oklab, var(--color-surface-container-lowest) 72%, transparent);
     color: var(--color-on-surface);
     transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
   }
 
   .input-field::placeholder {
-    color: rgb(70 69 84 / 42%);
+    color: color-mix(in oklab, var(--color-on-surface-variant) 62%, transparent);
   }
 
   .input-field:focus {
-    border-color: rgb(73 75 214 / 62%);
-    background: rgb(255 255 255 / 92%);
-    box-shadow: 0 0 0 4px rgb(73 75 214 / 14%);
+    border-color: color-mix(in oklab, var(--color-primary) 62%, transparent);
+    background: color-mix(in oklab, var(--color-surface-container-lowest) 92%, transparent);
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-primary) 14%, transparent);
     outline: none;
   }
 
   .gradient-text {
-    background: linear-gradient(135deg, #191c1e 0%, #4648d4 48%, #6b38d4 100%);
+    background: linear-gradient(135deg, var(--gradient-text-head) 0%, #4648d4 48%, #6b38d4 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -212,6 +289,21 @@
   background-size: auto, auto, 36px 36px, 36px 36px, auto;
   mask-image: radial-gradient(ellipse 90% 74% at 50% 18%, black 18%, transparent 78%);
   -webkit-mask-image: radial-gradient(ellipse 90% 74% at 50% 18%, black 18%, transparent 78%);
+}
+
+@utility starfield {
+  background:
+    radial-gradient(circle at 20% 10%, rgb(89 102 255 / 24%), transparent 35%),
+    radial-gradient(circle at 82% 24%, rgb(130 92 255 / 22%), transparent 30%),
+    radial-gradient(circle at 68% 78%, rgb(68 138 255 / 14%), transparent 28%),
+    radial-gradient(circle at 11% 36%, rgb(255 255 255 / 14%) 0.5px, transparent 1.2px),
+    radial-gradient(circle at 79% 14%, rgb(255 255 255 / 16%) 0.6px, transparent 1.4px),
+    radial-gradient(circle at 34% 72%, rgb(255 255 255 / 18%) 0.6px, transparent 1.5px),
+    radial-gradient(circle at 55% 44%, rgb(255 255 255 / 14%) 0.5px, transparent 1.3px),
+    linear-gradient(180deg, #03040b 0%, #050814 44%, #060b18 100%);
+  background-size: auto;
+  mask-image: radial-gradient(ellipse 92% 78% at 50% 18%, black 20%, transparent 84%);
+  -webkit-mask-image: radial-gradient(ellipse 92% 78% at 50% 18%, black 20%, transparent 84%);
 }
 
 @media (prefers-reduced-motion: reduce) {

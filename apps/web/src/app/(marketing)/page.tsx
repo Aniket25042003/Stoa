@@ -2,16 +2,16 @@
 
 import Link from "next/link";
 import { AnimatedHeadline } from "@/components/marketing/AnimatedHeadline";
-import { AgentHierarchyDiagram } from "@/components/marketing/AgentHierarchyDiagram";
 import { EmailCta } from "@/components/marketing/EmailCta";
-import { FeatureCard } from "@/components/marketing/FeatureCard";
 import { GradientOrb } from "@/components/marketing/GradientOrb";
+import { HeroDashboardOrbit } from "@/components/marketing/HeroDashboardOrbit";
 import { LiveActivityDemo } from "@/components/marketing/LiveActivityDemo";
 import { Marquee } from "@/components/marketing/Marquee";
+import { RadialOrbitalTimeline } from "@/components/marketing/RadialOrbitalTimeline";
 import { ReportPreviewCard } from "@/components/marketing/ReportPreviewCard";
 import { RevealOnScroll } from "@/components/marketing/RevealOnScroll";
 import { SectionHeader } from "@/components/marketing/SectionHeader";
-import { ArrowRight, BookOpen, CheckCircle2, PenLine, Radar, Sparkles } from "lucide-react";
+import { ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
 
 const sources = ["Crawler", "Tavily", "Jina", "SerpAPI", "LangSmith", "Supabase", "Redis"];
 
@@ -29,13 +29,13 @@ export default function LandingPage() {
         <div className="container-page relative">
           <div className="grid gap-12 lg:grid-cols-[1.04fr_0.96fr] lg:items-center">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-white/62 px-3 py-2 shadow-soft backdrop-blur-md">
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-surface-container-low/70 px-3 py-2 shadow-soft backdrop-blur-md">
                 <Sparkles className="h-3.5 w-3.5 text-primary" />
                 <p className="eyebrow text-[11px]">High-performance GTM automation</p>
               </div>
               <AnimatedHeadline
                 text="Your autonomous go-to-market command center."
-                className="mt-7 max-w-5xl font-display text-5xl font-extrabold leading-[1.02] tracking-[-0.055em] text-slate-deep md:text-7xl lg:text-8xl"
+                className="mt-7 max-w-5xl font-display text-5xl font-extrabold leading-[1.02] tracking-[-0.055em] text-on-surface md:text-7xl lg:text-8xl"
               />
               <p className="mt-7 max-w-2xl text-lg leading-8 text-on-surface-variant md:text-xl">
                 Multi-agent research, layered strategic reasoning, and polished GTM reports - with a user-approved master plan before any agent executes.
@@ -58,39 +58,7 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <div className="relative">
-              <div className="absolute -inset-6 rounded-[2rem] bg-gradient-to-br from-primary/20 via-violet-pulse/10 to-transparent blur-2xl" />
-              <div className="relative overflow-hidden rounded-[2rem] border border-white/70 bg-slate-deep p-5 text-white shadow-card">
-                <div className="absolute inset-0 opacity-30 [background-image:linear-gradient(to_right,rgb(255_255_255_/_0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgb(255_255_255_/_0.08)_1px,transparent_1px)] [background-size:32px_32px]" />
-                <div className="relative flex items-center justify-between gap-4 border-b border-white/10 pb-4">
-                  <div>
-                    <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-inverse-primary">Pipeline health</p>
-                    <p className="mt-1 font-display text-2xl font-bold tracking-[-0.03em]">GTM run active</p>
-                  </div>
-                  <span className="rounded-full bg-white/10 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-white/80">Live</span>
-                </div>
-                <div className="relative mt-5 grid gap-3">
-                  {[
-                    ["Research", "Competitor SERP mapping", "86%"],
-                    ["Reasoning", "ICP and channel scoring", "68%"],
-                    ["Writing", "Narrative assembly", "41%"],
-                  ].map(([phase, detail, progress]) => (
-                    <div key={phase} className="rounded-2xl border border-white/10 bg-white/8 p-4 backdrop-blur-md">
-                      <div className="flex items-center justify-between gap-4">
-                        <div>
-                          <p className="font-display text-sm font-bold">{phase}</p>
-                          <p className="mt-1 text-xs text-white/58">{detail}</p>
-                        </div>
-                        <p className="font-mono text-xs text-inverse-primary">{progress}</p>
-                      </div>
-                      <div className="mt-3 h-1 overflow-hidden rounded-full bg-white/10">
-                        <div className="h-full animate-shimmer rounded-full progress-shimmer" style={{ width: progress }} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <HeroDashboardOrbit />
           </div>
         </div>
       </section>
@@ -101,39 +69,20 @@ export default function LandingPage() {
         <RevealOnScroll>
           <SectionHeader
             eyebrow="Three layers"
-            title="Research, reason, write - with approvals at every step."
-            lead="Sub-agents plan and execute. Parents review. The main agent gates each layer. You approve the master plan first."
+            title="Radial orbital timeline"
+            lead="Master plan in the center - research, reasoning, and writing in orbit, with review gates between each layer."
           />
         </RevealOnScroll>
-        <div className="mt-14 grid gap-6 md:grid-cols-3">
-          <RevealOnScroll delay={0.05}>
-            <FeatureCard icon={Radar} title="Research" description="Web search, crawler passes, and competitor signals selected based on product context." />
-          </RevealOnScroll>
-          <RevealOnScroll delay={0.1}>
-            <FeatureCard icon={BookOpen} title="Reasoning" description="ICP, personas, positioning, and channel ranking synthesized from the research bundle." />
-          </RevealOnScroll>
-          <RevealOnScroll delay={0.15}>
-            <FeatureCard icon={PenLine} title="Writing" description="A founder-ready GTM narrative with Markdown and PDF export when the pipeline completes." />
-          </RevealOnScroll>
-        </div>
+        <RevealOnScroll delay={0.05}>
+          <div className="mt-14">
+            <RadialOrbitalTimeline />
+          </div>
+        </RevealOnScroll>
       </section>
 
       <section className="container-page py-12 md:py-16">
         <RevealOnScroll>
           <LiveActivityDemo />
-        </RevealOnScroll>
-      </section>
-
-      <section className="container-page grid gap-12 py-16 md:grid-cols-2 md:py-24 md:items-center">
-        <RevealOnScroll>
-          <SectionHeader
-            eyebrow="Hierarchy"
-            title="Plans, memory, and retries - not a black box."
-            lead="When a layer misses the bar, the main agent issues revised instructions and the layer retries. LangSmith traces correlate with every run."
-          />
-        </RevealOnScroll>
-        <RevealOnScroll delay={0.08}>
-          <AgentHierarchyDiagram />
         </RevealOnScroll>
       </section>
 
@@ -158,7 +107,7 @@ export default function LandingPage() {
             <RevealOnScroll key={s.k}>
               <div className="rounded-3xl p-7 card-glass">
                 <p className="font-display text-5xl font-extrabold tracking-[-0.05em] gradient-text">{s.k}</p>
-                <p className="mt-3 font-display text-xl font-bold text-slate-deep">{s.v}</p>
+                <p className="mt-3 font-display text-xl font-bold text-on-surface">{s.v}</p>
                 <p className="mt-2 text-sm leading-6 text-on-surface-variant">{s.d}</p>
               </div>
             </RevealOnScroll>

@@ -15,11 +15,11 @@ export function FaqItem({
   onToggle: () => void;
 }) {
   return (
-    <div className={cn("border-b border-outline-variant/55 last:border-b-0", open && "bg-white/50")}>
+    <div className={cn("border-b border-outline-variant/55 last:border-b-0", open && "bg-surface-container-low/70")}>
       <button
         type="button"
         onClick={onToggle}
-        className="flex w-full items-center justify-between gap-4 py-6 text-left font-display text-base font-bold tracking-[-0.01em] text-slate-deep focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        className="flex w-full items-center justify-between gap-4 py-6 text-left font-display text-base font-bold tracking-[-0.01em] text-on-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       >
         {question}
         <motion.span animate={{ rotate: open ? 45 : 0 }} className="font-mono text-xl text-primary">

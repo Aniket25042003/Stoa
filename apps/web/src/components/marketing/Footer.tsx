@@ -50,7 +50,7 @@ export function Footer() {
             </div>
           ))}
         </div>
-        <p className="mt-12 border-t border-white/10 pt-8 font-mono text-xs text-inverse-on-surface/48">
+        <p className="mt-12 border-t border-white/8 pt-8 font-mono text-xs text-inverse-on-surface/48">
           © {new Date().getFullYear()} GTM Agent. High-performance GTM workflows for focused teams.
         </p>
       </div>

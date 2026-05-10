@@ -18,7 +18,7 @@ export function StatusPill({ status }: { status: string }) {
           ? "border-error/25 bg-error-container text-error"
           : completed
             ? "border-primary/20 bg-primary/10 text-primary"
-            : "border-outline-variant/60 bg-white/72 text-slate-deep"
+            : "border-outline-variant/60 bg-surface-container-low/80 text-on-surface"
       )}
     >
       {pulse ? (

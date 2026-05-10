@@ -35,7 +35,7 @@ export function ReportPreviewCard({ className }: { className?: string }) {
         </div>
         <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">report.md</span>
       </div>
-      <pre className="max-h-[360px] overflow-hidden p-6 font-mono text-[12px] leading-7 text-slate-deep/86 [mask-image:linear-gradient(to_bottom,black_72%,transparent)]">
+      <pre className="max-h-[360px] overflow-hidden p-6 font-mono text-[12px] leading-7 text-on-surface/86 [mask-image:linear-gradient(to_bottom,black_72%,transparent)]">
         {excerpt}
       </pre>
     </motion.div>
