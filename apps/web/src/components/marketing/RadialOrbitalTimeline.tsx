@@ -15,18 +15,19 @@ type OrbitNode = {
   Icon: LucideIcon;
   rx: number;
   ry: number;
-  /** Radians per second */
   speed: number;
   phase: number;
 };
 
-/** Elliptical orbits aligned with decorative rings — planets move along these paths */
 const ORBITS: OrbitNode[] = [
   { id: "research", label: "Research", sub: "Discovers market signals", Icon: Search, rx: 102, ry: 48, speed: 0.38, phase: 0 },
   { id: "master", label: "Master Agent", sub: "Orchestrates strategy", Icon: Sparkles, rx: 150, ry: 72, speed: -0.3, phase: 1.2 },
   { id: "reasoning", label: "Reasoning", sub: "Scores ICP + channels", Icon: Telescope, rx: 198, ry: 94, speed: 0.26, phase: 2.45 },
-  { id: "writing", label: "Writing", sub: "Builds execution narrative", Icon: PenLine, rx: 242, ry: 114, speed: -0.22, phase: 4 },
+  { id: "writing", label: "Writing", sub: "Builds execution narrative", Icon: PenLine, rx: 232, ry: 108, speed: -0.22, phase: 4 },
 ];
+
+/** Extra radial gap so label cards sit outside the planet + orbit stroke (reduces overlap while orbiting) */
+const LABEL_RADIAL_PAD = 44;
 
 export function RadialOrbitalTimeline() {
   const reduceMotion = useReducedMotion();
@@ -50,18 +51,24 @@ export function RadialOrbitalTimeline() {
   }, [reduceMotion]);
 
   return (
-    <div className="relative overflow-hidden rounded-[2rem] border border-outline-variant/60 bg-slate-deep px-4 py-8 text-white shadow-card md:px-8 md:py-10">
+    <div className="relative overflow-hidden rounded-[2rem] border border-outline-variant/60 bg-slate-deep px-3 py-6 text-white shadow-card sm:px-4 md:px-8 md:py-10">
       <div className="pointer-events-none absolute inset-0 opacity-[0.22] [background-image:linear-gradient(to_right,rgb(255_255_255_/_0.07)_1px,transparent_1px),linear-gradient(to_bottom,rgb(255_255_255_/_0.07)_1px,transparent_1px)] [background-size:40px_40px]" />
       <div className="absolute left-1/2 top-[22%] h-48 w-48 -translate-x-1/2 rounded-full bg-primary/25 blur-3xl" />
-      <div className="relative">
-        <p className="text-center font-display text-4xl font-bold tracking-[-0.03em]">Radial Orbital Timeline</p>
-        <p className="mt-2 text-center text-sm text-white/70">
+      <div className="relative px-1">
+        <p className="text-center font-display text-2xl font-bold tracking-[-0.03em] sm:text-3xl md:text-4xl">Radial Orbital Timeline</p>
+        <p className="mt-2 text-center text-xs text-white/70 sm:text-sm">
           Master plan at the center — four stages orbit on their own rings, like planets around a star.
         </p>
       </div>
 
-      <div className="relative mt-6 overflow-hidden rounded-2xl border border-white/10 bg-black/25 p-2 md:p-4">
-        <svg viewBox="0 0 640 460" className="w-full" role="img" aria-label="Orbital diagram with Master Plan at center and four orbiting stages">
+      <div className="relative mt-4 min-h-[280px] w-full overflow-x-auto overflow-y-hidden sm:min-h-[320px] md:mt-6 md:min-h-0">
+        <svg
+          viewBox="0 0 640 460"
+          className="min-w-[min(100%,520px)] w-full max-w-full sm:min-w-0"
+          role="img"
+          aria-label="Orbital diagram with Master Plan at center and four orbiting stages"
+          preserveAspectRatio="xMidYMid meet"
+        >
           <ellipse cx={CX} cy={CY} rx="250" ry="118" fill="none" stroke="rgb(99 102 241 / 32%)" strokeWidth="1.2" />
           <ellipse cx={CX} cy={CY} rx="200" ry="95" fill="none" stroke="rgb(99 102 241 / 28%)" strokeWidth="1.2" />
           <ellipse cx={CX} cy={CY} rx="150" ry="72" fill="none" stroke="rgb(99 102 241 / 24%)" strokeWidth="1.2" />
@@ -83,25 +90,33 @@ export function RadialOrbitalTimeline() {
             const rdx = px - CX;
             const rdy = py - CY;
             const rlen = Math.hypot(rdx, rdy) || 1;
-            const lx = (rdx / rlen) * 26;
-            const ly = (rdy / rlen) * 26;
+            const ux = rdx / rlen;
+            const uy = rdy / rlen;
             const Icon = node.Icon;
+            const labelFx = ux * LABEL_RADIAL_PAD;
+            const labelFy = uy * LABEL_RADIAL_PAD;
+            const cardW = 188;
+            const cardH = 56;
+            /* Mirror card horizontal placement so it stays on-screen and clears the center */
+            const cardX = ux >= 0 ? 6 : -cardW - 6;
+            const cardY = uy >= 0 ? -cardH / 2 : -cardH / 2;
+
             return (
               <g key={node.id} transform={`translate(${px}, ${py})`}>
-                <circle r="16" fill="rgb(117 119 255 / 45%)" />
-                <circle r="11" fill="rgb(12 16 30)" stroke="rgb(192 193 255 / 35%)" strokeWidth="1" />
-                <foreignObject x={-8} y={-8} width={16} height={16}>
-                  <div className="flex h-4 w-4 items-center justify-center text-[rgb(200,201,255)]">
-                    <Icon className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
-                  </div>
-                </foreignObject>
-                <g transform={`translate(${lx}, ${ly})`}>
-                  <text x={14} y={3} className="fill-white text-[12px] font-semibold">
-                    {node.label}
-                  </text>
-                  <text x={14} y={17} className="fill-white/58 text-[10px]">
-                    {node.sub}
-                  </text>
+                <circle r="17" fill="rgb(117 119 255 / 40%)" />
+                <circle r="12" fill="rgb(12 16 30)" stroke="rgb(192 193 255 / 40%)" strokeWidth="1" />
+                <g transform={`translate(${labelFx}, ${labelFy})`}>
+                  <foreignObject x={cardX} y={cardY} width={cardW} height={cardH}>
+                    <div className="flex h-full items-start gap-2 rounded-lg border border-white/10 bg-black/40 px-2 py-1.5 shadow-lg backdrop-blur-md">
+                      <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-white/10">
+                        <Icon className="h-4 w-4 text-[rgb(200,201,255)]" strokeWidth={2} aria-hidden />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[11px] font-semibold leading-tight text-white">{node.label}</p>
+                        <p className="mt-0.5 text-[10px] leading-snug text-white/55">{node.sub}</p>
+                      </div>
+                    </div>
+                  </foreignObject>
                 </g>
               </g>
             );

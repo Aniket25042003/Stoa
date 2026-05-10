@@ -48,16 +48,16 @@ export default function LandingPage() {
               <p className="mt-7 max-w-2xl text-lg leading-8 text-on-surface-variant md:text-xl">
                 Multi-agent research, layered strategic reasoning, and polished GTM reports - with a user-approved master plan before any agent executes.
               </p>
-              <div className="mt-10 flex flex-wrap gap-3">
-                <Link href="/login" className="btn-primary px-6 py-3 text-sm">
-                  Start free <ArrowRight className="ml-2 h-4 w-4" />
+              <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                <Link href="/login" className="btn-primary px-6 py-3 text-center text-sm sm:inline-flex sm:items-center sm:justify-center">
+                  Start free <ArrowRight className="ml-2 inline h-4 w-4" />
                 </Link>
-                <Link href="/how-it-works" className="btn-secondary px-6 py-3 text-sm">
+                <Link href="/how-it-works" className="btn-secondary px-6 py-3 text-center text-sm">
                   See workflow
                 </Link>
               </div>
-              <div className="mt-10 flex flex-wrap gap-4 text-sm text-on-surface-variant">
-                {["Plan approval", "Live SSE activity", "PDF-ready output"].map((item) => (
+              <div className="mt-10 flex flex-wrap gap-x-4 gap-y-2 text-sm text-on-surface-variant">
+                {["Plan approval", "Live activity", "PDF-ready output"].map((item) => (
                   <span key={item} className="inline-flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary" />
                     {item}

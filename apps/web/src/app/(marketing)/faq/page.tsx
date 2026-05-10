@@ -101,7 +101,7 @@ export default function FaqPage() {
             ))}
           </nav>
         </aside>
-        <div className="rounded-3xl border border-outline-variant/55 bg-surface-container-lowest/85 px-5 py-1 shadow-soft backdrop-blur-md dark:border-outline-variant/40 dark:bg-surface-container/55 md:px-7">
+        <div className="rounded-3xl border border-outline-variant/50 bg-transparent px-4 py-1 backdrop-blur-[2px] md:px-7">
           {filtered.map((item) => (
             <FaqItem key={item.id} question={item.q} answer={item.a} open={openId === item.id} onToggle={() => setOpenId((cur) => (cur === item.id ? null : item.id))} />
           ))}

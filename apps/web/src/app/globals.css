@@ -128,6 +128,22 @@ html.dark {
     35%, 65% { opacity: 0.55; }
     50% { transform: translateY(120%); opacity: 0.2; }
   }
+
+  @keyframes hero-grid-pulse {
+    0%, 100% { opacity: 0.34; }
+    50% { opacity: 0.52; }
+  }
+
+  @keyframes bar-rise {
+    from {
+      opacity: 0.65;
+      transform: scaleY(0.35);
+    }
+    to {
+      opacity: 1;
+      transform: scaleY(1);
+    }
+  }
 }
 
 @layer base {
@@ -155,6 +171,17 @@ html.dark {
 }
 
 @layer components {
+  .hero-dashboard-grid {
+    animation: hero-grid-pulse 3.2s ease-in-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-dashboard-grid {
+      animation: none;
+      opacity: 0.42;
+    }
+  }
+
   .container-page {
     width: min(100% - 32px, 1280px);
     margin-inline: auto;
