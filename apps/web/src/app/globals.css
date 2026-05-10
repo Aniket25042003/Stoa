@@ -219,6 +219,54 @@ html.dark {
     background: color-mix(in oklab, var(--color-surface-container-lowest) 86%, transparent);
   }
 
+  /* Navbar CTAs: translucent purple tint, no solid gradient fill */
+  .btn-nav-purple {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 1rem;
+    font-weight: 700;
+    backdrop-filter: blur(12px);
+    border: 1px solid color-mix(in oklab, var(--color-primary) 42%, transparent);
+    background: linear-gradient(
+      135deg,
+      color-mix(in oklab, var(--color-primary) 16%, transparent),
+      color-mix(in oklab, var(--color-secondary-container) 12%, transparent)
+    );
+    color: var(--color-primary);
+    box-shadow: none;
+    transition: border-color 180ms ease, background 180ms ease, transform 180ms ease, color 180ms ease;
+  }
+
+  .btn-nav-purple:hover {
+    transform: translateY(-1px);
+    border-color: color-mix(in oklab, var(--color-primary) 58%, transparent);
+    background: linear-gradient(
+      135deg,
+      color-mix(in oklab, var(--color-primary) 26%, transparent),
+      color-mix(in oklab, var(--color-secondary-container) 18%, transparent)
+    );
+  }
+
+  .dark .btn-nav-purple {
+    color: var(--color-inverse-primary);
+    border-color: color-mix(in oklab, var(--color-primary) 38%, transparent);
+    background: linear-gradient(
+      135deg,
+      color-mix(in oklab, var(--color-primary) 22%, transparent),
+      color-mix(in oklab, var(--color-violet-pulse) 14%, transparent)
+    );
+  }
+
+  .dark .btn-nav-purple:hover {
+    border-color: color-mix(in oklab, var(--color-primary) 52%, transparent);
+    background: linear-gradient(
+      135deg,
+      color-mix(in oklab, var(--color-primary) 30%, transparent),
+      color-mix(in oklab, var(--color-violet-pulse) 22%, transparent)
+    );
+  }
+
   .card-surface {
     border: 1px solid color-mix(in oklab, var(--color-outline-variant) 80%, transparent);
     background: color-mix(in oklab, var(--color-surface-container-lowest) 84%, transparent);

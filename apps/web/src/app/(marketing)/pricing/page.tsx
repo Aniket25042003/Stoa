@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Check, X } from "lucide-react";
 import { useState } from "react";
 import { PricingCard } from "@/components/marketing/PricingCard";
 import { RevealOnScroll } from "@/components/marketing/RevealOnScroll";
@@ -23,7 +24,7 @@ const tiers = (yearly: boolean) => [
     price: yearly ? "$190" : "$19",
     period: yearly ? "/ year" : "/ month",
     description: "For founders shipping weekly experiments.",
-    features: ["20 runs / month", "SSE live activity", "PDF export", "LangSmith correlation IDs", "Email support"],
+    features: ["20 runs / month", "Live activity stream", "PDF export", "Pipeline trace IDs", "Email support"],
     cta: "Get Pro",
     href: "/login",
     highlighted: true,
@@ -41,11 +42,30 @@ const tiers = (yearly: boolean) => [
 ];
 
 const rows = [
-  { label: "Master plan approval", starter: "Yes", pro: "Yes", team: "Yes" },
+  { label: "Master plan approval", starter: "yes", pro: "yes", team: "yes" },
   { label: "Runs / month", starter: "1", pro: "20", team: "Unlimited" },
-  { label: "PDF export", starter: "No", pro: "Yes", team: "Yes" },
-  { label: "LangSmith IDs in events", starter: "No", pro: "Yes", team: "Yes" },
+  { label: "PDF export", starter: "no", pro: "yes", team: "yes" },
+  { label: "Trace IDs in activity", starter: "no", pro: "yes", team: "yes" },
 ];
+
+function CompareCell({ value }: { value: string }) {
+  const v = value.toLowerCase();
+  if (v === "yes") {
+    return (
+      <td className="px-5 py-4">
+        <Check className="mx-auto h-5 w-5 text-primary" strokeWidth={2.5} aria-label="Included" />
+      </td>
+    );
+  }
+  if (v === "no") {
+    return (
+      <td className="px-5 py-4">
+        <X className="mx-auto h-5 w-5 text-on-surface-variant/55" strokeWidth={2.5} aria-label="Not included" />
+      </td>
+    );
+  }
+  return <td className="px-5 py-4">{value}</td>;
+}
 
 export default function PricingPage() {
   const [yearly, setYearly] = useState(true);
@@ -108,9 +128,9 @@ export default function PricingPage() {
             {rows.map((r) => (
               <tr key={r.label} className="text-on-surface-variant">
                 <td className="px-5 py-4 font-semibold text-on-surface">{r.label}</td>
-                <td className="px-5 py-4">{r.starter}</td>
-                <td className="px-5 py-4">{r.pro}</td>
-                <td className="px-5 py-4">{r.team}</td>
+                <CompareCell value={r.starter} />
+                <CompareCell value={r.pro} />
+                <CompareCell value={r.team} />
               </tr>
             ))}
           </tbody>

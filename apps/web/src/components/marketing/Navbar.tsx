@@ -54,10 +54,10 @@ export function Navbar() {
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <Link href="/login" className="btn-secondary px-3 py-2 text-sm">
+          <Link href="/login" className="btn-nav-purple px-3 py-2 text-sm">
             Sign in
           </Link>
-          <Link href="/login" className="btn-primary hidden px-4 py-2 text-sm sm:inline-flex">
+          <Link href="/login" className="btn-nav-purple hidden px-4 py-2 text-sm sm:inline-flex">
             Start free
           </Link>
         </div>

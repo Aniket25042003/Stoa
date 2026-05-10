@@ -10,14 +10,54 @@ import { cn } from "@/lib/cn";
 type Cat = "Product" | "Agents" | "Pricing" | "Privacy";
 
 const faqs: { id: string; cat: Cat; q: string; a: string }[] = [
-  { id: "p1", cat: "Product", q: "What do I get at the end of a run?", a: "A structured GTM Markdown report and optional PDF export. Research sources are persisted so you can audit claims." },
-  { id: "p2", cat: "Product", q: "Why do I approve a master plan first?", a: "So you stay the top boss: the main agent proposes how research, reasoning, and writing will unfold. Nothing hits external tools until you approve or revise that plan." },
-  { id: "a1", cat: "Agents", q: "What happens if the main agent rejects a layer?", a: "The graph does not stop. Revision instructions are written for that layer's parent and the layer retries until requirements are met or the run fails explicitly." },
-  { id: "a2", cat: "Agents", q: "How do agents share context?", a: "Redis holds plans, observations, and cross-agent notes so parent agents can keep sibling work aligned." },
-  { id: "pr1", cat: "Pricing", q: "Is the pricing on /pricing final?", a: "No - tiers are illustrative for now. You can run the stack locally and swap in your own billing when you connect Stripe or a marketplace." },
-  { id: "pr2", cat: "Pricing", q: "Do I need my own API keys?", a: "For full web and social research you will configure provider keys on the API service. You can disable external research for dry runs while you iterate on the UI." },
-  { id: "pv1", cat: "Privacy", q: "Where does my product description live?", a: "Runs are stored in your Supabase project with RLS scoped to the authenticated user. Redis streams hold ephemeral progress events for the UI." },
-  { id: "pv2", cat: "Privacy", q: "What gets sent to LangSmith?", a: "When enabled, traces include run metadata and sanitized tool spans - secrets are redacted in the observability helpers." },
+  {
+    id: "p1",
+    cat: "Product",
+    q: "What do I get at the end of a run?",
+    a: "A structured go-to-market strategy document you can share or iterate on—typically Markdown in the product, with an optional PDF export when your plan supports it. Sources and rationale behind recommendations are kept with the output so you can validate claims.",
+  },
+  {
+    id: "p2",
+    cat: "Product",
+    q: "Why approve a master plan before anything runs?",
+    a: "So you stay in control of scope and priorities. The system proposes how research, reasoning, and writing will unfold; you can revise that plan in plain language until it matches what you want—then execution proceeds against an approved blueprint.",
+  },
+  {
+    id: "a1",
+    cat: "Agents",
+    q: "What happens if a stage doesn’t meet the bar?",
+    a: "The pipeline doesn’t silently ship weak output. The orchestrating agent can send targeted revision instructions back to that stage so it retries with clearer constraints—until requirements are met or the run stops with an explicit failure you can inspect.",
+  },
+  {
+    id: "a2",
+    cat: "Agents",
+    q: "How does context carry across stages?",
+    a: "Each stage builds on structured outputs from the previous ones—plans, observations, and decisions stay attached to the run so research, reasoning, and writing stay aligned without you restating the same context repeatedly.",
+  },
+  {
+    id: "pr1",
+    cat: "Pricing",
+    q: "Are the prices on /pricing final?",
+    a: "The tiers are illustrative for positioning and comparison. When you connect billing, you can map these tiers to your own prices—or keep the product internal until you are ready to charge.",
+  },
+  {
+    id: "pr2",
+    cat: "Pricing",
+    q: "Do I need add-ons for full research depth?",
+    a: "Deep web and social research often depends on external data providers. Your deployment can enable those integrations when you choose; you can also run leaner passes while you focus on workflow and narrative quality first.",
+  },
+  {
+    id: "pv1",
+    cat: "Privacy",
+    q: "Where does my product and run data live?",
+    a: "Data stays in the environment you deploy—typically your authenticated workspace with access scoped to signed-in users. Treat product descriptions and outputs like any sensitive strategy material: follow your own retention and sharing policies.",
+  },
+  {
+    id: "pv2",
+    cat: "Privacy",
+    q: "Can observability be turned off or minimized?",
+    a: "Yes. Detailed traces and diagnostics are optional. When enabled, they help debug runs and correlate issues; you can restrict or disable them for stricter environments.",
+  },
 ];
 
 const categories: Cat[] = ["Product", "Agents", "Pricing", "Privacy"];
@@ -31,7 +71,11 @@ export default function FaqPage() {
   return (
     <div className="container-page py-16 md:py-24">
       <RevealOnScroll>
-        <SectionHeader eyebrow="FAQ" title="Answers for builders." lead="Still curious after this? Sign in and run a pipeline on your own product description." />
+        <SectionHeader
+          eyebrow="FAQ"
+          title="Answers for builders."
+          lead="Still curious after this? Sign in and run a pipeline on your own product description."
+        />
       </RevealOnScroll>
 
       <div className="mt-14 lg:grid lg:grid-cols-[240px_1fr] lg:gap-12">
@@ -57,7 +101,7 @@ export default function FaqPage() {
             ))}
           </nav>
         </aside>
-        <div className="rounded-3xl px-5 py-2 card-glass md:px-7">
+        <div className="rounded-3xl border border-outline-variant/55 bg-surface-container-lowest/85 px-5 py-1 shadow-soft backdrop-blur-md dark:border-outline-variant/40 dark:bg-surface-container/55 md:px-7">
           {filtered.map((item) => (
             <FaqItem key={item.id} question={item.q} answer={item.a} open={openId === item.id} onToggle={() => setOpenId((cur) => (cur === item.id ? null : item.id))} />
           ))}
@@ -67,7 +111,7 @@ export default function FaqPage() {
       <RevealOnScroll>
         <div className="mt-16 rounded-3xl p-8 text-center card-glass">
           <p className="font-display text-xl font-bold text-on-surface">Still curious?</p>
-          <p className="mt-2 text-sm text-on-surface-variant">Spin up a run - the UI shows live activity the whole way.</p>
+          <p className="mt-2 text-sm text-on-surface-variant">Spin up a run — the workspace shows live activity the whole way.</p>
           <Link href="/login" className="btn-primary mt-6 px-6 py-3 text-sm">
             Sign up free
           </Link>

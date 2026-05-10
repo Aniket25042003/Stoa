@@ -13,12 +13,20 @@ import { RevealOnScroll } from "@/components/marketing/RevealOnScroll";
 import { SectionHeader } from "@/components/marketing/SectionHeader";
 import { ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
 
-const sources = ["Crawler", "Tavily", "Jina", "SerpAPI", "LangSmith", "Supabase", "Redis"];
+const marqueeItems = [
+  "Live pipeline visibility",
+  "Approvals before execution",
+  "Multi-layer research & reasoning",
+  "Founder-ready GTM narratives",
+  "PDF-ready outputs",
+  "Competitive & market context",
+  "Runs scoped to your workspace",
+];
 
 const metrics = [
   { k: "200+", v: "Signals per run", d: "Web, social, and competitor context" },
   { k: "3", v: "Review layers", d: "Research, reasoning, and writing gates" },
-  { k: "1", v: "Trace per pipeline", d: "LangSmith correlation baked in" },
+  { k: "1", v: "Trace per pipeline", d: "End-to-end correlation for every run" },
 ];
 
 export default function LandingPage() {
@@ -63,7 +71,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <Marquee items={sources} />
+      <Marquee items={marqueeItems} />
 
       <section className="container-page py-20 md:py-28">
         <RevealOnScroll>

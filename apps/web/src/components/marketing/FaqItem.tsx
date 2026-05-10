@@ -15,7 +15,7 @@ export function FaqItem({
   onToggle: () => void;
 }) {
   return (
-    <div className={cn("border-b border-outline-variant/55 last:border-b-0", open && "bg-surface-container-low/70")}>
+    <div className={cn("border-b border-outline-variant/50 last:border-b-0", open && "bg-primary/[0.06] dark:bg-white/[0.04]")}>
       <button
         type="button"
         onClick={onToggle}

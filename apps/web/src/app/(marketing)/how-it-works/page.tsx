@@ -13,7 +13,7 @@ const steps = [
   },
   {
     title: "Research layer",
-    body: "The research parent plans steps, calls sub-agents for search and crawl work, stores observations, and seeks approval from the main agent.",
+    body: "The research stage gathers web and competitive context, structures observations, and checks back with the main agent before moving on.",
   },
   {
     title: "Reasoning layer",
@@ -21,12 +21,21 @@ const steps = [
   },
   {
     title: "Writing layer",
-    body: "The writer turns approved reasoning into a crisp GTM document - Markdown first, PDF export from the API when the run completes.",
+    body: "The writer turns approved reasoning into a crisp GTM document - editable Markdown first, with optional PDF when the run completes.",
   },
   {
-    title: "Report + traces",
-    body: "SSE keeps the UI honest about what's running. LangSmith trace IDs ride along events so regressions can be debugged without guessing.",
+    title: "Report + visibility",
+    body: "The workspace stays transparent while work is in flight: you see phase updates and activity as the pipeline progresses, so nothing feels like a black box.",
   },
+];
+
+const atAGlance = [
+  "Secure sign-in",
+  "Your inputs stay in your workspace",
+  "Approvals before automated steps run",
+  "Layered research → reasoning → writing",
+  "Shareable strategy doc + optional PDF",
+  "Activity you can follow end to end",
 ];
 
 export default function HowItWorksPage() {
@@ -36,38 +45,40 @@ export default function HowItWorksPage() {
         <SectionHeader
           eyebrow="Pipeline"
           title="From prompt to GTM doc, with gates you can trust."
-          lead="Autonomy where it helps, approvals where it matters - you, then the main agent, then parents, then sub-agents."
+          lead="Autonomy where it helps, approvals where it matters - you first, then the main agent, then each stage in sequence."
         />
       </RevealOnScroll>
 
-      <div className="mt-10 rounded-3xl p-5 font-mono text-xs leading-7 text-on-surface-variant card-glass lg:hidden">
-        <p className="text-primary">Stack</p>
-        <p className="mt-2">Next.js | Supabase | FastAPI | Celery | LangGraph | Redis | MCP | LangSmith</p>
+      <div className="mt-10 rounded-3xl border border-outline-variant/55 bg-surface-container-low/75 p-5 lg:hidden">
+        <p className="eyebrow text-[11px]">At a glance</p>
+        <ul className="mt-3 space-y-2 text-sm leading-relaxed text-on-surface-variant">
+          {atAGlance.map((line) => (
+            <li key={line} className="flex gap-2">
+              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-gradient-to-r from-primary to-violet-pulse" />
+              {line}
+            </li>
+          ))}
+        </ul>
       </div>
 
       <div className="mt-16 lg:grid lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
         <aside className="relative mb-12 lg:mb-0">
-          <div className="sticky top-28 hidden overflow-hidden rounded-3xl bg-slate-deep p-8 font-mono text-xs leading-7 text-white/72 shadow-card lg:block">
+          <div className="sticky top-28 hidden overflow-hidden rounded-3xl border border-white/10 bg-slate-deep p-8 shadow-card lg:block">
             <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(to_right,rgb(255_255_255_/_0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgb(255_255_255_/_0.08)_1px,transparent_1px)] [background-size:36px_36px]" />
-            <div className="relative">
-              <p className="text-inverse-primary">Stack</p>
-              <ul className="mt-4 space-y-3">
-                <li>Next.js + Supabase auth</li>
-                <li>FastAPI + Celery workers</li>
-                <li>LangGraph orchestration</li>
-                <li>Redis shared memory</li>
-                <li>MCP research tools</li>
-                <li>LangSmith tracing</li>
+            <div className="relative text-white">
+              <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-[rgb(200,201,255)]">At a glance</p>
+              <ul className="mt-4 space-y-3 text-sm leading-relaxed text-white/78">
+                {atAGlance.map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
               </ul>
-              <p className="mt-8 text-inverse-primary">Flow</p>
-              <pre className="mt-3 whitespace-pre-wrap text-[11px] text-white/64">
-                {`User
-  -> approve
-Main agent
-  -> instruct
-Research -> Reasoning -> Writing
-  ->
-GTM report + PDF`}
+              <p className="mt-8 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-[rgb(200,201,255)]">Flow</p>
+              <pre className="mt-3 whitespace-pre-wrap font-mono text-[11px] leading-relaxed text-white/64">
+                {`You approve the plan
+    → Research
+    → Reasoning
+    → Writing
+    → GTM report (+ PDF optional)`}
               </pre>
             </div>
           </div>
