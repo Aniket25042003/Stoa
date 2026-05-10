@@ -31,8 +31,13 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-50 px-4 py-3 md:px-6">
       <div className={shell}>
-        <div className="flex items-center justify-between gap-3">
-          <Link href="/" className="group inline-flex min-w-0 items-center gap-3" aria-label="GTM Agent home">
+        {/* w-full + md grid: logo | centered nav | right-aligned CTAs (fixes collapsed row / buttons hugging left on desktop) */}
+        <div className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 md:grid-cols-[auto_1fr_auto] md:gap-6">
+          <Link
+            href="/"
+            className="group inline-flex min-w-0 items-center gap-3 justify-self-start"
+            aria-label="GTM Agent home"
+          >
             <span className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-primary via-indigo-pulse to-violet-pulse shadow-glow">
               <span className="absolute inset-0 bg-[radial-gradient(circle_at_35%_20%,rgb(255_255_255_/_0.55),transparent_34%)]" />
               <span className="relative font-mono text-sm font-semibold text-white">G</span>
@@ -40,12 +45,12 @@ export function Navbar() {
             <span className="truncate font-display text-lg font-extrabold tracking-[-0.03em] text-on-surface">GTM Agent</span>
           </Link>
 
-          <nav className="hidden flex-1 justify-center gap-7 md:flex" aria-label="Primary">
+          <nav className="hidden items-center justify-center gap-7 justify-self-center md:flex" aria-label="Primary">
             {nav.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="group relative font-mono text-xs font-semibold uppercase tracking-[0.1em] text-on-surface-variant transition-colors hover:text-primary"
+                className="group relative shrink-0 font-mono text-xs font-semibold uppercase tracking-[0.1em] text-on-surface-variant transition-colors hover:text-primary"
               >
                 {item.label}
                 <span className="absolute -bottom-2 left-0 h-0.5 w-0 rounded-full bg-gradient-to-r from-primary to-secondary transition-all duration-300 group-hover:w-full" />
@@ -53,7 +58,7 @@ export function Navbar() {
             ))}
           </nav>
 
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 items-center justify-end gap-2 justify-self-end">
             <ThemeToggle />
             <Link href="/login" className="btn-nav-purple px-3 py-2 text-sm">
               Sign in
