@@ -50,21 +50,30 @@ const rows = [
 
 function CompareCell({ value }: { value: string }) {
   const v = value.toLowerCase();
+  const tdClass = "px-3 py-3 align-middle sm:px-5 sm:py-4 text-center tabular-nums";
   if (v === "yes") {
     return (
-      <td className="px-5 py-4">
-        <Check className="mx-auto h-5 w-5 text-primary" strokeWidth={2.5} aria-label="Included" />
+      <td className={tdClass}>
+        <span className="flex h-full min-h-[1.5rem] w-full items-center justify-center">
+          <Check className="h-5 w-5 shrink-0 text-primary" strokeWidth={2.5} aria-label="Included" />
+        </span>
       </td>
     );
   }
   if (v === "no") {
     return (
-      <td className="px-5 py-4">
-        <X className="mx-auto h-5 w-5 text-on-surface-variant/55" strokeWidth={2.5} aria-label="Not included" />
+      <td className={tdClass}>
+        <span className="flex h-full min-h-[1.5rem] w-full items-center justify-center">
+          <X className="h-5 w-5 shrink-0 text-on-surface-variant/55" strokeWidth={2.5} aria-label="Not included" />
+        </span>
       </td>
     );
   }
-  return <td className="px-5 py-4">{value}</td>;
+  return (
+    <td className={tdClass}>
+      <span className="inline-block w-full text-center font-medium text-on-surface">{value}</span>
+    </td>
+  );
 }
 
 export default function PricingPage() {
@@ -115,19 +124,19 @@ export default function PricingPage() {
       </div>
 
       <div className="mt-20 overflow-x-auto rounded-3xl border border-outline-variant/60 bg-surface-container-low/80 shadow-soft backdrop-blur-md">
-        <table className="w-full min-w-[600px] text-left text-sm">
+        <table className="w-full min-w-[600px] text-sm">
           <thead className="border-b border-outline-variant/60 bg-surface-container-low font-mono text-xs font-semibold uppercase tracking-[0.14em] text-primary">
             <tr>
-              <th className="px-5 py-4">Compare</th>
-              <th className="px-5 py-4">Starter</th>
-              <th className="px-5 py-4">Pro</th>
-              <th className="px-5 py-4">Team</th>
+              <th className="px-3 py-3 text-left sm:px-5 sm:py-4">Compare</th>
+              <th className="px-3 py-3 text-center sm:px-5 sm:py-4">Starter</th>
+              <th className="px-3 py-3 text-center sm:px-5 sm:py-4">Pro</th>
+              <th className="px-3 py-3 text-center sm:px-5 sm:py-4">Team</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-outline-variant/45">
             {rows.map((r) => (
               <tr key={r.label} className="text-on-surface-variant">
-                <td className="px-5 py-4 font-semibold text-on-surface">{r.label}</td>
+                <td className="px-3 py-3 text-left font-semibold text-on-surface sm:px-5 sm:py-4">{r.label}</td>
                 <CompareCell value={r.starter} />
                 <CompareCell value={r.pro} />
                 <CompareCell value={r.team} />
