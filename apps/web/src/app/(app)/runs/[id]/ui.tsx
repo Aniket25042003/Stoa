@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { ACTIVITY_MESSAGES, type ActivityPhase } from "@/lib/activity-messages";
 import { StatusPill } from "@/components/app-shell/StatusPill";
@@ -47,6 +47,39 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
   const currentActivityMessages = ACTIVITY_MESSAGES[currentActivityPhase];
   const currentActivity = currentActivityMessages[activityIndex % currentActivityMessages.length];
   const latestEvent = events.at(-1);
+  const pollInFlight = useRef(false);
+
+  const refreshSnapshot = useCallback(
+    async (includeArtifacts = true) => {
+      const requests = includeArtifacts
+        ? Promise.all([
+            apiFetch(`/v1/runs/${runId}`, { accessToken }),
+            apiFetch(`/v1/runs/${runId}/report`, { accessToken }),
+            apiFetch(`/v1/runs/${runId}/sources`, { accessToken }),
+          ])
+        : Promise.all([apiFetch(`/v1/runs/${runId}`, { accessToken })]);
+
+      const [runRes, reportRes, sourcesRes] = await requests;
+
+      if (runRes?.ok) {
+        const body = await runRes.json();
+        const run = body.run as RunRow | undefined;
+        setStatus(run?.status ?? "?");
+        setMasterPlan(run?.master_plan ?? null);
+      }
+
+      if (includeArtifacts && reportRes?.ok) {
+        const body = await reportRes.json();
+        setMarkdown(body.markdown ?? null);
+      }
+
+      if (includeArtifacts && sourcesRes?.ok) {
+        const body = await sourcesRes.json();
+        setSources(body.sources ?? []);
+      }
+    },
+    [runId, accessToken]
+  );
 
   useEffect(() => {
     setActivityIndex(0);
@@ -61,20 +94,18 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const r = await apiFetch(`/v1/runs/${runId}`, { accessToken });
-      if (r.ok) {
-        const body = await r.json();
+      try {
+        await refreshSnapshot(true);
+      } catch {
         if (!cancelled) {
-          const run = body.run as RunRow | undefined;
-          setStatus(run?.status ?? "?");
-          setMasterPlan(run?.master_plan ?? null);
+          setStatus((prev) => prev);
         }
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [runId, accessToken]);
+  }, [refreshSnapshot]);
 
   useEffect(() => {
     const base = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
@@ -107,37 +138,38 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
   }, [runId, accessToken, status]);
 
   useEffect(() => {
+    if (status === "..." || status === "awaiting_plan_approval") return;
     let cancelled = false;
-    const t = setInterval(async () => {
-      const [reportRes, sourcesRes, runRes] = await Promise.all([
-        apiFetch(`/v1/runs/${runId}/report`, { accessToken }),
-        apiFetch(`/v1/runs/${runId}/sources`, { accessToken }),
-        apiFetch(`/v1/runs/${runId}`, { accessToken }),
-      ]);
-      if (reportRes.ok) {
-        const body = await reportRes.json();
-        if (body.markdown && !cancelled) {
-          setMarkdown(body.markdown);
-        }
+
+    const tick = async () => {
+      if (pollInFlight.current) return;
+      pollInFlight.current = true;
+      try {
+        await refreshSnapshot(true);
+      } catch {
+        /* ignore transient polling failures */
+      } finally {
+        pollInFlight.current = false;
       }
-      if (sourcesRes.ok) {
-        const body = await sourcesRes.json();
-        if (!cancelled) setSources(body.sources ?? []);
+    };
+
+    void tick();
+    if (status !== "queued" && status !== "running") {
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const t = setInterval(() => {
+      if (!cancelled) {
+        void tick();
       }
-      if (runRes.ok) {
-        const body = await runRes.json();
-        if (!cancelled) {
-          const run = body.run as RunRow | undefined;
-          setStatus(run?.status ?? "?");
-          setMasterPlan(run?.master_plan ?? null);
-        }
-      }
-    }, 4000);
+    }, 15000);
     return () => {
       cancelled = true;
       clearInterval(t);
     };
-  }, [runId, accessToken]);
+  }, [status, refreshSnapshot]);
 
   async function downloadPdf() {
     const res = await apiFetch(`/v1/runs/${runId}/report.pdf`, { accessToken });
