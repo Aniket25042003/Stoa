@@ -11,7 +11,7 @@ from __future__ import annotations
 import os
 from datetime import datetime, timezone
 from typing import Any, Iterable, Literal, TypedDict
-from urllib.parse import quote_plus
+from urllib.parse import quote_plus, urlparse
 
 import httpx
 from gtm_agents.observability import traced_tool
@@ -85,6 +85,24 @@ def _jina_read_url(url: str) -> str:
     return f"https://r.jina.ai/{url}"
 
 
+def _prefer_jina_extract(url: str) -> bool:
+    host = (urlparse(url).hostname or "").lower()
+    if not host:
+        return False
+    blocked_hosts = (
+        "reddit.com",
+        "www.reddit.com",
+        "old.reddit.com",
+        "x.com",
+        "www.x.com",
+        "twitter.com",
+        "www.twitter.com",
+        "linkedin.com",
+        "www.linkedin.com",
+    )
+    return any(host == domain or host.endswith(f".{domain}") for domain in blocked_hosts)
+
+
 def _jina_extract(url: str) -> str:
     try:
         headers: dict[str, str] = {"Accept": "text/plain", "x-respond-with": "markdown"}
@@ -118,8 +136,10 @@ def research_web(plan: dict[str, Any], max_results: int = 8) -> ResearchToolResu
             )
             for r in resp.get("results", [])[:max_results]:
                 url = r.get("url") or ""
-                extracted = _jina_extract(url) if url else ""
-                content = extracted or r.get("content") or ""
+                # Prefer Tavily snippets by default; reserve Jina extraction for sites that
+                # commonly block direct crawling or are awkward to render locally.
+                extracted = _jina_extract(url) if url and _prefer_jina_extract(url) else ""
+                content = r.get("content") or extracted or ""
                 items.append(
                     {
                         "source_type": "web",
@@ -131,7 +151,10 @@ def research_web(plan: dict[str, Any], max_results: int = 8) -> ResearchToolResu
                         "sentiment": None,
                         "confidence": float(r.get("score") or 0.6),
                         "retrieved_at": _now(),
-                        "metadata": {"provider": "tavily+jina" if extracted else "tavily"},
+                        "metadata": {
+                            "provider": "tavily+jina" if extracted else "tavily",
+                            "used_jina_extract": bool(extracted),
+                        },
                     }
                 )
         except Exception as e:

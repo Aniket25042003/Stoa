@@ -394,7 +394,7 @@ def plan_research_calls(user_input: dict[str, Any], tools: list[dict[str, Any]])
 
 def _plan_research_calls_impl(user_input: dict[str, Any], tools: list[dict[str, Any]]) -> dict[str, Any]:
     prompt = """You are the autonomous research supervisor for a GTM multi-agent system.
-Choose only the MCP tools that are likely to produce useful evidence for this specific product.
+Choose only the research tools that are likely to produce useful evidence for this specific product.
 Do not call every tool by default. For example:
 - Internet/software/devtools products may justify web_research, competitor_research, and crawl_search_results (or crawl_web when you already have high-value URLs like docs/pricing pages).
 - Physical products, food, local services, healthcare, or regulated categories may rely more on web_research/competitor_research and shallow crawl_search_results for public pages — avoid aggressive crawling when robots disallow it.
@@ -494,14 +494,14 @@ def _autonomous_research_impl(
     except Exception as e:
         error_plan = {
             "autonomy_mode": "error",
-            "research_strategy": "Could not list MCP research tools.",
+            "research_strategy": "Could not list research tools.",
             "calls": [],
         }
         error_parent_plan = create_agent_plan(
             "research_parent_agent",
-            "Research MCP server is unavailable; document the blocked state.",
+            "Research tool registry is unavailable; document the blocked state.",
             {"user_input": user_input, "error": str(e)},
-            ["Attempt to list MCP tools.", "Document MCP failure.", "Ask main agent for blocked-state approval."],
+            ["Attempt to list research tools.", "Document the tool failure.", "Ask main agent for blocked-state approval."],
             run_id,
             parent_agent,
         )
@@ -511,14 +511,14 @@ def _autonomous_research_impl(
             parent_agent,
             "research_parent_agent",
             error_parent_plan,
-            {"warnings": [f"MCP research server unavailable: {e}"]},
+            {"warnings": [f"Research tool registry unavailable: {e}"]},
             {"user_input": user_input},
             run_id,
         )
         return {
             "research_plan": error_plan,
             "items": [],
-            "warnings": [f"MCP research server unavailable: {e}"],
+            "warnings": [f"Research tool registry unavailable: {e}"],
             "tool_results": [],
             "research_bundle": merge_research([]),
             "research_parent_plan": error_parent_plan,
@@ -527,7 +527,7 @@ def _autonomous_research_impl(
 
     research_parent_plan = create_agent_plan(
         "research_parent_agent",
-        "Decide what market evidence is needed, choose relevant MCP research tools, supervise subagents, and stop only after parent approval.",
+        "Decide what market evidence is needed, choose relevant research tools, supervise subagents, and stop only after parent approval.",
         {
             "user_input": user_input,
             "available_tools": tools,
@@ -535,7 +535,7 @@ def _autonomous_research_impl(
             "shared_memory": read_memory(run_id, 50),
         },
         [
-            "Inspect product details and available MCP tools.",
+            "Inspect product details and available research tools.",
             "Choose relevant sources and formulate source-specific queries.",
             "Delegate selected calls to research subagents.",
             "Review subagent results and decide whether more research is required.",
@@ -577,7 +577,7 @@ def _autonomous_research_impl(
         subagent = run_planned_agent(
             subagent_name,
             "research_parent_agent",
-            f"Use MCP tool {tool_name} only if useful, collect evidence, and request parent approval before stopping.",
+            f"Use research tool {tool_name} only if useful, collect evidence, and request parent approval before stopping.",
             {
                 "selected_call": call,
                 "user_input": user_input,
@@ -585,7 +585,7 @@ def _autonomous_research_impl(
             },
             [
                 "Read parent instructions and sibling memory.",
-                "Execute the assigned MCP tool call.",
+                "Execute the assigned research tool call.",
                 "Normalize findings and warnings.",
                 "Ask research parent for approval.",
             ],

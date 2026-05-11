@@ -8,10 +8,12 @@ import re
 import uuid
 from dataclasses import dataclass
 from datetime import timedelta
+from html import unescape
 from pathlib import Path
 from typing import Literal
 from urllib.parse import urlparse
 
+import httpx
 from crawlee import ConcurrencySettings, Glob
 from crawlee.configuration import Configuration
 from crawlee.crawlers import PlaywrightCrawler, PlaywrightCrawlingContext
@@ -72,6 +74,70 @@ def _keyword_hits(text: str, keywords_csv: str) -> dict[str, int]:
     return {k: v for k, v in hits.items() if v > 0}
 
 
+def _html_to_text(html: str) -> str:
+    without_scripts = re.sub(r"(?is)<(script|style|noscript).*?>.*?</\\1>", " ", html)
+    without_tags = re.sub(r"(?is)<[^>]+>", " ", without_scripts)
+    return _clip(" ".join(unescape(without_tags).split()), 3500)
+
+
+def _extract_html_title(html: str) -> str:
+    match = re.search(r"(?is)<title[^>]*>(.*?)</title>", html)
+    return _clip(unescape(match.group(1)).strip(), 240) if match else ""
+
+
+def _extract_meta_description(html: str) -> str:
+    match = re.search(
+        r'(?is)<meta[^>]+name=["\\\']description["\\\'][^>]+content=["\\\'](.*?)["\\\']',
+        html,
+    )
+    return _clip(unescape(match.group(1)).strip(), 400) if match else ""
+
+
+async def _http_fallback_crawl(settings: CrawlSettings, urls: list[str]) -> ResearchToolResult:
+    items: list[ResearchItem] = []
+    warnings: list[str] = []
+    headers = {
+        "User-Agent": (os.getenv("GTM_CRAWLER_USER_AGENT") or "").strip() or "gtm-agent-crawler/0.1 (+https://example.com)",
+        "Accept": "text/html,application/xhtml+xml",
+    }
+    timeout = min(max(settings.request_handler_timeout_secs, 5), 30)
+    async with httpx.AsyncClient(timeout=timeout, headers=headers, follow_redirects=True) as client:
+        for url in urls[: settings.max_pages]:
+            try:
+                resp = await client.get(url)
+                resp.raise_for_status()
+                html = resp.text
+                title = _extract_html_title(html) or url
+                meta_desc = _extract_meta_description(html)
+                body_text = _html_to_text(html)
+                text_for_kw = f"{title} {meta_desc} {body_text}"
+                excerpt = _clip(f"{meta_desc + ' — ' if meta_desc else ''}{body_text}", 2200)
+                q = settings.query or settings.product_context or settings.keywords or str(resp.url)
+                items.append(
+                    {
+                        "source_type": "crawl",
+                        "source_url": str(resp.url),
+                        "query": _clip(q, 512),
+                        "title": title,
+                        "raw_excerpt": excerpt,
+                        "summary": _clip(excerpt, 700),
+                        "sentiment": _sentiment(text_for_kw),
+                        "confidence": 0.52,
+                        "retrieved_at": _now(),
+                        "metadata": {
+                            "requested_url": url,
+                            "final_url": str(resp.url),
+                            "status": resp.status_code,
+                            "keyword_hits": _keyword_hits(text_for_kw, settings.keywords),
+                            "extractor": "httpx-html-fallback",
+                        },
+                    }
+                )
+            except Exception as e:
+                warnings.append(f"HTTP fallback failed for {url}: {e}")
+    return _result("crawl", items, warnings)
+
+
 @dataclass
 class CrawlSettings:
     """Parameters for a single crawl (MCP / suite callers map into this)."""
@@ -99,6 +165,8 @@ def crawl_settings_from_env_overrides(base: CrawlSettings) -> CrawlSettings:
     """Apply global env caps to a settings object (mutates max_pages/max_depth/concurrency)."""
     max_pages = min(base.max_pages, _env_int("GTM_CRAWLER_MAX_PAGES", 25))
     max_depth = min(base.max_depth, _env_int("GTM_CRAWLER_MAX_DEPTH", 2))
+    min_concurrency = max(1, _env_int("GTM_CRAWLER_MIN_CONCURRENCY", base.min_concurrency))
+    max_concurrency = max(min_concurrency, _env_int("GTM_CRAWLER_MAX_CONCURRENCY", base.max_concurrency))
     return CrawlSettings(
         start_urls=base.start_urls,
         keywords=base.keywords,
@@ -108,8 +176,8 @@ def crawl_settings_from_env_overrides(base: CrawlSettings) -> CrawlSettings:
         include_url_patterns=base.include_url_patterns,
         exclude_url_patterns=base.exclude_url_patterns,
         request_handler_timeout_secs=_env_int("GTM_CRAWLER_REQUEST_TIMEOUT_SECS", base.request_handler_timeout_secs),
-        min_concurrency=_env_int("GTM_CRAWLER_MIN_CONCURRENCY", base.min_concurrency),
-        max_concurrency=_env_int("GTM_CRAWLER_MAX_CONCURRENCY", base.max_concurrency),
+        min_concurrency=min_concurrency,
+        max_concurrency=max_concurrency,
         respect_robots=base.respect_robots,
         product_context=base.product_context,
         query=base.query,
@@ -143,6 +211,8 @@ async def run_crawl(settings: CrawlSettings) -> ResearchToolResult:
 
     configuration = Configuration(storage_dir=str(storage_dir))
 
+    desired_concurrency = max(settings.min_concurrency, min(settings.max_concurrency, 2))
+
     crawler = PlaywrightCrawler(
         configuration=configuration,
         headless=True,
@@ -161,6 +231,7 @@ async def run_crawl(settings: CrawlSettings) -> ResearchToolResult:
         concurrency_settings=ConcurrencySettings(
             min_concurrency=settings.min_concurrency,
             max_concurrency=settings.max_concurrency,
+            desired_concurrency=desired_concurrency,
         ),
         configure_logging=False,
     )
@@ -241,6 +312,26 @@ async def run_crawl(settings: CrawlSettings) -> ResearchToolResult:
     crawler.failed_request_handler(on_failed)
 
     await crawler.run(urls)
+    if items:
+        return _result("crawl", items, warnings)
+
+    browser_failed = any(
+        marker in warning
+        for warning in warnings
+        for marker in (
+            "launch_persistent_context",
+            "headless_shell",
+            "Target page, context or browser has been closed",
+            "Executable doesn't exist",
+        )
+    )
+    if browser_failed:
+        fallback = await _http_fallback_crawl(settings, urls)
+        merged_warnings = warnings + fallback["warnings"]
+        if fallback["items"]:
+            merged_warnings.append("Playwright crawl failed; used lightweight HTTP fallback for crawlable pages.")
+        return _result("crawl", fallback["items"], merged_warnings)
+
     return _result("crawl", items, warnings)
 
 
