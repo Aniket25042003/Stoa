@@ -71,6 +71,20 @@ def _env_int(name: str, default: int) -> int:
         return default
 
 
+def _safe_int(value: Any, default: int) -> int:
+    if value is None or value == "":
+        return default
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _clamp_int(value: Any, default: int, minimum: int, maximum: int) -> int:
+    parsed = _safe_int(value, default)
+    return max(minimum, min(parsed, maximum))
+
+
 def _normalize_steps(plan: dict[str, Any], fallback_steps: list[str]) -> dict[str, Any]:
     raw_steps = plan.get("steps") if isinstance(plan.get("steps"), list) else []
     steps = []
@@ -433,7 +447,7 @@ def _split_competitor_calls(call: dict[str, Any], user_input: dict[str, Any]) ->
     if len(competitors) < 2:
         return []
     product_context = str(args.get("product_context") or _product_context(user_input))
-    max_results = int(args.get("max_results") or 5)
+    max_results = _safe_int(args.get("max_results"), 5)
     return [
         {
             **call,
@@ -492,7 +506,7 @@ def revise_research_calls_for_retry(
                     "arguments": {
                         "query": _broaden_query(query, user_input),
                         "product_context": args.get("product_context") or _product_context(user_input),
-                        "max_results": max(5, int(args.get("max_results") or 5)),
+                        "max_results": max(5, _safe_int(args.get("max_results"), 5)),
                     },
                     "reason": "Adaptive retry: broad web search after crawl/search returned no usable evidence.",
                 }
@@ -500,7 +514,11 @@ def revise_research_calls_for_retry(
             continue
 
         if zero_results and "query" in args:
-            new_args = {**args, "query": _broaden_query(query, user_input), "max_results": max(5, int(args.get("max_results") or 5))}
+            new_args = {
+                **args,
+                "query": _broaden_query(query, user_input),
+                "max_results": max(5, _safe_int(args.get("max_results"), 5)),
+            }
             revised.append({**call, "arguments": new_args, "reason": "Adaptive retry: broadened query after no usable evidence."})
             continue
 
@@ -538,7 +556,7 @@ def validate_research_calls(calls: list[dict[str, Any]], user_input: dict[str, A
                         "arguments": {
                             "query": _broaden_query(query, user_input),
                             "product_context": args.get("product_context") or _product_context(user_input),
-                            "max_results": max(5, int(args.get("max_results") or 5)),
+                            "max_results": max(5, _safe_int(args.get("max_results"), 5)),
                         },
                         "reason": "Planner guardrail: broad web search before narrow forum crawl.",
                     }
@@ -546,13 +564,13 @@ def validate_research_calls(calls: list[dict[str, Any]], user_input: dict[str, A
                 notes.append({"tool_name": tool_name, "reason": "Rewrote narrow crawl_search_results query to web_research."})
                 continue
 
-            args["max_results"] = max(1, min(int(args.get("max_results") or 3), 3))
-            args["max_pages_per_result"] = max(1, min(int(args.get("max_pages_per_result") or 1), 1))
-            args["max_depth"] = max(0, min(int(args.get("max_depth") or 1), 1))
+            args["max_results"] = _clamp_int(args.get("max_results"), 3, 1, 3)
+            args["max_pages_per_result"] = _clamp_int(args.get("max_pages_per_result"), 1, 1, 1)
+            args["max_depth"] = _clamp_int(args.get("max_depth"), 1, 0, 1)
 
         if tool_name == "crawl_web":
-            args["max_pages"] = max(1, min(int(args.get("max_pages") or 8), 8))
-            args["max_depth"] = max(0, min(int(args.get("max_depth") or 1), 1))
+            args["max_pages"] = _clamp_int(args.get("max_pages"), 8, 1, 8)
+            args["max_depth"] = _clamp_int(args.get("max_depth"), 1, 0, 1)
 
         validated.append({**call, "arguments": args})
     return validated, notes
