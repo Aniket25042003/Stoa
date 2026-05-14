@@ -20,20 +20,18 @@ def insert_run(
     input_payload: dict[str, Any],
     master_plan: dict[str, Any] | None = None,
     status: str = "awaiting_plan_approval",
+    company_id: str | None = None,
 ) -> str:
     sb = get_supabase_admin()
-    row = (
-        sb.table("gtm_runs")
-        .insert(
-            {
-                "user_id": user_id,
-                "status": status,
-                "run_input": input_payload,
-                "master_plan": master_plan or {},
-            }
-        )
-        .execute()
-    )
+    insert_body: dict[str, Any] = {
+        "user_id": user_id,
+        "status": status,
+        "run_input": input_payload,
+        "master_plan": master_plan or {},
+    }
+    if company_id:
+        insert_body["company_id"] = company_id
+    row = sb.table("gtm_runs").insert(insert_body).execute()
     data = row.data
     if not data:
         raise RuntimeError("Failed to insert gtm_run")
@@ -191,8 +189,250 @@ def list_runs_for_user(user_id: str, limit: int = 50) -> list[dict[str, Any]]:
     sb = get_supabase_admin()
     res = (
         sb.table("gtm_runs")
-        .select("id,status,created_at,updated_at")
+        .select("id,status,created_at,updated_at,company_id")
         .eq("user_id", user_id)
+        .order("created_at", desc=True)
+        .limit(limit)
+        .execute()
+    )
+    return list(res.data or [])
+
+
+# --- Companies & marketing (shared KB workspace) ---
+
+
+def insert_company(user_id: str, name: str, description: str | None = None, brand_voice: dict[str, Any] | None = None) -> str:
+    sb = get_supabase_admin()
+    res = (
+        sb.table("companies")
+        .insert(
+            {
+                "user_id": user_id,
+                "name": name,
+                "description": description,
+                "brand_voice": brand_voice or {},
+            }
+        )
+        .execute()
+    )
+    if not res.data:
+        raise RuntimeError("Failed to insert company")
+    return str(res.data[0]["id"])
+
+
+def get_company(company_id: str) -> dict[str, Any] | None:
+    sb = get_supabase_admin()
+    r = sb.table("companies").select("*").eq("id", company_id).limit(1).execute()
+    return r.data[0] if r.data else None
+
+
+def list_companies_for_user(user_id: str, limit: int = 50) -> list[dict[str, Any]]:
+    sb = get_supabase_admin()
+    res = sb.table("companies").select("*").eq("user_id", user_id).order("created_at", desc=True).limit(limit).execute()
+    return list(res.data or [])
+
+
+def list_knowledge_for_company(company_id: str, kind: str | None = None, limit: int = 100) -> list[dict[str, Any]]:
+    sb = get_supabase_admin()
+    q = sb.table("company_knowledge").select("id,kind,title,content,tags,created_at,updated_at").eq("company_id", company_id)
+    if kind:
+        q = q.eq("kind", kind)
+    res = q.order("updated_at", desc=True).limit(limit).execute()
+    return list(res.data or [])
+
+
+def search_knowledge_text(company_id: str, query: str, kinds: list[str] | None = None, limit: int = 20) -> list[dict[str, Any]]:
+    sb = get_supabase_admin()
+    try:
+        res = sb.rpc(
+            "kb_search_company_knowledge_text",
+            {
+                "p_company_id": company_id,
+                "p_query": query,
+                "p_match_count": limit,
+                "p_kinds": kinds,
+            },
+        ).execute()
+        return list(res.data or [])
+    except Exception:
+        return []
+
+
+def insert_marketing_chat(user_id: str, company_id: str, title: str | None = None) -> str:
+    sb = get_supabase_admin()
+    res = (
+        sb.table("marketing_chats")
+        .insert(
+            {
+                "user_id": user_id,
+                "company_id": company_id,
+                "title": title or "Marketing chat",
+            }
+        )
+        .execute()
+    )
+    if not res.data:
+        raise RuntimeError("Failed to insert marketing chat")
+    return str(res.data[0]["id"])
+
+
+def list_marketing_chats(company_id: str, limit: int = 50) -> list[dict[str, Any]]:
+    sb = get_supabase_admin()
+    res = (
+        sb.table("marketing_chats")
+        .select("*")
+        .eq("company_id", company_id)
+        .order("created_at", desc=True)
+        .limit(limit)
+        .execute()
+    )
+    return list(res.data or [])
+
+
+def get_marketing_chat(chat_id: str) -> dict[str, Any] | None:
+    sb = get_supabase_admin()
+    r = sb.table("marketing_chats").select("*").eq("id", chat_id).limit(1).execute()
+    return r.data[0] if r.data else None
+
+
+def insert_marketing_message(
+    chat_id: str,
+    role: str,
+    content: str,
+    *,
+    agent: str | None = None,
+    parts: dict[str, Any] | None = None,
+) -> str:
+    sb = get_supabase_admin()
+    res = (
+        sb.table("marketing_messages")
+        .insert(
+            {
+                "chat_id": chat_id,
+                "role": role,
+                "agent": agent,
+                "content": content,
+                "parts": parts or {},
+            }
+        )
+        .execute()
+    )
+    if not res.data:
+        raise RuntimeError("Failed to insert marketing message")
+    return str(res.data[0]["id"])
+
+
+def list_marketing_messages(chat_id: str, limit: int = 200) -> list[dict[str, Any]]:
+    sb = get_supabase_admin()
+    res = (
+        sb.table("marketing_messages")
+        .select("*")
+        .eq("chat_id", chat_id)
+        .order("created_at", desc=False)
+        .limit(limit)
+        .execute()
+    )
+    return list(res.data or [])
+
+
+def insert_marketing_task(
+    chat_id: str,
+    agent_name: str,
+    status: str,
+    *,
+    message_id: str | None = None,
+    payload: dict[str, Any] | None = None,
+    result: dict[str, Any] | None = None,
+) -> str:
+    sb = get_supabase_admin()
+    res = (
+        sb.table("marketing_tasks")
+        .insert(
+            {
+                "chat_id": chat_id,
+                "message_id": message_id,
+                "agent_name": agent_name,
+                "status": status,
+                "payload": payload or {},
+                "result": result,
+            }
+        )
+        .execute()
+    )
+    if not res.data:
+        raise RuntimeError("Failed to insert marketing task")
+    return str(res.data[0]["id"])
+
+
+def update_marketing_task(task_id: str, status: str, result: dict[str, Any] | None = None) -> None:
+    sb = get_supabase_admin()
+    now = datetime.now(timezone.utc).isoformat()
+    body: dict[str, Any] = {"status": status}
+    if result is not None:
+        body["result"] = result
+    if status == "running":
+        body["started_at"] = now
+    if status in ("completed", "failed"):
+        body["finished_at"] = now
+    sb.table("marketing_tasks").update(body).eq("id", task_id).execute()
+
+
+def insert_marketing_artifact(
+    chat_id: str,
+    kind: str,
+    title: str,
+    *,
+    task_id: str | None = None,
+    storage_path: str | None = None,
+    mime_type: str | None = None,
+    metadata: dict[str, Any] | None = None,
+) -> str:
+    sb = get_supabase_admin()
+    res = (
+        sb.table("marketing_artifacts")
+        .insert(
+            {
+                "chat_id": chat_id,
+                "task_id": task_id,
+                "kind": kind,
+                "title": title,
+                "storage_path": storage_path,
+                "mime_type": mime_type,
+                "metadata": metadata or {},
+            }
+        )
+        .execute()
+    )
+    if not res.data:
+        raise RuntimeError("Failed to insert marketing artifact")
+    return str(res.data[0]["id"])
+
+
+def list_marketing_artifacts(chat_id: str, limit: int = 100) -> list[dict[str, Any]]:
+    sb = get_supabase_admin()
+    res = (
+        sb.table("marketing_artifacts")
+        .select("*")
+        .eq("chat_id", chat_id)
+        .order("created_at", desc=True)
+        .limit(limit)
+        .execute()
+    )
+    return list(res.data or [])
+
+
+def get_marketing_artifact(artifact_id: str) -> dict[str, Any] | None:
+    sb = get_supabase_admin()
+    r = sb.table("marketing_artifacts").select("*").eq("id", artifact_id).limit(1).execute()
+    return r.data[0] if r.data else None
+
+
+def list_gtm_runs_for_company(company_id: str, limit: int = 50) -> list[dict[str, Any]]:
+    sb = get_supabase_admin()
+    res = (
+        sb.table("gtm_runs")
+        .select("id,status,created_at,updated_at")
+        .eq("company_id", company_id)
         .order("created_at", desc=True)
         .limit(limit)
         .execute()
