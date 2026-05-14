@@ -1,5 +1,6 @@
 def test_graph_invokes(monkeypatch) -> None:
     monkeypatch.setenv("GTM_DISABLE_EXTERNAL_RESEARCH", "true")
+    monkeypatch.setenv("GTM_DISABLE_LLM", "true")
 
     from gtm_agents.graph import run_pipeline
 

@@ -100,9 +100,9 @@ async def _http_fallback_crawl(settings: CrawlSettings, urls: list[str]) -> Rese
         "User-Agent": (os.getenv("GTM_CRAWLER_USER_AGENT") or "").strip() or "gtm-agent-crawler/0.1 (+https://example.com)",
         "Accept": "text/html,application/xhtml+xml",
     }
-    timeout = min(max(settings.request_handler_timeout_secs, 5), 30)
+    timeout = min(max(_env_int("GTM_CRAWLER_HTTP_FALLBACK_TIMEOUT_SECS", 10), 3), 15)
     async with httpx.AsyncClient(timeout=timeout, headers=headers, follow_redirects=True) as client:
-        for url in urls[: settings.max_pages]:
+        for url in urls[: min(settings.max_pages, _env_int("GTM_CRAWLER_HTTP_FALLBACK_MAX_PAGES", 3))]:
             try:
                 resp = await client.get(url)
                 resp.raise_for_status()
@@ -201,6 +201,29 @@ async def run_crawl(settings: CrawlSettings) -> ResearchToolResult:
 
     items: list[ResearchItem] = []
     warnings: list[str] = []
+
+    try:
+        from playwright.async_api import async_playwright
+
+        async with async_playwright() as pw:
+            executable_path = Path(pw.chromium.executable_path)
+        if not executable_path.exists():
+            fallback = await _http_fallback_crawl(settings, urls)
+            return _result(
+                "crawl",
+                fallback["items"],
+                [
+                    f"Playwright Chromium is not installed at {executable_path}; used lightweight HTTP fallback.",
+                    *fallback["warnings"],
+                ],
+            )
+    except Exception as e:
+        fallback = await _http_fallback_crawl(settings, urls)
+        return _result(
+            "crawl",
+            fallback["items"],
+            [f"Playwright preflight failed; used lightweight HTTP fallback: {e}", *fallback["warnings"]],
+        )
 
     storage_dir = _storage_subdir()
     user_agent = (os.getenv("GTM_CRAWLER_USER_AGENT") or "").strip() or "gtm-agent-crawler/0.1 (+https://example.com)"

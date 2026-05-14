@@ -19,6 +19,7 @@ type SourceRow = {
 
 function activityPhase(status: string, events: EventRow[]): ActivityPhase {
   if (status === "awaiting_plan_approval") return "awaiting_plan_approval";
+  if (status === "planning") return "planning";
   if (status === "completed") return "completed";
   if (status === "failed") return "failed";
   const latestPhase = events.at(-1)?.phase;
@@ -120,6 +121,10 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
           accessToken,
           (data) => {
             setEvents((prev) => [...prev, data as EventRow]);
+            if (data.message === "Master plan ready for approval") {
+              setStatus((prev) => (prev === "planning" ? "awaiting_plan_approval" : prev));
+              void refreshSnapshot(false);
+            }
             if (data.message === "Pipeline completed") {
               setStatus("completed");
               ac.abort();
@@ -135,10 +140,10 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
       }
     })();
     return () => ac.abort();
-  }, [runId, accessToken, status]);
+  }, [runId, accessToken, status, refreshSnapshot]);
 
   useEffect(() => {
-    if (status === "..." || status === "awaiting_plan_approval") return;
+    if (status === "...") return;
     let cancelled = false;
 
     const tick = async () => {
@@ -154,7 +159,7 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
     };
 
     void tick();
-    if (status !== "queued" && status !== "running") {
+    if (status !== "planning" && status !== "queued" && status !== "running") {
       return () => {
         cancelled = true;
       };
@@ -195,7 +200,7 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
       if (res.ok) {
         const body = await res.json();
         setMasterPlan(body.master_plan ?? null);
-        setStatus(body.status ?? "awaiting_plan_approval");
+        setStatus(body.status ?? "planning");
         setPlanFeedback("");
       }
     } finally {
@@ -242,6 +247,15 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
           <p className="mt-3 text-sm text-on-surface-variant">Waiting for the first backend event.</p>
         )}
       </section>
+
+      {status === "planning" && (
+        <section className={card}>
+          <h2 className="font-display text-2xl font-bold tracking-[-0.03em] text-on-surface">Master plan is being drafted</h2>
+          <p className="mt-3 text-sm leading-7 text-on-surface-variant">
+            The main agent is preparing the plan for approval. This page will update when the plan is ready.
+          </p>
+        </section>
+      )}
 
       {status === "awaiting_plan_approval" && (
         <section className={card}>

@@ -19,6 +19,36 @@ from gtm_agents.observability import (
 )
 
 
+@celery_app.task(name="gtm.create_master_plan")
+def create_master_plan_task(
+    run_id: str,
+    user_id: str,
+    user_feedback: str | None = None,
+    prior_plan: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    from gtm_agents.autonomy import create_master_plan_for_user
+
+    _emit(run_id, "main_agent", "planning", "Drafting the master plan for user approval")
+    supabase_db.update_run_status(run_id, "planning")
+    try:
+        run_row = supabase_db.get_run(run_id)
+        if not run_row or run_row.get("user_id") != user_id:
+            raise RuntimeError("Run not found for master-plan generation")
+        plan = create_master_plan_for_user(
+            run_row.get("run_input") or {},
+            user_feedback=user_feedback,
+            prior_plan=prior_plan or run_row.get("master_plan") or {},
+            run_id=run_id,
+        )
+        supabase_db.update_master_plan(run_id, plan, feedback=user_feedback)
+        _emit(run_id, "main_agent", "planning", "Master plan ready for approval", {"step_count": len(plan.get("steps") or [])})
+        return {"ok": True, "run_id": run_id}
+    except Exception as e:
+        supabase_db.update_run_status(run_id, "failed", error=str(e))
+        _emit(run_id, "main_agent", "planning", f"Failed: {e}", {"error": str(e)})
+        raise
+
+
 def _emit(run_id: str, agent: str, phase: str, message: str, detail: dict[str, Any] | None = None) -> None:
     payload_detail = dict(detail or {})
     corr = get_current_trace_correlation()
@@ -71,12 +101,36 @@ def run_pipeline_task(run_id: str, user_id: str) -> dict[str, Any]:
         inp = (run_row or {}).get("run_input") or {}
         approved_plan = (run_row or {}).get("master_plan") or {}
         inp = {**inp, "approved_master_plan": approved_plan}
+        persisted_source_keys: set[str] = set()
+
+        def _persist_research_items(items: list[dict[str, Any]], tool_result: dict[str, Any] | None = None) -> None:
+            fresh: list[dict[str, Any]] = []
+            for item in items:
+                key = str(item.get("source_url") or f"{item.get('source_type')}:{item.get('title')}:{item.get('raw_excerpt')}")
+                if key in persisted_source_keys:
+                    continue
+                persisted_source_keys.add(key)
+                fresh.append(item)
+            if not fresh:
+                return
+            try:
+                supabase_db.insert_research_sources(run_id, fresh)
+                _emit(
+                    run_id,
+                    str((tool_result or {}).get("tool_name") or "research_tool"),
+                    "research",
+                    f"Persisted {len(fresh)} research source(s)",
+                    {"source_count": len(fresh), "arguments": (tool_result or {}).get("arguments") or {}},
+                )
+            except Exception as e:
+                _emit(run_id, "research_supervisor", "research", f"Source persistence warning: {e}")
 
         initial: dict[str, Any] = {
             "run_id": run_id,
             "user_id": user_id,
             "input": inp,
             "progress_callback": lambda agent, phase, message, detail=None: _emit(run_id, agent, phase, message, detail),
+            "research_items_callback": _persist_research_items,
         }
         _emit(run_id, "orchestrator", "research", "Planning research objectives")
         _record_task(run_id, "orchestrator", "running", payload=inp)
@@ -122,7 +176,13 @@ def run_pipeline_task(run_id: str, user_id: str) -> dict[str, Any]:
                 )
                 _emit(run_id, "research_supervisor", "research", f"Collected {len(items)} research source(s)", {"warnings": tool_errors})
                 try:
-                    supabase_db.insert_research_sources(run_id, list(items))
+                    remaining = []
+                    for item in list(items):
+                        key = str(item.get("source_url") or f"{item.get('source_type')}:{item.get('title')}:{item.get('raw_excerpt')}")
+                        if key not in persisted_source_keys:
+                            persisted_source_keys.add(key)
+                            remaining.append(item)
+                    supabase_db.insert_research_sources(run_id, remaining)
                 except Exception as e:
                     _emit(run_id, "research_supervisor", "research", f"Source persistence warning: {e}")
                 _record_artifact(

@@ -31,6 +31,17 @@
 - Optional research: `TAVILY_API_KEY`, `JINA_API_KEY`, `SERPAPI_API_KEY`, and crawler envs (`GTM_CRAWLER_*`, `CRAWLEE_STORAGE_DIR`) — see `services/api/.env.example`
 - **Playwright browsers (API + worker):** after `pip install -r requirements.txt`, run `playwright install chromium --with-deps` locally or rely on `services/api/nixpacks.toml` on Railway so the Celery worker can run `PlaywrightCrawler`.
 
+### Local worker note
+
+On macOS local development, prefer the solo pool to avoid prefork/browser-driver instability:
+
+```bash
+cd services/api
+.venv/bin/celery -A app.celery_app worker -l info --pool=solo --concurrency=1
+```
+
+Use the default prefork worker on Linux/Railway unless you have a reason to serialize tasks.
+
 ## Supabase
 
 1. Create project → copy URL, anon key, service role, JWT secret.
@@ -53,4 +64,3 @@
 - Vercel: promote previous deployment or git revert.
 - Railway: redeploy previous image / commit.
 - DB: migrations are forward-only; add new migration to revert schema if needed.
-

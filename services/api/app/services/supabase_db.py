@@ -15,14 +15,19 @@ def get_supabase_admin() -> Client:
     return create_client(s.supabase_url, s.supabase_service_role_key)
 
 
-def insert_run(user_id: str, input_payload: dict[str, Any], master_plan: dict[str, Any] | None = None) -> str:
+def insert_run(
+    user_id: str,
+    input_payload: dict[str, Any],
+    master_plan: dict[str, Any] | None = None,
+    status: str = "awaiting_plan_approval",
+) -> str:
     sb = get_supabase_admin()
     row = (
         sb.table("gtm_runs")
         .insert(
             {
                 "user_id": user_id,
-                "status": "awaiting_plan_approval",
+                "status": status,
                 "run_input": input_payload,
                 "master_plan": master_plan or {},
             }
