@@ -15,6 +15,7 @@ from gtm_agents.autonomy import (
     run_reasoning_layer,
     run_writing_layer,
 )
+from gtm_agents.kb_writeback import write_gtm_run_to_company_kb
 from gtm_agents.memory import append_memory, read_memory, write_context_snapshot
 from gtm_agents.observability import span
 
@@ -315,6 +316,20 @@ Research confidence: **{report_confidence}**.
     else:
         raise RuntimeError("Main agent rejected writing layer after revision attempts.")
     append_memory(state.get("run_id"), "main_agent", "final_review", {"master_plan": master_plan, "writing_approval": result.get("writing_parent_approval")})
+    try:
+        cid = (inp.get("company_id") or "").strip() or None
+        write_gtm_run_to_company_kb(
+            company_id=cid,
+            run_id=str(state.get("run_id") or "") or None,
+            inp=inp,
+            research_items=list(state.get("research_items") or []),
+            segmentation=state.get("segmentation") or {},
+            positioning=state.get("positioning") or {},
+            channels=state.get("channels") or {},
+            validation=state.get("validation") or {},
+        )
+    except Exception:
+        pass
     plans = dict(state.get("agent_plans") or {})
     plans["writing_parent"] = result.get("writing_parent_plan")
     approvals = dict(state.get("approvals") or {})

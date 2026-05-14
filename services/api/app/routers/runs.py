@@ -28,6 +28,7 @@ class CreateRunBody(BaseModel):
     stage: str | None = None
     constraints: list[str] | None = None
     horizon_days: int | None = 90
+    company_id: str | None = None
 
 
 class RevisePlanBody(BaseModel):
@@ -37,7 +38,8 @@ class RevisePlanBody(BaseModel):
 @router.post("")
 def create_run(body: CreateRunBody, user_id: str = Depends(verify_supabase_jwt)) -> dict[str, Any]:
     payload = body.model_dump()
-    run_id = supabase_db.insert_run(user_id, payload, {}, status="planning")
+    company_id = payload.pop("company_id", None)
+    run_id = supabase_db.insert_run(user_id, payload, {}, status="planning", company_id=company_id)
     create_master_plan_task.delay(run_id, user_id)
     return {"id": run_id, "status": "planning", "master_plan": {}}
 

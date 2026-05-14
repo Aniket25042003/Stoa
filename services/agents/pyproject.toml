@@ -21,6 +21,8 @@ dependencies = [
   "playwright>=1.50",
   "mcp>=1.9.0",
   "redis>=5.2.0",
+  "supabase>=2.10.0",
+  "google-cloud-aiplatform>=1.70.0",
 ]
 
 [project.optional-dependencies]
@@ -28,3 +30,4 @@ dev = ["pytest>=8.0"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+include = ["gtm_agents*", "marketing_agents*", "shared_memory*"]

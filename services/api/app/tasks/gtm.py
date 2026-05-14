@@ -99,6 +99,9 @@ def run_pipeline_task(run_id: str, user_id: str) -> dict[str, Any]:
     try:
         run_row = supabase_db.get_run(run_id)
         inp = (run_row or {}).get("run_input") or {}
+        cid = (run_row or {}).get("company_id")
+        if cid:
+            inp = {**inp, "company_id": str(cid)}
         approved_plan = (run_row or {}).get("master_plan") or {}
         inp = {**inp, "approved_master_plan": approved_plan}
         persisted_source_keys: set[str] = set()

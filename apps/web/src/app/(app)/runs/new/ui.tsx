@@ -1,13 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 
 const field = "mt-2 block input-field px-3 py-3 text-sm";
 const label = "eyebrow text-[11px]";
 
-export function NewRunForm({ accessToken }: { accessToken: string }) {
+export function NewRunForm({ accessToken, defaultCompanyId }: { accessToken: string; defaultCompanyId?: string }) {
   const router = useRouter();
   const [desc, setDesc] = useState("");
   const [name, setName] = useState("");
@@ -19,8 +19,28 @@ export function NewRunForm({ accessToken }: { accessToken: string }) {
   const [stage, setStage] = useState("");
   const [constraints, setConstraints] = useState("");
   const [horizonDays, setHorizonDays] = useState(90);
+  const [companyId, setCompanyId] = useState<string>(defaultCompanyId || "");
+  const [companies, setCompanies] = useState<{ id: string; name: string }[]>([]);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const res = await apiFetch("/v1/companies", { accessToken });
+        if (res.ok) {
+          const body = await res.json();
+          setCompanies(body.companies ?? []);
+        }
+      } catch {
+        setCompanies([]);
+      }
+    })();
+  }, [accessToken]);
+
+  useEffect(() => {
+    if (defaultCompanyId) setCompanyId(defaultCompanyId);
+  }, [defaultCompanyId]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -47,6 +67,7 @@ export function NewRunForm({ accessToken }: { accessToken: string }) {
             .map((c) => c.trim())
             .filter(Boolean),
           horizon_days: horizonDays,
+          company_id: companyId || undefined,
         }),
       });
       if (!res.ok) {
@@ -65,6 +86,20 @@ export function NewRunForm({ accessToken }: { accessToken: string }) {
   return (
     <form onSubmit={onSubmit} className="space-y-6">
       <div className="grid gap-6 md:grid-cols-2">
+        <div className="md:col-span-2">
+          <label htmlFor="company" className={label}>Link to workspace (optional — enables shared KB with Marketing)</label>
+          <select
+            id="company"
+            className={field}
+            value={companyId}
+            onChange={(e) => setCompanyId(e.target.value)}
+          >
+            <option value="">No workspace</option>
+            {companies.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+        </div>
         <div>
           <label htmlFor="name" className={label}>Product name (optional)</label>
           <input id="name" className={field} value={name} onChange={(e) => setName(e.target.value)} />

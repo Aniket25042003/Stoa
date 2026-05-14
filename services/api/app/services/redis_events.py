@@ -41,6 +41,34 @@ async def publish_event(run_id: str, payload: dict[str, Any]) -> str:
         await r.aclose()
 
 
+def mkt_stream_key(chat_id: str) -> str:
+    return f"mkt:chat:{chat_id}:events"
+
+
+async def read_marketing_events_since(
+    chat_id: str, last_id: str | None, block_ms: int = 15000
+) -> AsyncIterator[tuple[str, dict[str, Any]]]:
+    r = await get_redis()
+    try:
+        cur = last_id if last_id is not None else "0-0"
+        while True:
+            resp = await r.xread({mkt_stream_key(chat_id): cur}, count=50, block=block_ms)
+            if not resp:
+                yield ("heartbeat", {"message": "keepalive"})
+                continue
+            for _name, messages in resp:
+                for msg_id, fields in messages:
+                    cur = msg_id
+                    raw = fields.get("data") or "{}"
+                    try:
+                        data = json.loads(raw)
+                    except json.JSONDecodeError:
+                        data = {"message": raw}
+                    yield (str(msg_id), data)
+    finally:
+        await r.aclose()
+
+
 async def read_events_since(
     run_id: str, last_id: str | None, block_ms: int = 15000
 ) -> AsyncIterator[tuple[str, dict[str, Any]]]:

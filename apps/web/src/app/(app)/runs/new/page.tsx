@@ -3,7 +3,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { NewRunForm } from "./ui";
 
-export default async function NewRunPage() {
+export default async function NewRunPage({ searchParams }: { searchParams: Promise<{ company_id?: string }> }) {
+  const sp = await searchParams;
   const supabase = await createClient();
   const {
     data: { session },
@@ -22,7 +23,7 @@ export default async function NewRunPage() {
         </p>
       </div>
       <div className="rounded-3xl p-6 card-glass md:p-8">
-        <NewRunForm accessToken={session.access_token} />
+        <NewRunForm accessToken={session.access_token} defaultCompanyId={sp.company_id} />
       </div>
     </div>
   );

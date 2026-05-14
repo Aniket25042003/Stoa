@@ -10,12 +10,13 @@ from app.routers import runs as runs_router
 def test_create_run_enqueues_master_plan_without_blocking(monkeypatch) -> None:
     calls: dict[str, object] = {}
 
-    def _insert_run(user_id, payload, master_plan=None, status="awaiting_plan_approval"):
+    def _insert_run(user_id, payload, master_plan=None, status="awaiting_plan_approval", company_id=None):
         calls["insert"] = {
             "user_id": user_id,
             "payload": payload,
             "master_plan": master_plan,
             "status": status,
+            "company_id": company_id,
         }
         return "00000000-0000-0000-0000-000000000123"
 
