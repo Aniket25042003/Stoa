@@ -19,6 +19,36 @@ from gtm_agents.observability import (
 )
 
 
+@celery_app.task(name="gtm.create_master_plan")
+def create_master_plan_task(
+    run_id: str,
+    user_id: str,
+    user_feedback: str | None = None,
+    prior_plan: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    from gtm_agents.autonomy import create_master_plan_for_user
+
+    _emit(run_id, "main_agent", "planning", "Drafting the master plan for user approval")
+    supabase_db.update_run_status(run_id, "planning")
+    try:
+        run_row = supabase_db.get_run(run_id)
+        if not run_row or run_row.get("user_id") != user_id:
+            raise RuntimeError("Run not found for master-plan generation")
+        plan = create_master_plan_for_user(
+            run_row.get("run_input") or {},
+            user_feedback=user_feedback,
+            prior_plan=prior_plan or run_row.get("master_plan") or {},
+            run_id=run_id,
+        )
+        supabase_db.update_master_plan(run_id, plan, feedback=user_feedback)
+        _emit(run_id, "main_agent", "planning", "Master plan ready for approval", {"step_count": len(plan.get("steps") or [])})
+        return {"ok": True, "run_id": run_id}
+    except Exception as e:
+        supabase_db.update_run_status(run_id, "failed", error=str(e))
+        _emit(run_id, "main_agent", "planning", f"Failed: {e}", {"error": str(e)})
+        raise
+
+
 def _emit(run_id: str, agent: str, phase: str, message: str, detail: dict[str, Any] | None = None) -> None:
     payload_detail = dict(detail or {})
     corr = get_current_trace_correlation()

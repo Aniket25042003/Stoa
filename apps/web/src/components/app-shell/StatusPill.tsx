@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/cn";
 
-const pulseStatuses = new Set(["running", "awaiting_plan_approval", "queued"]);
+const pulseStatuses = new Set(["planning", "running", "awaiting_plan_approval", "queued"]);
 
 export function StatusPill({ status }: { status: string }) {
   const pulse = pulseStatuses.has(status);

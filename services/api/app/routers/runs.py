@@ -12,8 +12,7 @@ from pydantic import BaseModel, Field
 from app.deps.auth import verify_supabase_jwt
 from app.services import supabase_db
 from app.services.redis_events import read_events_since
-from app.tasks.gtm import run_pipeline_task
-from gtm_agents.autonomy import create_master_plan_for_user
+from app.tasks.gtm import create_master_plan_task, run_pipeline_task
 
 router = APIRouter(prefix="/v1/runs", tags=["runs"])
 
@@ -38,9 +37,9 @@ class RevisePlanBody(BaseModel):
 @router.post("")
 def create_run(body: CreateRunBody, user_id: str = Depends(verify_supabase_jwt)) -> dict[str, Any]:
     payload = body.model_dump()
-    master_plan = create_master_plan_for_user(payload)
-    run_id = supabase_db.insert_run(user_id, payload, master_plan)
-    return {"id": run_id, "status": "awaiting_plan_approval", "master_plan": master_plan}
+    run_id = supabase_db.insert_run(user_id, payload, {}, status="planning")
+    create_master_plan_task.delay(run_id, user_id)
+    return {"id": run_id, "status": "planning", "master_plan": {}}
 
 
 @router.get("")
@@ -64,9 +63,10 @@ def revise_plan(run_id: str, body: RevisePlanBody, user_id: str = Depends(verify
         raise HTTPException(404, "Run not found")
     if row.get("status") != "awaiting_plan_approval":
         raise HTTPException(409, "Plan can only be revised before approval")
-    plan = create_master_plan_for_user(row.get("run_input") or {}, user_feedback=body.feedback, prior_plan=row.get("master_plan") or {}, run_id=run_id)
-    supabase_db.update_master_plan(run_id, plan, feedback=body.feedback)
-    return {"status": "awaiting_plan_approval", "master_plan": plan}
+    prior_plan = row.get("master_plan") or {}
+    supabase_db.update_run_status(run_id, "planning")
+    create_master_plan_task.delay(run_id, user_id, body.feedback, prior_plan)
+    return {"status": "planning", "master_plan": prior_plan}
 
 
 @router.post("/{run_id}/plan/approve")
@@ -74,6 +74,8 @@ def approve_plan(run_id: str, user_id: str = Depends(verify_supabase_jwt)) -> di
     row = supabase_db.get_run(run_id)
     if not row or row.get("user_id") != user_id:
         raise HTTPException(404, "Run not found")
+    if row.get("status") == "planning":
+        raise HTTPException(409, "Plan is still being generated")
     if row.get("status") != "awaiting_plan_approval":
         raise HTTPException(409, "Plan has already been approved or run has started")
     supabase_db.approve_master_plan(run_id)
