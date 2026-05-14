@@ -6,10 +6,10 @@ The current implementation correctly replaced the previous stdio MCP dependency 
 
 Test run used:
 
-- User: `test@gmail.com`
-- Run ID: `a8f1a1ad-61b2-43de-b9ae-b05d43dffdc7`
-- API: `http://localhost:8000`
-- Web: `http://localhost:3000`
+- User: diagnostic test account
+- Run ID: diagnostic run
+- API: local FastAPI service
+- Web: local Next.js app
 - Environment: external research enabled, Vertex primary, `gemini-2.5-pro`, Tavily/Jina/SerpAPI configured
 
 ## Current Architecture Observed

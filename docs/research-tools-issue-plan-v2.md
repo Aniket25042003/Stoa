@@ -55,7 +55,7 @@
 
 ### Live Workflow Test
 
-Run ID: `616fb446-5141-4a0b-b4e9-0a7854df2e76`
+Run ID: diagnostic run A
 
 Observed:
 
@@ -76,7 +76,7 @@ The run did not complete within the verification window and was manually marked 
 
 Second run after adding research gates:
 
-- Run ID: `ba360f51-b3dd-47ba-bb8c-c6a3c954eda1`
+- Run ID: diagnostic run B
 - `POST /v1/runs` returned in `0.78s`.
 - Master plan generation completed in about `26s`.
 - Research collected and persisted `15` sources.
