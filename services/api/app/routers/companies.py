@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from app.deps.auth import verify_supabase_jwt
@@ -41,7 +41,7 @@ def list_knowledge(
     user_id: str = Depends(verify_supabase_jwt),
     kind: str | None = None,
     q: str | None = None,
-    limit: int = 50,
+    limit: int = Query(50, ge=1, le=200),
 ) -> dict[str, Any]:
     row = supabase_db.get_company(company_id)
     if not row or row.get("user_id") != user_id:

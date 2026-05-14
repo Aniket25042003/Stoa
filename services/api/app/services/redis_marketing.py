@@ -27,3 +27,25 @@ def publish_marketing_event_sync(chat_id: str, payload: dict[str, Any]) -> None:
         r.expire(key, TTL)
     finally:
         r.close()
+
+
+def marketing_turn_lock_key(chat_id: str, message_id: str) -> str:
+    return f"mkt:chat:{chat_id}:turn:{message_id}"
+
+
+def try_acquire_marketing_turn_lock(chat_id: str, message_id: str, *, ttl_sec: int = 3600) -> bool:
+    """Return True if this worker owns the turn (SET NX). False if another worker already runs it."""
+    r = _client()
+    try:
+        return bool(r.set(marketing_turn_lock_key(chat_id, message_id), "1", nx=True, ex=ttl_sec))
+    finally:
+        r.close()
+
+
+def release_marketing_turn_lock(chat_id: str, message_id: str) -> None:
+    """Call on failure so Celery retry can re-run the turn."""
+    r = _client()
+    try:
+        r.delete(marketing_turn_lock_key(chat_id, message_id))
+    finally:
+        r.close()

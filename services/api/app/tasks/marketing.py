@@ -5,7 +5,11 @@ from typing import Any
 
 from app.celery_app import celery_app
 from app.services import supabase_db
-from app.services.redis_marketing import publish_marketing_event_sync
+from app.services.redis_marketing import (
+    publish_marketing_event_sync,
+    release_marketing_turn_lock,
+    try_acquire_marketing_turn_lock,
+)
 
 from gtm_agents.observability import (
     flush_traces,
@@ -34,15 +38,22 @@ def run_chat_turn_task(chat_id: str, user_id: str, message_id: str) -> dict[str,
     if os.getenv("LANGCHAIN_TRACING_V2") == "true" and os.getenv("LANGCHAIN_API_KEY"):
         os.environ.setdefault("LANGCHAIN_TRACING_V2", "true")
 
-    from marketing_agents.graph import run_marketing_turn
+    from marketing_agents.graph import build_marketing_turn_graph
     from marketing_agents.state import MarketingTurnState
 
     chat = supabase_db.get_marketing_chat(chat_id)
     if not chat or chat.get("user_id") != user_id:
         raise RuntimeError("Chat not found")
+    if not try_acquire_marketing_turn_lock(chat_id, message_id):
+        _emit(chat_id, "celery", "system", "Turn already running or completed; skipping duplicate task", {"message_id": message_id})
+        return {"ok": True, "chat_id": chat_id, "skipped": True}
     company_id = str(chat.get("company_id") or "")
     msgs = supabase_db.list_marketing_messages(chat_id, limit=100)
     user_msg = next((m for m in reversed(msgs) if str(m.get("id")) == message_id), None)
+    if not user_msg or str(user_msg.get("role")) != "user":
+        release_marketing_turn_lock(chat_id, message_id)
+        _emit(chat_id, "celery", "error", "User message not found for this turn", {"message_id": message_id})
+        return {"ok": False, "chat_id": chat_id, "error": "message_not_found"}
     user_text = str((user_msg or {}).get("content") or "")
 
     _emit(chat_id, "celery", "start", "Marketing agents starting", {"message_id": message_id})
@@ -104,11 +115,12 @@ def run_chat_turn_task(chat_id: str, user_id: str, message_id: str) -> dict[str,
         _emit(chat_id, "main_marketing_agent", "done", "Pipeline completed", {})
         return {"ok": True, "chat_id": chat_id}
     except Exception as e:
+        release_marketing_turn_lock(chat_id, message_id)
         _emit(chat_id, "celery", "error", f"Failed: {e}", {"error": str(e)})
         supabase_db.insert_marketing_message(
             chat_id,
             "assistant",
-            f"Sorry, something went wrong: {e}",
+            "Sorry, something went wrong while generating a response. Please try again.",
             agent="system",
             parts={"error": str(e)},
         )

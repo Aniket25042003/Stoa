@@ -38,8 +38,17 @@ def node_load_context(state: MarketingTurnState) -> dict[str, Any]:
     cid = state.get("company_id") or ""
     um = state.get("user_message") or ""
     _progress(state, "main_marketing_agent", "context", "Loading company knowledge base")
-    rows = kb_search(cid, um, k=10) if cid else []
-    facts = kb_facts(cid, limit=20) if cid else []
+    rows: list[dict[str, Any]] = []
+    facts: list[dict[str, Any]] = []
+    if cid:
+        try:
+            rows = kb_search(cid, um, k=10)
+        except Exception:
+            rows = []
+        try:
+            facts = kb_facts(cid, limit=20)
+        except Exception:
+            facts = []
     merged = rows + [f for f in facts if f.get("id") not in {r.get("id") for r in rows}]
     kb_ctx = kb_format_for_prompt(merged[:25], max_chars=14000)
     return {"kb_context": kb_ctx}

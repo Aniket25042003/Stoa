@@ -36,6 +36,12 @@ export function MarketingChat({
     void refresh();
   }, [refresh]);
 
+  useEffect(() => {
+    return () => {
+      acRef.current?.abort();
+    };
+  }, []);
+
   async function send() {
     const text = input.trim();
     if (!text || busy) return;

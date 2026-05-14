@@ -4,14 +4,29 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 import uuid
 from typing import Any
 
 logger = logging.getLogger(__name__)
 
+_UUID_RE = re.compile(
+    r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+    re.IGNORECASE,
+)
+
 
 def _bucket() -> str:
     return (os.getenv("MKT_STORAGE_BUCKET") or "marketing-assets").strip()
+
+
+def _safe_uuid_segment(value: str, *, label: str) -> str:
+    """Only allow canonical UUID strings in storage paths (avoid path traversal)."""
+    s = (value or "").strip()
+    if _UUID_RE.match(s):
+        return s
+    logger.warning("vertex_media: invalid %s for storage path, using placeholder", label)
+    return "00000000-0000-0000-0000-000000000000"
 
 
 def generate_image(
@@ -23,6 +38,8 @@ def generate_image(
 ) -> dict[str, Any]:
     """Generate image via Vertex Imagen; upload bytes to Supabase Storage if configured."""
     out: dict[str, Any] = {"ok": False, "storage_path": None, "mime_type": "image/png", "metadata": {}}
+    safe_company = _safe_uuid_segment(company_id, label="company_id")
+    safe_chat = _safe_uuid_segment(chat_id, label="chat_id")
     model = (os.getenv("MKT_IMAGEN_MODEL") or "imagen-3.0-generate-002").strip()
     project = (os.getenv("GTM_VERTEX_PROJECT") or os.getenv("GOOGLE_CLOUD_PROJECT") or "").strip()
     location = (os.getenv("GTM_VERTEX_LOCATION") or "us-central1").strip()
@@ -59,31 +76,37 @@ def generate_image(
             out["error"] = "empty_bytes"
             return out
 
-        path = f"{company_id}/images/{chat_id}/{uuid.uuid4().hex}.png"
+        path = f"{safe_company}/images/{safe_chat}/{uuid.uuid4().hex}.png"
         url = (os.getenv("SUPABASE_URL") or "").strip()
         key = (os.getenv("SUPABASE_SERVICE_ROLE_KEY") or "").strip()
-        if url and key:
-            try:
-                import httpx
+        if not url or not key:
+            out["error"] = "supabase_not_configured"
+            out["metadata"]["note"] = "Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY to upload generated images."
+            return out
 
-                up = f"{url.rstrip('/')}/storage/v1/object/{_bucket()}/{path}"
-                r = httpx.post(
-                    up,
-                    headers={"Authorization": f"Bearer {key}", "Content-Type": "image/png", "x-upsert": "true"},
-                    content=raw if isinstance(raw, bytes) else bytes(raw),
-                    timeout=120.0,
-                )
-                if r.status_code not in (200, 201):
-                    logger.warning("Storage upload failed: %s %s", r.status_code, r.text[:200])
-                    out["error"] = f"upload_{r.status_code}"
-                    return out
-            except Exception as exc:
-                logger.warning("Storage upload exception: %s", exc)
-                out["error"] = str(exc)
+        try:
+            import httpx
+
+            # Path segments are UUID-only after sanitization; safe for URL path.
+            up = f"{url.rstrip('/')}/storage/v1/object/{_bucket()}/{path}"
+            r = httpx.post(
+                up,
+                headers={
+                    "Authorization": f"Bearer {key}",
+                    "apikey": key,
+                    "Content-Type": "image/png",
+                    "x-upsert": "true",
+                },
+                content=raw if isinstance(raw, bytes) else bytes(raw),
+                timeout=120.0,
+            )
+            if r.status_code not in (200, 201):
+                logger.warning("Storage upload failed: %s %s", r.status_code, r.text[:200])
+                out["error"] = f"upload_{r.status_code}"
                 return out
-        else:
-            out["metadata"]["inline_note"] = "supabase_not_configured_bytes_omitted"
-            out["ok"] = True
+        except Exception as exc:
+            logger.warning("Storage upload exception: %s", exc)
+            out["error"] = str(exc)
             return out
 
         out["ok"] = True
@@ -104,6 +127,8 @@ def generate_video(
     duration_s: int = 6,
 ) -> dict[str, Any]:
     """Start or stub Veo generation. Full async poll should be handled by Celery; this returns op metadata."""
+    safe_company = _safe_uuid_segment(company_id, label="company_id")
+    safe_chat = _safe_uuid_segment(chat_id, label="chat_id")
     model = (os.getenv("MKT_VEO_MODEL") or "veo-2.0-generate-001").strip()
     project = (os.getenv("GTM_VERTEX_PROJECT") or os.getenv("GOOGLE_CLOUD_PROJECT") or "").strip()
     location = (os.getenv("GTM_VERTEX_LOCATION") or "us-central1").strip()
@@ -121,14 +146,13 @@ def generate_video(
         from google.cloud import aiplatform
 
         aiplatform.init(project=project, location=location)
-        # Veo API surface evolves; provide a deterministic placeholder so workers don't crash.
         out["ok"] = True
         out["metadata"]["status"] = "queued_stub"
         out["metadata"]["note"] = (
             "Wire your Veo long-running op here (MKT_VEO_MODEL). "
             "Bucket: " + _bucket()
         )
-        out["storage_path"] = f"{company_id}/videos/{chat_id}/{uuid.uuid4().hex}.mp4.pending"
+        out["storage_path"] = f"{safe_company}/videos/{safe_chat}/{uuid.uuid4().hex}.mp4.pending"
         return out
     except Exception as exc:
         logger.warning("generate_video failed: %s", exc)

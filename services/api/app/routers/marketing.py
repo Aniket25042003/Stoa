@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 from typing import Any, AsyncGenerator
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -13,6 +14,8 @@ from app.services import supabase_db
 from app.services.supabase_db import get_supabase_admin
 from app.services.redis_events import read_marketing_events_since
 from app.tasks.marketing import run_chat_turn_task
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["marketing"])
 
@@ -77,22 +80,24 @@ async def _sse_gen(chat_id: str, user_id: str) -> AsyncGenerator[bytes, None]:
         yield f"event: error\ndata: {json.dumps({'message': 'not found'})}\n\n".encode()
         return
 
-    last_id: str | None = "$"
     try:
-        async for msg_id, data in read_marketing_events_since(chat_id, last_id):
+        async for msg_id, data in read_marketing_events_since(chat_id, "$"):
             if msg_id == "heartbeat":
                 yield b": heartbeat\n\n"
                 continue
-            last_id = msg_id
-            yield f"event: progress\ndata: {json.dumps(data)}\n\n".encode()
+            try:
+                payload = json.dumps(data, default=str, ensure_ascii=False)
+            except (TypeError, ValueError):
+                payload = json.dumps({"message": "event", "detail": "non-serializable payload omitted"}, default=str)
+            yield f"event: progress\ndata: {payload}\n\n".encode()
             if data.get("message") == "Pipeline completed":
                 return
             if data.get("phase") == "error" and data.get("detail", {}).get("error"):
                 return
     except asyncio.CancelledError:
         raise
-    except Exception as e:
-        yield f"event: error\ndata: {json.dumps({'message': str(e)})}\n\n".encode()
+    except Exception:
+        yield f"event: error\ndata: {json.dumps({'message': 'stream interrupted'})}\n\n".encode()
 
 
 @router.get("/v1/chats/{chat_id}/events")
@@ -118,11 +123,12 @@ def artifact_signed_url(artifact_id: str, user_id: str = Depends(verify_supabase
     sb = get_supabase_admin()
     try:
         signed = sb.storage.from_(bucket).create_signed_url(str(art["storage_path"]), 3600)
-        url = signed.get("signedURL") or signed.get("signedUrl")
+        url = signed.get("signedURL") or signed.get("signedUrl") or signed.get("signed_url")
         if not url:
             raise HTTPException(503, "Could not sign URL")
         return {"url": url, "mime_type": art.get("mime_type"), "title": art.get("title")}
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(503, str(e)) from e
+    except Exception as exc:
+        logger.warning("artifact_signed_url failed: %s", exc)
+        raise HTTPException(503, "Could not create download link") from exc
