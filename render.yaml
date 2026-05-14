@@ -8,8 +8,10 @@ services:
     rootDir: services/api
     autoDeploy: true
     healthCheckPath: /health
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    # Playwright is required for Crawlee in the worker; runs in same process as API on free tier.
+    buildCommand: pip install -r requirements.txt && playwright install chromium
+    # API + Celery on one free Web instance (Render Background Workers are paid).
+    startCommand: bash scripts/render_start.sh
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
@@ -74,71 +76,6 @@ services:
         value: imagen-3.0-generate-002
       - key: MKT_VEO_MODEL
         value: veo-2.0-generate-001
-
-  - type: worker
-    name: gtm-agent-worker
-    runtime: python
-    plan: starter
-    region: oregon
-    branch: main
-    rootDir: services/api
-    autoDeploy: true
-    buildCommand: pip install -r requirements.txt && playwright install chromium
-    startCommand: celery -A app.celery_app worker -l info --concurrency=2
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.9
-      - fromService:
-          type: keyvalue
-          name: gtm-agent-redis
-          property: connectionString
-        key: REDIS_URL
-      - fromService:
-          type: keyvalue
-          name: gtm-agent-redis
-          property: connectionString
-        key: CELERY_BROKER_URL
-      - fromService:
-          type: keyvalue
-          name: gtm-agent-redis
-          property: connectionString
-        key: CELERY_RESULT_BACKEND
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_SERVICE_ROLE_KEY
-        sync: false
-      - key: SUPABASE_JWT_SECRET
-        sync: false
-      - key: GTM_LLM_PROVIDER
-        value: vertex
-      - key: GTM_LLM_AUTO_FAILOVER
-        value: "true"
-      - key: GTM_VERTEX_PROJECT
-        sync: false
-      - key: GTM_VERTEX_LOCATION
-        value: us-central1
-      - key: GTM_VERTEX_MODEL
-        value: gemini-2.5-pro
-      - key: GTM_VERTEX_MODEL_FAST
-        value: gemini-2.5-flash
-      - key: GTM_VERTEX_MODEL_PRO
-        value: gemini-2.5-pro
-      - key: GOOGLE_APPLICATION_CREDENTIALS
-        value: /etc/secrets/gcp-sa.json
-      - key: OPENAI_API_KEY
-        sync: false
-      - key: TAVILY_API_KEY
-        sync: false
-      - key: JINA_API_KEY
-        sync: false
-      - key: SERPAPI_API_KEY
-        sync: false
-      - key: LANGSMITH_TRACING
-        value: "false"
-      - key: LANGSMITH_PROJECT
-        value: gtm-agent
-      - key: GTM_DISABLE_EXTERNAL_RESEARCH
-        value: "false"
       - key: GTM_CRAWLER_USER_AGENT
         value: "gtm-agent-crawler/0.1"
       - key: GTM_CRAWLER_MAX_PAGES
@@ -149,13 +86,5 @@ services:
         value: "2"
       - key: CRAWLEE_STORAGE_DIR
         value: /tmp/crawlee
-      - key: MKT_STORAGE_BUCKET
-        value: marketing-assets
-      - key: MKT_EMBED_MODEL
-        value: text-embedding-004
-      - key: MKT_IMAGEN_MODEL
-        value: imagen-3.0-generate-002
-      - key: MKT_VEO_MODEL
-        value: veo-2.0-generate-001
 
 databases: []

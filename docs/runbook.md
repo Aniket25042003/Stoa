@@ -42,6 +42,10 @@ cd services/api
 
 Use the default prefork worker on Linux/Railway unless you have a reason to serialize tasks.
 
+### Render (free Web + Redis; no paid Background Worker)
+
+Render’s separate **Background Worker** service is paid. On the **free Web** instance, run Celery next to uvicorn with `services/api/scripts/render_start.sh` (solo pool, one task at a time). See `render.yaml` for build (`playwright install chromium`) and `startCommand`. Expect tighter RAM and CPU than split API/worker services.
+
 ## Supabase
 
 1. Create project → copy URL, anon key, service role, JWT secret.
