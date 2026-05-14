@@ -27,6 +27,9 @@ export function AppHeader({ email }: { email: string }) {
             {email}
           </span>
           <ThemeToggle />
+          <Link href="/marketing" className="btn-secondary px-4 py-2 text-sm">
+            Marketing
+          </Link>
           <Link href="/runs/new" className="btn-primary px-4 py-2 text-sm">
             New run
           </Link>
