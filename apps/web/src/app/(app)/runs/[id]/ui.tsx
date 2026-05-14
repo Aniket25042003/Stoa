@@ -122,7 +122,7 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
           (data) => {
             setEvents((prev) => [...prev, data as EventRow]);
             if (data.message === "Master plan ready for approval") {
-              setStatus("awaiting_plan_approval");
+              setStatus((prev) => (prev === "planning" ? "awaiting_plan_approval" : prev));
               void refreshSnapshot(false);
             }
             if (data.message === "Pipeline completed") {
