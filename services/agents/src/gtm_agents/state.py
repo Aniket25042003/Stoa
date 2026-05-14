@@ -23,6 +23,7 @@ class GTMState(TypedDict, total=False):
     user_id: str
     input: dict[str, Any]
     progress_callback: Any
+    research_items_callback: Any
     master_plan: dict[str, Any]
     agent_plans: dict[str, Any]
     approvals: dict[str, Any]

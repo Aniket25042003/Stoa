@@ -90,7 +90,14 @@ def _node_research_impl(state: GTMState) -> dict[str, Any]:
             "Research layer is choosing sources and delegating research agents",
             {"attempt": attempt + 1},
         )
-        result = autonomous_research(state.get("input") or {}, state.get("run_id"), "main_agent", instructions)
+        result = autonomous_research(
+            state.get("input") or {},
+            state.get("run_id"),
+            "main_agent",
+            instructions,
+            progress_callback=state.get("progress_callback"),
+            research_items_callback=state.get("research_items_callback"),
+        )
         if result.get("research_parent_approval", {}).get("approved"):
             complete_step(master_plan, 1, f"Research parent completed its plan on attempt {attempt + 1}.")
             complete_step(master_plan, 2, "Main agent approved research layer.")

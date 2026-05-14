@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import os
+import re
+import time
 from typing import Any
 
 from gtm_agents.llm import invoke_json, load_config
@@ -11,7 +13,9 @@ from gtm_agents.state import ResearchItem
 from gtm_agents.tools.research import merge_research
 
 
-def _llm_json(system: str, payload: dict[str, Any], max_chars: int = 16000) -> dict[str, Any] | None:
+def _llm_json(system: str, payload: dict[str, Any], max_chars: int = 16000, task_tier: str = "standard") -> dict[str, Any] | None:
+    if os.getenv("GTM_DISABLE_LLM") == "true":
+        return None
     cfg = load_config()
     payload_keys = list(payload.keys()) if isinstance(payload, dict) else []
     with span(
@@ -21,13 +25,16 @@ def _llm_json(system: str, payload: dict[str, Any], max_chars: int = 16000) -> d
             "primary_provider": cfg.primary,
             "auto_failover": cfg.auto_failover,
             "vertex_model": cfg.vertex_model,
+            "vertex_model_fast": cfg.vertex_model_fast,
+            "vertex_model_pro": cfg.vertex_model_pro,
             "openai_model": cfg.openai_model,
+            "task_tier": task_tier,
             "system_preview": (system[:400] + "…") if len(system) > 400 else system,
             "payload_keys": payload_keys,
             "max_chars": max_chars,
         },
     ):
-        parsed, provider_used = invoke_json(system, payload, max_chars=max_chars, config=cfg)
+        parsed, provider_used = invoke_json(system, payload, max_chars=max_chars, config=cfg, task_tier=task_tier)  # type: ignore[arg-type]
         if provider_used and provider_used != cfg.primary:
             # Surface failover events into the trace so operators see when Vertex went down.
             with span(
@@ -52,6 +59,16 @@ def _product_context(user_input: dict[str, Any]) -> str:
         ("Constraints", user_input.get("constraints")),
     ]
     return "\n".join(f"{label}: {value}" for label, value in fields if value)
+
+
+def _env_int(name: str, default: int) -> int:
+    raw = (os.getenv(name) or "").strip()
+    if not raw:
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        return default
 
 
 def _normalize_steps(plan: dict[str, Any], fallback_steps: list[str]) -> dict[str, Any]:
@@ -95,7 +112,7 @@ Your parent agent is {parent_agent or "none"}.
 Create a concrete step-by-step plan before doing work.
 Each step should be independently checkable. Include completion criteria and likely risks.
 Return JSON with: objective, assumptions, steps, approval_criteria, stop_conditions, continue_conditions."""
-    planned = _llm_json(prompt, {"objective": objective, "context": context, "shared_memory": read_memory(run_id, 30)})
+    planned = _llm_json(prompt, {"objective": objective, "context": context, "shared_memory": read_memory(run_id, 30)}, task_tier="cheap")
     if not planned:
         planned = {
             "objective": objective,
@@ -202,6 +219,7 @@ Return JSON with: missing, improved_instructions, must_do_next, approval_criteri
     instructions = _llm_json(
         prompt,
         {"failed_output": failed_output, "approval": approval, "context": context, "shared_memory": read_memory(run_id, 80)},
+        task_tier="cheap",
     )
     if not instructions:
         issues = approval.get("issues") or ["Reviewer requested another iteration."]
@@ -229,7 +247,7 @@ def _review_agent_work_impl(agent_name: str, objective: str, output: dict[str, A
     prompt = f"""You are the reviewer for {agent_name}.
 Decide whether the agent should stop or continue. If it should continue, identify exactly what must be fixed.
 Return JSON: approved (boolean), decision ("approve"|"revise"|"blocked"), issues (array), rationale."""
-    reviewed = _llm_json(prompt, {"objective": objective, "output": output, "context": context, "shared_memory": read_memory(run_id, 40)})
+    reviewed = _llm_json(prompt, {"objective": objective, "output": output, "context": context, "shared_memory": read_memory(run_id, 40)}, task_tier="cheap")
     if not reviewed:
         issues = []
         if output.get("critical_error"):
@@ -277,6 +295,7 @@ Return JSON: approved (boolean), decision ("approve"|"revise"|"blocked"), issues
             "context": context,
             "shared_memory": read_memory(run_id, 60),
         },
+        task_tier="cheap",
     )
     if not reviewed:
         warnings = child_output.get("warnings") or []
@@ -315,6 +334,7 @@ def run_planned_agent(
     work_fn,
     run_id: str | None = None,
     max_iterations: int = 2,
+    revision_fn=None,
 ) -> dict[str, Any]:
     with span(
         "run_planned_agent",
@@ -343,6 +363,10 @@ def run_planned_agent(
                     plan["status"] = "completed"
                     break
                 issues = approval.get("issues") or self_review.get("issues") or ["Parent requested revision."]
+                if revision_fn is not None:
+                    revision = revision_fn(context, output, self_review, approval, iteration)
+                    if revision:
+                        append_memory(run_id, agent_name, "tool_call_revised", revision)
                 request_fix(plan, "; ".join(str(issue) for issue in issues))
                 append_memory(run_id, agent_name, "revision_requested", {"iteration": iteration + 1, "issues": issues})
         else:
@@ -381,6 +405,157 @@ def _fallback_research_calls(user_input: dict[str, Any], tools: list[dict[str, A
             }
         )
     return calls
+
+
+def _broaden_query(query: str, user_input: dict[str, Any]) -> str:
+    cleaned = re.sub(r'["()]', " ", query)
+    cleaned = re.sub(r"\bsite:\S+", " ", cleaned)
+    cleaned = re.sub(r"\b(OR|AND)\b", " ", cleaned, flags=re.IGNORECASE)
+    cleaned = " ".join(cleaned.split())
+    fallback_bits = [
+        user_input.get("product_name"),
+        user_input.get("target_customers"),
+        "GTM pain points competitors pricing customer acquisition",
+    ]
+    fallback = " ".join(str(bit) for bit in fallback_bits if bit)
+    if len(cleaned.split()) < 4:
+        return fallback[:500]
+    return f"{cleaned} {fallback}"[:500]
+
+
+def _split_competitor_calls(call: dict[str, Any], user_input: dict[str, Any]) -> list[dict[str, Any]]:
+    args = dict(call.get("arguments") or {})
+    raw_competitors = user_input.get("known_competitors") or []
+    competitors = [str(c).strip() for c in raw_competitors if str(c).strip()]
+    if len(competitors) < 2:
+        query = str(args.get("query") or "")
+        competitors = [part.strip(" .") for part in re.split(r"\s+(?:and|vs|versus)\s+|,", query) if "." in part or part.strip().istitle()]
+    if len(competitors) < 2:
+        return []
+    product_context = str(args.get("product_context") or _product_context(user_input))
+    max_results = int(args.get("max_results") or 5)
+    return [
+        {
+            **call,
+            "tool_name": "competitor_research",
+            "arguments": {
+                "query": f"{competitor} GTM strategy pricing positioning customer acquisition channels",
+                "product_context": product_context,
+                "max_results": max(3, min(max_results, 6)),
+            },
+            "reason": f"Adaptive retry: split combined competitor research into a focused search for {competitor}.",
+        }
+        for competitor in competitors[:6]
+    ]
+
+
+def revise_research_calls_for_retry(
+    selected_calls: list[dict[str, Any]],
+    user_input: dict[str, Any],
+    output: dict[str, Any],
+    self_review: dict[str, Any],
+    approval: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Produce executable revised tool calls after a research retry rejection."""
+    issues_text = " ".join(str(i) for i in (approval.get("issues") or []) + (self_review.get("issues") or [])).lower()
+    result_items = output.get("items") or []
+    result_warnings = output.get("warnings") or []
+    zero_results = not result_items or "zero result" in issues_text or "no results" in issues_text
+    needs_split = any(token in issues_text for token in ("combined", "separate", "split", "multiple", "missing", "no information"))
+    if not zero_results and not result_warnings and not needs_split:
+        return selected_calls
+
+    revised: list[dict[str, Any]] = []
+    for call in selected_calls:
+        tool_name = str(call.get("tool_name") or "")
+        args = dict(call.get("arguments") or {})
+        query = str(args.get("query") or "")
+        if tool_name == "competitor_research" and (
+            "combined" in issues_text
+            or "separate" in issues_text
+            or "split" in issues_text
+            or "multiple" in issues_text
+            or "missing" in issues_text
+            or "no information" in issues_text
+            or len(user_input.get("known_competitors") or []) > 1
+        ):
+            split_calls = _split_competitor_calls(call, user_input)
+            if split_calls:
+                revised.extend(split_calls)
+                continue
+
+        if zero_results and tool_name == "crawl_search_results":
+            revised.append(
+                {
+                    **call,
+                    "tool_name": "web_research",
+                    "arguments": {
+                        "query": _broaden_query(query, user_input),
+                        "product_context": args.get("product_context") or _product_context(user_input),
+                        "max_results": max(5, int(args.get("max_results") or 5)),
+                    },
+                    "reason": "Adaptive retry: broad web search after crawl/search returned no usable evidence.",
+                }
+            )
+            continue
+
+        if zero_results and "query" in args:
+            new_args = {**args, "query": _broaden_query(query, user_input), "max_results": max(5, int(args.get("max_results") or 5))}
+            revised.append({**call, "arguments": new_args, "reason": "Adaptive retry: broadened query after no usable evidence."})
+            continue
+
+        revised.append(call)
+
+    return revised or selected_calls
+
+
+def validate_research_calls(calls: list[dict[str, Any]], user_input: dict[str, Any]) -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
+    validated: list[dict[str, Any]] = []
+    notes: list[dict[str, str]] = []
+    for call in calls:
+        if not isinstance(call, dict):
+            continue
+        tool_name = str(call.get("tool_name") or "")
+        args = dict(call.get("arguments") or {})
+
+        if tool_name == "competitor_research" and len(user_input.get("known_competitors") or []) > 1:
+            split_calls = _split_competitor_calls(call, user_input)
+            if split_calls:
+                validated.extend(split_calls)
+                notes.append({"tool_name": tool_name, "reason": "Split multi-competitor research into focused calls."})
+                continue
+
+        if tool_name == "crawl_search_results":
+            query = str(args.get("query") or "")
+            exact_phrases = query.count('"') // 2
+            site_filters = len(re.findall(r"\bsite:\S+", query))
+            boolean_ops = len(re.findall(r"\b(?:OR|AND)\b", query, flags=re.IGNORECASE))
+            if exact_phrases >= 2 or site_filters >= 2 or (site_filters >= 1 and boolean_ops >= 1):
+                validated.append(
+                    {
+                        **call,
+                        "tool_name": "web_research",
+                        "arguments": {
+                            "query": _broaden_query(query, user_input),
+                            "product_context": args.get("product_context") or _product_context(user_input),
+                            "max_results": max(5, int(args.get("max_results") or 5)),
+                        },
+                        "reason": "Planner guardrail: broad web search before narrow forum crawl.",
+                    }
+                )
+                notes.append({"tool_name": tool_name, "reason": "Rewrote narrow crawl_search_results query to web_research."})
+                continue
+
+            args["max_results"] = max(1, min(int(args.get("max_results") or 3), 3))
+            args["max_pages_per_result"] = max(1, min(int(args.get("max_pages_per_result") or 1), 1))
+            args["max_depth"] = max(0, min(int(args.get("max_depth") or 1), 1))
+
+        if tool_name == "crawl_web":
+            args["max_pages"] = max(1, min(int(args.get("max_pages") or 8), 8))
+            args["max_depth"] = max(0, min(int(args.get("max_depth") or 1), 1))
+
+        validated.append({**call, "arguments": args})
+    return validated, notes
 
 
 def plan_research_calls(user_input: dict[str, Any], tools: list[dict[str, Any]]) -> dict[str, Any]:
@@ -422,8 +597,16 @@ Create focused, source-specific queries. Return:
 }
 Include only arguments relevant to each tool (e.g. crawl_web requires start_urls; crawl_search_results requires query).
 """
-    planned = _llm_json(prompt, {"user_input": user_input, "available_tools": tools, "shared_memory": read_memory(str(user_input.get("run_id") or ""), 50)})
+    planned = _llm_json(
+        prompt,
+        {"user_input": user_input, "available_tools": tools, "shared_memory": read_memory(str(user_input.get("run_id") or ""), 50)},
+        task_tier="standard",
+    )
     if planned and isinstance(planned.get("calls"), list):
+        calls, notes = validate_research_calls(planned.get("calls") or [], user_input)
+        planned["calls"] = calls
+        if notes:
+            planned.setdefault("planner_guardrails", []).extend(notes)
         planned["autonomy_mode"] = "llm"
         return planned
     return {
@@ -439,13 +622,15 @@ def autonomous_research(
     run_id: str | None = None,
     parent_agent: str = "main_agent",
     additional_instructions: dict[str, Any] | None = None,
+    progress_callback=None,
+    research_items_callback=None,
 ) -> dict[str, Any]:
     with span(
         "autonomous_research",
         "chain",
         {"run_id": run_id, "parent_agent": parent_agent, "has_revision_instructions": bool(additional_instructions)},
     ):
-        return _autonomous_research_impl(user_input, run_id, parent_agent, additional_instructions)
+        return _autonomous_research_impl(user_input, run_id, parent_agent, additional_instructions, progress_callback, research_items_callback)
 
 
 def _autonomous_research_impl(
@@ -453,7 +638,14 @@ def _autonomous_research_impl(
     run_id: str | None = None,
     parent_agent: str = "main_agent",
     additional_instructions: dict[str, Any] | None = None,
+    progress_callback=None,
+    research_items_callback=None,
 ) -> dict[str, Any]:
+    started_at = time.monotonic()
+    max_seconds = _env_int("GTM_RESEARCH_MAX_SECONDS", 240)
+    max_tool_calls = _env_int("GTM_RESEARCH_MAX_TOOL_CALLS", 8)
+    min_sources_for_approval = _env_int("GTM_RESEARCH_MIN_SOURCES_FOR_APPROVAL", 12)
+    tool_call_count = 0
     if os.getenv("GTM_DISABLE_EXTERNAL_RESEARCH") == "true":
         disabled_plan = {
             "autonomy_mode": "disabled",
@@ -557,22 +749,98 @@ def _autonomous_research_impl(
             {"tool_name": "all", "reason": "Planner selected no research calls for this product/input."}
         )
     for call in calls:
+        if tool_call_count >= max_tool_calls or (time.monotonic() - started_at) >= max_seconds:
+            research_plan.setdefault("skipped_tools", []).append(
+                {
+                    "tool_name": str(call.get("tool_name") or "research_tool"),
+                    "reason": "Skipped because the research budget was exhausted.",
+                }
+            )
+            continue
         tool_name = str(call.get("tool_name") or "research_tool")
         subagent_name = f"{tool_name}_subagent"
 
-        def _call_tool(_plan: dict[str, Any], _context: dict[str, Any], _iteration: int, selected_call: dict[str, Any] = call) -> dict[str, Any]:
-            result = call_research_tools([selected_call])[0]
+        def _call_tool(_plan: dict[str, Any], _context: dict[str, Any], _iteration: int) -> dict[str, Any]:
+            nonlocal tool_call_count
+            selected_calls = list(_context.get("selected_calls") or [_context.get("selected_call")])
+            selected_calls = [c for c in selected_calls if isinstance(c, dict)]
+            remaining = max(0, max_tool_calls - tool_call_count)
+            if remaining <= 0:
+                return {
+                    "result": {"items": [], "warnings": ["Research tool budget exhausted before this call."], "tool_name": "budget"},
+                    "items": [],
+                    "warnings": ["Research tool budget exhausted before this call."],
+                    "reusable_context": {"result_count": 0, "budget_exhausted": True},
+                }
+            selected_calls = selected_calls[:remaining]
+            tool_call_count += len(selected_calls)
+            if callable(progress_callback):
+                for selected_call in selected_calls:
+                    try:
+                        progress_callback(
+                            str(selected_call.get("tool_name") or "research_tool"),
+                            "research",
+                            "Research tool call started",
+                            {"iteration": _iteration + 1, "arguments": selected_call.get("arguments") or {}, "reason": selected_call.get("reason")},
+                        )
+                    except Exception:
+                        pass
+            results = call_research_tools(selected_calls)
+            merged_items: list[ResearchItem] = []
+            merged_warnings: list[str] = []
+            for result in results:
+                merged_items.extend(result.get("items") or [])
+                merged_warnings.extend(result.get("warnings") or [])
+                if callable(progress_callback):
+                    try:
+                        progress_callback(
+                            str(result.get("tool_name") or "research_tool"),
+                            "research",
+                            "Research tool call finished",
+                            {
+                                "iteration": _iteration + 1,
+                                "source_count": len(result.get("items") or []),
+                                "warnings": result.get("warnings") or [],
+                                "arguments": result.get("arguments") or {},
+                            },
+                        )
+                    except Exception:
+                        pass
+                if callable(research_items_callback) and result.get("items"):
+                    try:
+                        research_items_callback(list(result.get("items") or []), result)
+                    except Exception:
+                        pass
+            result = {
+                "source_type": "other",
+                "items": merged_items,
+                "warnings": merged_warnings,
+                "tool_name": "+".join(str(r.get("tool_name") or "research_tool") for r in results),
+                "arguments": [r.get("arguments") or {} for r in results],
+                "reason": "; ".join(str(r.get("reason") or "") for r in results if r.get("reason")),
+                "tool_results": results,
+            }
             return {
                 "result": result,
                 "items": result.get("items") or [],
                 "warnings": result.get("warnings") or [],
                 "reusable_context": {
-                    "tool_name": selected_call.get("tool_name"),
-                    "query": (selected_call.get("arguments") or {}).get("query"),
+                    "tool_name": result.get("tool_name"),
+                    "query": result.get("arguments"),
                     "result_count": len(result.get("items") or []),
-                    "approach": selected_call.get("reason"),
+                    "approach": result.get("reason"),
                 },
             }
+
+        def _revise_tool_call(_context: dict[str, Any], output: dict[str, Any], self_review: dict[str, Any], approval: dict[str, Any], _iteration: int) -> dict[str, Any] | None:
+            selected_calls = list(_context.get("selected_calls") or [_context.get("selected_call")])
+            selected_calls = [c for c in selected_calls if isinstance(c, dict)]
+            revised_calls = revise_research_calls_for_retry(selected_calls, user_input, output, self_review, approval)
+            if revised_calls == selected_calls:
+                return None
+            _context["selected_calls"] = revised_calls
+            _context["selected_call"] = revised_calls[0] if revised_calls else None
+            return {"previous_calls": selected_calls, "revised_calls": revised_calls, "iteration": _iteration + 1}
 
         subagent = run_planned_agent(
             subagent_name,
@@ -580,6 +848,7 @@ def _autonomous_research_impl(
             f"Use research tool {tool_name} only if useful, collect evidence, and request parent approval before stopping.",
             {
                 "selected_call": call,
+                "selected_calls": [call],
                 "user_input": user_input,
                 "sibling_memory": read_memory(run_id, 75),
             },
@@ -592,6 +861,7 @@ def _autonomous_research_impl(
             _call_tool,
             run_id,
             max_iterations=2,
+            revision_fn=_revise_tool_call,
         )
         tool_results.append(
             {
@@ -615,9 +885,27 @@ def _autonomous_research_impl(
         "warnings": warnings,
         "tool_results": tool_results,
         "research_bundle": merge_research(items),
+        "budget": {
+            "elapsed_seconds": round(time.monotonic() - started_at, 2),
+            "tool_call_count": tool_call_count,
+            "max_seconds": max_seconds,
+            "max_tool_calls": max_tool_calls,
+            "min_sources_for_approval": min_sources_for_approval,
+        },
     }
     complete_step(research_parent_plan, 3, "Subagent results reviewed and merged.")
-    parent_review = parent_approve(parent_agent, "research_parent_agent", research_parent_plan, research_output, {"user_input": user_input}, run_id)
+    fatal_warnings = [w for w in warnings if "registry unavailable" in str(w).lower()]
+    if len(items) >= min_sources_for_approval and not fatal_warnings:
+        parent_review = {
+            "approved": True,
+            "decision": "approved_with_warnings" if warnings else "approve",
+            "issues": [],
+            "feedback": "Deterministic research gate approved the layer because the source threshold was met.",
+            "reusable_context": {"source_count": len(items), "warnings": warnings[:10], "budget": research_output["budget"]},
+        }
+        append_memory(run_id, parent_agent, "parent_approval", {"child_agent": "research_parent_agent", "approval": parent_review, "deterministic_gate": True})
+    else:
+        parent_review = parent_approve(parent_agent, "research_parent_agent", research_parent_plan, research_output, {"user_input": user_input}, run_id)
     if parent_review.get("approved"):
         complete_step(research_parent_plan, 4, "Main agent approved research layer.")
         research_parent_plan["status"] = "completed"
@@ -640,7 +928,7 @@ You have full freedom to choose the structure and fields that are most useful fo
 Do not force generic keys like value_props or messaging_angles unless they genuinely fit the evidence.
 Ground every important claim in the provided evidence. If evidence is thin, say so explicitly.
 Return a JSON object with your chosen structure."""
-    llm = _llm_json(prompt, {"user_input": user_input, "research": research, "prior": prior or {}})
+    llm = _llm_json(prompt, {"user_input": user_input, "research": research, "prior": prior or {}}, task_tier="standard")
     if llm:
         return llm
 
@@ -760,7 +1048,7 @@ def _synthesize_report_markdown_impl(user_input: dict[str, Any], research: dict[
 Write a professional GTM strategy document in Markdown. You may decide the section structure,
 but it must include citations/source references where available, assumptions, and concrete next actions.
 Do not use a generic template if the product calls for a different structure."""
-    llm = _llm_json(prompt, {"user_input": user_input, "research": research, "synthesis": synthesis}, max_chars=24000)
+    llm = _llm_json(prompt, {"user_input": user_input, "research": research, "synthesis": synthesis}, max_chars=24000, task_tier="premium")
     if not llm:
         return None
     markdown = llm.get("markdown") or llm.get("report") or llm.get("content")
