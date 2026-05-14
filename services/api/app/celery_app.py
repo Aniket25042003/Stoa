@@ -10,7 +10,7 @@ celery_app = Celery(
     "gtm_api",
     broker=settings.celery_broker_url,
     backend=settings.celery_result_backend,
-    include=["app.tasks.gtm"],
+    include=["app.tasks.gtm", "app.tasks.marketing"],
 )
 
 celery_app.conf.update(
