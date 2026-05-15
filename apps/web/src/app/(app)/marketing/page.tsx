@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { apiFetch } from "@/lib/api";
+import { CompaniesLoadError } from "../companies-load-error";
 import { MarketingWorkspace } from "./marketing-workspace";
 
 type Company = { id: string; name: string; description?: string | null };
@@ -13,15 +14,20 @@ export default async function MarketingPage() {
   if (!session) redirect("/login");
 
   let companies: Company[] = [];
+  let companiesRequestFailed = false;
   try {
     const res = await apiFetch("/v1/companies", { accessToken: session.access_token });
     if (res.ok) {
       const body = await res.json();
       companies = body.companies ?? [];
+    } else {
+      companiesRequestFailed = true;
     }
   } catch {
-    companies = [];
+    companiesRequestFailed = true;
   }
+
+  if (companiesRequestFailed) return <CompaniesLoadError retryHref="/marketing" />;
 
   if (companies.length === 0) redirect("/onboarding");
 

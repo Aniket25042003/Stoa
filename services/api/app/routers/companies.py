@@ -108,11 +108,11 @@ def update_company(company_id: str, body: UpdateCompanyBody, user_id: str = Depe
 @router.get("/{company_id}/summary")
 def company_summary(company_id: str, user_id: str = Depends(verify_supabase_jwt)) -> dict[str, Any]:
     company = _require_company(company_id, user_id)
-    runs = supabase_db.list_gtm_runs_for_company(company_id, limit=20)
-    chats = supabase_db.list_marketing_chats(company_id, limit=20)
-    knowledge = supabase_db.list_knowledge_for_company(company_id, limit=50)
+    runs = supabase_db.list_gtm_runs_for_company(company_id, limit=5)
+    chats = supabase_db.list_marketing_chats(company_id, limit=5)
+    knowledge = supabase_db.list_knowledge_for_company(company_id, limit=8)
     plan = supabase_db.get_active_gtm_plan(company_id)
-    artifacts = supabase_db.list_company_marketing_artifacts(company_id, limit=10)
+    artifacts = supabase_db.list_company_marketing_artifacts(company_id, limit=5)
     run_count = supabase_db.count_gtm_runs_for_company(company_id)
     chat_count = supabase_db.count_marketing_chats_for_company(company_id)
     knowledge_count = supabase_db.count_knowledge_for_company(company_id)
@@ -127,6 +127,10 @@ def company_summary(company_id: str, user_id: str = Depends(verify_supabase_jwt)
         "stage",
     ]
     completed = sum(1 for key in profile_fields if company.get(key))
+    marketing_baseline_kinds = supabase_db.count_knowledge_for_company_kinds(
+        company_id,
+        ["brand_decision", "channel", "positioning"],
+    )
     return {
         "company": company,
         "stats": {
@@ -139,13 +143,13 @@ def company_summary(company_id: str, user_id: str = Depends(verify_supabase_jwt)
         "readiness": {
             "has_company_profile": bool(company.get("onboarding_completed_at")),
             "has_gtm_plan": bool(plan),
-            "has_marketing_baseline": any(item.get("kind") in ("brand_decision", "channel", "positioning") for item in knowledge),
+            "has_marketing_baseline": marketing_baseline_kinds > 0,
         },
         "recent": {
-            "runs": runs[:5],
-            "chats": chats[:5],
-            "knowledge": knowledge[:8],
-            "artifacts": artifacts[:5],
+            "runs": runs,
+            "chats": chats,
+            "knowledge": knowledge,
+            "artifacts": artifacts,
         },
         "gtm_plan": plan,
     }
@@ -218,10 +222,8 @@ def get_gtm_plan(company_id: str, user_id: str = Depends(verify_supabase_jwt)) -
     _require_company(company_id, user_id)
     plan = supabase_db.get_active_gtm_plan(company_id)
     plan_id = str(plan["id"]) if plan else None
-    return {
-        "plan": plan,
-        "messages": supabase_db.list_gtm_plan_messages(company_id, plan_id=plan_id),
-    }
+    messages = supabase_db.list_gtm_plan_messages(company_id, plan_id=plan_id, limit=100) if plan_id else []
+    return {"plan": plan, "messages": messages}
 
 
 @router.post("/{company_id}/gtm-plan/upload")
@@ -265,18 +267,19 @@ def post_gtm_plan_message(company_id: str, body: GtmPlanMessageBody, user_id: st
     if not plan:
         raise HTTPException(409, "Create or upload a GTM plan first")
     plan_id = str(plan["id"])
-    supabase_db.insert_gtm_plan_message(company_id, "user", body.content, plan_id=plan_id)
-    messages = supabase_db.list_gtm_plan_messages(company_id, plan_id=plan_id)
+    plan_updated_at = plan.get("updated_at")
+    messages = supabase_db.list_gtm_plan_messages(company_id, plan_id=plan_id, limit=100)
     edited = edit_gtm_plan(company=company, plan=plan, messages=messages, user_message=body.content)
     updated_plan = supabase_db.update_company_gtm_plan(
         plan_id,
-        expected_updated_at=plan.get("updated_at"),
         content_markdown=edited["updated_markdown"],
         content_json=edited["updated_json"],
         title=edited.get("title"),
+        expected_updated_at=str(plan_updated_at) if plan_updated_at is not None else None,
     )
     if not updated_plan:
         raise HTTPException(409, "The GTM plan was updated in another session. Refresh and try again.")
+    supabase_db.insert_gtm_plan_message(company_id, "user", body.content, plan_id=plan_id)
     assistant_content = str(edited["assistant_reply"])
     assistant_id = supabase_db.insert_gtm_plan_message(
         company_id,

@@ -178,34 +178,34 @@ export function DashboardWorkspace({ accessToken, companies, email }: { accessTo
           <div>
             <h3 className="font-display text-xl font-bold text-on-surface">GTM</h3>
             <div className="mt-3 space-y-2 text-sm text-on-surface-variant">
-              {(summary?.recent.runs ?? []).slice(0, 4).map((run) => (
+              {(summary?.recent?.runs ?? []).slice(0, 4).map((run) => (
                 <Link key={run.id} href={`/runs/${run.id}`} className="block rounded-xl bg-surface-container-low/70 px-3 py-2 hover:text-primary">
                   {run.status}
                 </Link>
               ))}
-              {summary?.recent.runs.length ? null : <p>No GTM activity yet.</p>}
+              {(summary?.recent?.runs ?? []).length === 0 ? <p>No GTM activity yet.</p> : null}
             </div>
           </div>
           <div>
             <h3 className="font-display text-xl font-bold text-on-surface">Marketing</h3>
             <div className="mt-3 space-y-2 text-sm text-on-surface-variant">
-              {(summary?.recent.chats ?? []).slice(0, 4).map((chat) => (
+              {(summary?.recent?.chats ?? []).slice(0, 4).map((chat) => (
                 <p key={chat.id} className="rounded-xl bg-surface-container-low/70 px-3 py-2">
                   {chat.title || "Marketing chat"}
                 </p>
               ))}
-              {summary?.recent.chats.length ? null : <p>No marketing activity yet.</p>}
+              {(summary?.recent?.chats ?? []).length === 0 ? <p>No marketing activity yet.</p> : null}
             </div>
           </div>
           <div>
             <h3 className="font-display text-xl font-bold text-on-surface">Knowledge</h3>
             <div className="mt-3 space-y-2 text-sm text-on-surface-variant">
-              {(summary?.recent.knowledge ?? []).slice(0, 4).map((item) => (
+              {(summary?.recent?.knowledge ?? []).slice(0, 4).map((item) => (
                 <p key={item.id} className="rounded-xl bg-surface-container-low/70 px-3 py-2">
                   {item.title || item.kind}
                 </p>
               ))}
-              {summary?.recent.knowledge.length ? null : <p>No saved company notes yet.</p>}
+              {(summary?.recent?.knowledge ?? []).length === 0 ? <p>No saved company notes yet.</p> : null}
             </div>
           </div>
         </div>

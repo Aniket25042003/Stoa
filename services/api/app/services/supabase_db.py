@@ -349,18 +349,21 @@ def upsert_company_gtm_plan(
     source_run_id: str | None = None,
 ) -> dict[str, Any]:
     sb = get_supabase_admin()
-    res = sb.rpc(
-        "upsert_company_gtm_plan_atomic",
-        {
-            "p_company_id": company_id,
-            "p_source": source,
-            "p_title": title,
-            "p_content_markdown": content_markdown,
-            "p_content_json": content_json or {},
-            "p_source_run_id": source_run_id,
-        },
+    res = (
+        sb.rpc(
+            "upsert_company_gtm_plan_atomic",
+            {
+                "p_company_id": company_id,
+                "p_source": source,
+                "p_title": title,
+                "p_content_markdown": content_markdown,
+                "p_content_json": content_json or {},
+                "p_source_run_id": source_run_id,
+            },
+        )
+        .execute()
     )
-    data = res.execute().data
+    data = res.data
     if not data:
         raise RuntimeError("Failed to upsert GTM plan")
     if isinstance(data, list):
@@ -371,20 +374,20 @@ def upsert_company_gtm_plan(
 def update_company_gtm_plan(
     plan_id: str,
     *,
-    expected_updated_at: str | None = None,
     content_markdown: str,
     content_json: dict[str, Any] | None = None,
     title: str | None = None,
+    expected_updated_at: str | None = None,
 ) -> dict[str, Any] | None:
     sb = get_supabase_admin()
     body: dict[str, Any] = {
         "content_markdown": content_markdown,
-        "content_json": content_json or {},
+        "content_json": content_json if content_json is not None else {},
     }
     if title:
         body["title"] = title
     q = sb.table("company_gtm_plans").update(body).eq("id", plan_id)
-    if expected_updated_at:
+    if expected_updated_at is not None:
         q = q.eq("updated_at", expected_updated_at)
     res = q.execute()
     return res.data[0] if res.data else None
@@ -422,8 +425,10 @@ def list_gtm_plan_messages(company_id: str, *, plan_id: str | None = None, limit
     q = sb.table("gtm_plan_messages").select("*").eq("company_id", company_id)
     if plan_id:
         q = q.eq("plan_id", plan_id)
-    res = q.order("created_at", desc=False).limit(limit).execute()
-    return list(res.data or [])
+    res = q.order("created_at", desc=True).limit(limit).execute()
+    rows = list(res.data or [])
+    rows.reverse()
+    return rows
 
 
 def list_company_marketing_artifacts(company_id: str, limit: int = 20) -> list[dict[str, Any]]:
@@ -437,6 +442,47 @@ def list_company_marketing_artifacts(company_id: str, limit: int = 20) -> list[d
         .execute()
     )
     return list(res.data or [])
+
+
+def count_gtm_runs_for_company(company_id: str) -> int:
+    sb = get_supabase_admin()
+    res = sb.table("gtm_runs").select("id", count="exact", head=True).eq("company_id", company_id).execute()
+    return int(res.count or 0)
+
+
+def count_marketing_chats_for_company(company_id: str) -> int:
+    sb = get_supabase_admin()
+    res = sb.table("marketing_chats").select("id", count="exact", head=True).eq("company_id", company_id).execute()
+    return int(res.count or 0)
+
+
+def count_knowledge_for_company(company_id: str) -> int:
+    sb = get_supabase_admin()
+    res = sb.table("company_knowledge").select("id", count="exact", head=True).eq("company_id", company_id).execute()
+    return int(res.count or 0)
+
+
+def count_knowledge_for_company_kinds(company_id: str, kinds: list[str]) -> int:
+    sb = get_supabase_admin()
+    res = (
+        sb.table("company_knowledge")
+        .select("id", count="exact")
+        .eq("company_id", company_id)
+        .in_("kind", kinds)
+        .execute()
+    )
+    return int(res.count or 0)
+
+
+def count_company_marketing_artifacts(company_id: str) -> int:
+    sb = get_supabase_admin()
+    res = (
+        sb.table("marketing_artifacts")
+        .select("id, marketing_chats!inner(company_id)", count="exact", head=True)
+        .eq("marketing_chats.company_id", company_id)
+        .execute()
+    )
+    return int(res.count or 0)
 
 
 def insert_marketing_chat(user_id: str, company_id: str, title: str | None = None) -> str:
@@ -468,9 +514,6 @@ def list_marketing_chats(company_id: str, limit: int = 50) -> list[dict[str, Any
         .execute()
     )
     return list(res.data or [])
-
-
-def get_marketing_chat(chat_id: str) -> dict[str, Any] | None:
     sb = get_supabase_admin()
     r = sb.table("marketing_chats").select("*").eq("id", chat_id).limit(1).execute()
     return r.data[0] if r.data else None
@@ -619,32 +662,3 @@ def list_gtm_runs_for_company(company_id: str, limit: int = 50) -> list[dict[str
         .execute()
     )
     return list(res.data or [])
-
-
-def count_gtm_runs_for_company(company_id: str) -> int:
-    sb = get_supabase_admin()
-    res = sb.table("gtm_runs").select("id", count="exact", head=True).eq("company_id", company_id).execute()
-    return int(res.count or 0)
-
-
-def count_marketing_chats_for_company(company_id: str) -> int:
-    sb = get_supabase_admin()
-    res = sb.table("marketing_chats").select("id", count="exact", head=True).eq("company_id", company_id).execute()
-    return int(res.count or 0)
-
-
-def count_knowledge_for_company(company_id: str) -> int:
-    sb = get_supabase_admin()
-    res = sb.table("company_knowledge").select("id", count="exact", head=True).eq("company_id", company_id).execute()
-    return int(res.count or 0)
-
-
-def count_company_marketing_artifacts(company_id: str) -> int:
-    sb = get_supabase_admin()
-    res = (
-        sb.table("marketing_artifacts")
-        .select("id, marketing_chats!inner(company_id)", count="exact", head=True)
-        .eq("marketing_chats.company_id", company_id)
-        .execute()
-    )
-    return int(res.count or 0)

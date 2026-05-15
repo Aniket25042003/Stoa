@@ -24,7 +24,15 @@ type GtmMessage = {
   content: string;
 };
 
-export function GtmWorkspace({ accessToken, companies }: { accessToken: string; companies: Company[] }) {
+export function GtmWorkspace({
+  accessToken,
+  companies,
+  initialCompanyId,
+}: {
+  accessToken: string;
+  companies: Company[];
+  initialCompanyId?: string;
+}) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [plan, setPlan] = useState<GtmPlan | null>(null);
   const [messages, setMessages] = useState<GtmMessage[]>([]);
@@ -38,10 +46,11 @@ export function GtmWorkspace({ accessToken, companies }: { accessToken: string; 
 
   useEffect(() => {
     const stored = getStoredActiveCompanyId();
-    const next = companies.find((company) => company.id === stored)?.id ?? companies[0]?.id ?? null;
+    const fromUrl = initialCompanyId && companies.some((c) => c.id === initialCompanyId) ? initialCompanyId : null;
+    const next = fromUrl ?? companies.find((company) => company.id === stored)?.id ?? companies[0]?.id ?? null;
     setActiveId(next);
     if (next !== stored) setStoredActiveCompanyId(next);
-  }, [companies]);
+  }, [companies, initialCompanyId]);
 
   useEffect(() => {
     const onActiveCompany = (event: Event) => {
@@ -74,8 +83,9 @@ export function GtmWorkspace({ accessToken, companies }: { accessToken: string; 
   }
 
   useEffect(() => {
-    if (activeId) void loadPlan(activeId);
-  }, [activeId]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (!activeId) return;
+    void loadPlan(activeId);
+  }, [activeId, accessToken]);
 
   async function generatePlan() {
     if (!activeId) return;

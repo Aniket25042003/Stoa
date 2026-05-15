@@ -96,8 +96,9 @@ export function MarketingWorkspace({ accessToken, companies }: { accessToken: st
   }
 
   useEffect(() => {
-    if (activeId) void load(activeId);
-  }, [activeId]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (!activeId) return;
+    void load(activeId);
+  }, [activeId, accessToken]);
 
   async function saveBaseline(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
