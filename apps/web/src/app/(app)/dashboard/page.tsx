@@ -40,7 +40,7 @@ export default async function DashboardPage() {
       {runs.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-primary/28 bg-surface-container-low/75 px-6 py-16 text-center shadow-soft backdrop-blur-md">
           <p className="font-display text-2xl font-bold text-on-surface">No runs yet</p>
-          <p className="mt-3 text-sm text-on-surface-variant">Create a master plan when your API and Supabase session are configured.</p>
+          <p className="mt-3 text-sm text-on-surface-variant">Create a company workspace, then build your first GTM plan.</p>
           <Link href="/runs/new" className="btn-primary mt-7 px-5 py-3 text-sm">
             Create your first run
           </Link>

@@ -19,7 +19,7 @@ export default async function NewRunPage({ searchParams }: { searchParams: Promi
         </Link>
         <h1 className="mt-5 font-display text-4xl font-extrabold tracking-[-0.045em] md:text-5xl">New GTM run</h1>
         <p className="mt-4 max-w-2xl text-sm leading-7 text-white/68">
-          Describe your product. The multi-agent pipeline will draft a master plan for your approval, then research, reason, and write your GTM document.
+          Describe your product and goals. nexara will draft a GTM plan for your review and turn it into a document your team can use.
         </p>
       </div>
       <div className="rounded-3xl p-6 card-glass md:p-8">

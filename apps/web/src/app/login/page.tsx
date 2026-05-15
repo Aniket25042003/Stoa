@@ -63,15 +63,15 @@ function LoginForm() {
         <div className="flex-1 space-y-7 lg:max-w-lg">
           <Link href="/" className="inline-flex items-center gap-3">
             <span className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-violet-pulse shadow-glow" />
-            <span className="font-display text-xl font-extrabold tracking-[-0.03em] text-on-surface">GTM Agent</span>
+            <span className="font-display text-xl font-extrabold tracking-[-0.03em] text-on-surface">nexara</span>
           </Link>
           <div>
             <p className="eyebrow">Secure workspace</p>
             <h1 className="mt-4 font-display text-4xl font-extrabold leading-tight tracking-[-0.045em] text-on-surface md:text-6xl">
-              Sign in to launch your GTM pipeline.
+              Sign in to build your company workspace.
             </h1>
             <p className="mt-5 text-base leading-8 text-on-surface-variant">
-              One click with your Google account. No passwords, no magic-link delays, and no changes to your Supabase auth flow.
+              One click with your Google account. Keep GTM plans, marketing tasks, and company context together.
             </p>
           </div>
           <div className="hidden lg:block">
@@ -89,7 +89,7 @@ function LoginForm() {
             <div className="mb-8 rounded-2xl bg-slate-deep p-5 text-white shadow-card">
               <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-inverse-primary">Authentication</p>
               <h2 className="mt-2 font-display text-2xl font-bold tracking-[-0.03em]">Continue to dashboard</h2>
-              <p className="mt-2 text-sm leading-6 text-white/62">Uses Supabase Auth with the Google provider.</p>
+              <p className="mt-2 text-sm leading-6 text-white/62">Use your Google account to access your workspace.</p>
             </div>
             <motion.button
               type="button"

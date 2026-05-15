@@ -20,7 +20,7 @@ export function AppHeader({ email }: { email: string }) {
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 md:px-6">
         <Link href="/dashboard" className="inline-flex items-center gap-3">
           <span className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-violet-pulse shadow-glow" />
-          <span className="font-display text-lg font-extrabold tracking-[-0.03em] text-on-surface">GTM Agent</span>
+          <span className="font-display text-lg font-extrabold tracking-[-0.03em] text-on-surface">nexara</span>
         </Link>
         <div className="flex flex-wrap items-center gap-3 md:gap-4">
           <span className="hidden max-w-[200px] truncate rounded-full border border-outline-variant/60 bg-surface-container-low/80 px-3 py-2 text-sm text-on-surface-variant sm:inline md:max-w-xs" title={email}>

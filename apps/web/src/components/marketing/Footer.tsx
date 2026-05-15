@@ -14,7 +14,8 @@ const cols = [
     links: [
       { href: "/login", label: "Sign in" },
       { href: "/dashboard", label: "Dashboard" },
-      { href: "/runs/new", label: "New run" },
+      { href: "/gtm", label: "GTM" },
+      { href: "/marketing", label: "Marketing" },
     ],
   },
 ];
@@ -29,10 +30,10 @@ export function Footer() {
           <div className="md:col-span-2">
             <div className="inline-flex items-center gap-3">
               <span className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-violet-pulse shadow-glow" />
-              <p className="font-display text-xl font-extrabold tracking-[-0.03em] text-white">GTM Agent</p>
+              <p className="font-display text-xl font-extrabold tracking-[-0.03em] text-white">nexara</p>
             </div>
             <p className="mt-4 max-w-md text-sm leading-7 text-white/78">
-              Autonomous research, layered reasoning, and founder-ready GTM reports with transparent agent activity and review gates.
+              Company workspaces for go-to-market strategy, marketing planning, and campaign-ready creative.
             </p>
           </div>
           {cols.map((col) => (
@@ -51,7 +52,7 @@ export function Footer() {
           ))}
         </div>
         <p className="mt-12 border-t border-white/15 pt-8 font-mono text-xs text-white/45">
-          © {new Date().getFullYear()} GTM Agent. High-performance GTM workflows for focused teams.
+          © {new Date().getFullYear()} nexara. Strategy and marketing workflows for focused teams.
         </p>
       </div>
     </footer>

@@ -14,19 +14,19 @@ import { SectionHeader } from "@/components/marketing/SectionHeader";
 import { ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
 
 const marqueeItems = [
-  "Live pipeline visibility",
-  "Approvals before execution",
-  "Multi-layer research & reasoning",
-  "Founder-ready GTM narratives",
-  "PDF-ready outputs",
-  "Competitive & market context",
-  "Runs scoped to your workspace",
+  "Company-scoped workspaces",
+  "GTM plans you can edit",
+  "Marketing ideas and campaign assets",
+  "Brand voice that stays consistent",
+  "Strategy and creative in one place",
+  "Multiple companies, separate context",
+  "Launch-ready next steps",
 ];
 
 const metrics = [
-  { k: "200+", v: "Signals per run", d: "Web, social, and competitor context" },
-  { k: "3", v: "Review layers", d: "Research, reasoning, and writing gates" },
-  { k: "1", v: "Trace per pipeline", d: "End-to-end correlation for every run" },
+  { k: "2", v: "Focused workspaces", d: "GTM planning and marketing execution side by side" },
+  { k: "Many", v: "Company memories", d: "Each company keeps its own strategy, voice, and assets" },
+  { k: "1", v: "Command center", d: "Dashboard, GTM, and Marketing stay connected" },
 ];
 
 export default function LandingPage() {
@@ -39,25 +39,25 @@ export default function LandingPage() {
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-surface-container-low/70 px-3 py-2 shadow-soft backdrop-blur-md">
                 <Sparkles className="h-3.5 w-3.5 text-primary" />
-                <p className="eyebrow text-[11px]">High-performance GTM automation</p>
+                <p className="eyebrow text-[11px]">Strategy and marketing workspace</p>
               </div>
               <AnimatedHeadline
-                text="Your autonomous go-to-market command center."
+                text="One command center for GTM and marketing."
                 className="mt-7 max-w-5xl font-display text-5xl font-extrabold leading-[1.02] tracking-[-0.055em] text-on-surface md:text-7xl lg:text-8xl"
               />
               <p className="mt-7 max-w-2xl text-lg leading-8 text-on-surface-variant md:text-xl">
-                Multi-agent research, layered strategic reasoning, and polished GTM reports - with a user-approved master plan before any agent executes.
+                nexara helps you shape company strategy, build editable GTM plans, and turn marketing ideas into campaign-ready copy, scripts, and creative direction.
               </p>
               <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <Link href="/login" className="btn-primary px-6 py-3 text-center text-sm sm:inline-flex sm:items-center sm:justify-center">
                   Start free <ArrowRight className="ml-2 inline h-4 w-4" />
                 </Link>
                 <Link href="/how-it-works" className="btn-secondary px-6 py-3 text-center text-sm">
-                  See workflow
+                  See how it works
                 </Link>
               </div>
               <div className="mt-10 flex flex-wrap gap-x-4 gap-y-2 text-sm text-on-surface-variant">
-                {["Plan approval", "Live activity", "PDF-ready output"].map((item) => (
+                {["GTM planning", "Marketing execution", "Company memory"].map((item) => (
                   <span key={item} className="inline-flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary" />
                     {item}
@@ -76,9 +76,9 @@ export default function LandingPage() {
       <section className="container-page py-20 md:py-28">
         <RevealOnScroll>
           <SectionHeader
-            eyebrow="Three layers"
-            title="Radial orbital timeline"
-            lead="Master plan in the center - research, reasoning, and writing in orbit, with review gates between each layer."
+            eyebrow="Connected workspace"
+            title="Strategy and creative stay in sync."
+            lead="Start with company context, build a GTM plan, then keep marketing work aligned with the same positioning and brand voice."
           />
         </RevealOnScroll>
         <RevealOnScroll delay={0.05}>
@@ -99,8 +99,8 @@ export default function LandingPage() {
           <RevealOnScroll>
             <SectionHeader
               eyebrow="Output"
-              title="A GTM document your team can act on."
-              lead="Share strategy with investors, GTM hires, or your backlog without losing the source trail behind each recommendation."
+              title="Plans, briefs, copy, scripts, and assets your team can use."
+              lead="Keep strategy and marketing execution together so each campaign reflects the company you are building."
             />
           </RevealOnScroll>
           <RevealOnScroll delay={0.06}>
@@ -129,8 +129,8 @@ export default function LandingPage() {
           <div className="relative flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
             <div className="max-w-2xl">
               <p className="eyebrow text-inverse-primary">Ready</p>
-              <h2 className="mt-4 font-display text-4xl font-bold tracking-[-0.04em] md:text-5xl">Run your first GTM pipeline</h2>
-              <p className="mt-4 text-sm leading-7 text-white/68">Google sign-in. Approve the master plan. Watch the agents work.</p>
+              <h2 className="mt-4 font-display text-4xl font-bold tracking-[-0.04em] md:text-5xl">Build your first company workspace.</h2>
+              <p className="mt-4 text-sm leading-7 text-white/68">Sign in, add your company details, and start planning GTM and marketing from one place.</p>
             </div>
             <EmailCta />
           </div>

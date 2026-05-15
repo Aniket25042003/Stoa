@@ -13,8 +13,8 @@ const tiers = (yearly: boolean) => [
     name: "Starter",
     price: "$0",
     period: yearly ? "/ year" : "/ month",
-    description: "For solo founders validating positioning.",
-    features: ["1 run / month", "Master plan approval", "Markdown export", "Community support"],
+    description: "For solo founders organizing one company.",
+    features: ["1 company workspace", "GTM plan starter", "Marketing idea drafts", "Community support"],
     cta: "Start free",
     href: "/login",
     highlighted: false,
@@ -23,8 +23,8 @@ const tiers = (yearly: boolean) => [
     name: "Pro",
     price: yearly ? "$190" : "$19",
     period: yearly ? "/ year" : "/ month",
-    description: "For founders shipping weekly experiments.",
-    features: ["20 runs / month", "Live activity stream", "PDF export", "Pipeline trace IDs", "Email support"],
+    description: "For founders planning and shipping weekly campaigns.",
+    features: ["5 company workspaces", "Editable GTM plans", "Campaign copy and scripts", "Creative briefs", "Email support"],
     cta: "Get Pro",
     href: "/login",
     highlighted: true,
@@ -33,8 +33,8 @@ const tiers = (yearly: boolean) => [
     name: "Team",
     price: yearly ? "$490" : "$49",
     period: yearly ? "/ year" : "/ month",
-    description: "For small GTM pods sharing a workspace.",
-    features: ["Unlimited runs", "Shared dashboard", "Priority support", "Custom data retention (coming)"],
+    description: "For small teams managing several brands or products.",
+    features: ["Unlimited company workspaces", "Shared dashboard", "Priority support", "Team-ready exports"],
     cta: "Talk to us",
     href: "/faq",
     highlighted: false,
@@ -42,10 +42,10 @@ const tiers = (yearly: boolean) => [
 ];
 
 const rows = [
-  { label: "Master plan approval", starter: "yes", pro: "yes", team: "yes" },
-  { label: "Runs / month", starter: "1", pro: "20", team: "Unlimited" },
-  { label: "PDF export", starter: "no", pro: "yes", team: "yes" },
-  { label: "Trace IDs in activity", starter: "no", pro: "yes", team: "yes" },
+  { label: "Company workspaces", starter: "1", pro: "5", team: "Unlimited" },
+  { label: "GTM planning", starter: "yes", pro: "yes", team: "yes" },
+  { label: "Marketing briefs and scripts", starter: "Limited", pro: "yes", team: "yes" },
+  { label: "Team-ready exports", starter: "no", pro: "yes", team: "yes" },
 ];
 
 function CompareCell({ value }: { value: string }) {
@@ -85,8 +85,8 @@ export default function PricingPage() {
       <RevealOnScroll>
         <SectionHeader
           eyebrow="Pricing"
-          title="Simple tiers. Serious GTM depth."
-          lead="Pricing shown is illustrative - wire your billing when you are ready. The product paths stay the same."
+          title="Simple tiers for strategy and marketing teams."
+          lead="Pricing shown is illustrative. Start with one company workspace, then add more when your portfolio grows."
         />
       </RevealOnScroll>
 

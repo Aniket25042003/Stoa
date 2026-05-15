@@ -1,30 +1,29 @@
 export const ACTIVITY_MESSAGES = {
-  planning: ["Drafting the master plan", "Preparing approval criteria", "Checking the agent hierarchy"],
-  queued: ["Waiting for a worker to pick up the run", "Preparing the GTM pipeline", "Getting the agent team ready"],
+  planning: ["Drafting the strategy plan", "Organizing company context", "Preparing your review checklist"],
+  queued: ["Preparing the workspace", "Organizing GTM details", "Getting your plan ready"],
   research: [
-    "Running web research passes",
-    "Deep-crawling priority URLs with Playwright",
-    "Searching the web for problem and competitor signals",
-    "Looking for competitor positioning and pricing clues",
-    "Reviewing sources before the research parent asks for approval",
+    "Reviewing market and customer signals",
+    "Organizing competitor notes",
+    "Looking for positioning and pricing clues",
+    "Summarizing what matters for the plan",
   ],
   reasoning: [
     "Building ICP and persona hypotheses",
-    "Synthesizing pain points from the research bundle",
+    "Synthesizing customer pain points",
     "Drafting positioning and messaging angles",
     "Ranking launch channels and experiment ideas",
-    "Checking whether reasoning is strong enough for main-agent approval",
+    "Checking whether recommendations are actionable",
   ],
   writing: [
     "Drafting the GTM strategy document",
-    "Turning research and reasoning into a clear narrative",
+    "Turning notes into a clear narrative",
     "Adding citations and assumptions",
     "Reviewing the report for actionability",
-    "Preparing the final Markdown and PDF-ready output",
+    "Preparing the final plan output",
   ],
-  completed: ["Pipeline completed. The report is ready."],
-  failed: ["The run failed. Check the latest event for details."],
-  awaiting_plan_approval: ["Waiting for your approval before starting any agents."],
+  completed: ["The plan is ready."],
+  failed: ["The request failed. Check the latest update for details."],
+  awaiting_plan_approval: ["Waiting for your approval before continuing."],
 } as const;
 
 export type ActivityPhase = keyof typeof ACTIVITY_MESSAGES;
