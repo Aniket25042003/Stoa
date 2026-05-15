@@ -23,6 +23,7 @@ jobs:
         working-directory: .
         run: pnpm install --frozen-lockfile
       - name: Lint
+        working-directory: .
         run: pnpm lint:web
 
   api:
