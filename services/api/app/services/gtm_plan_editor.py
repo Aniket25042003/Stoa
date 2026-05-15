@@ -44,7 +44,8 @@ def edit_gtm_plan(
     if isinstance(result, dict):
         updated_markdown = str(result.get("updated_markdown") or current_markdown).strip()
         assistant_reply = str(result.get("assistant_reply") or "I updated the GTM plan.").strip()
-        updated_json = result.get("updated_json") if isinstance(result.get("updated_json"), dict) else {}
+        current_json = plan.get("content_json") if isinstance(plan.get("content_json"), dict) else {}
+        updated_json = result.get("updated_json") if isinstance(result.get("updated_json"), dict) else current_json
         title = str(result.get("title") or plan.get("title") or "GTM plan").strip()
         return {
             "assistant_reply": assistant_reply,

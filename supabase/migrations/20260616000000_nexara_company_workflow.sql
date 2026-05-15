@@ -32,19 +32,69 @@ create unique index if not exists idx_company_gtm_plans_one_active
   on public.company_gtm_plans (company_id)
   where is_active;
 
+create unique index if not exists idx_company_gtm_plans_id_company
+  on public.company_gtm_plans (id, company_id);
+
 drop trigger if exists trg_company_gtm_plans_updated on public.company_gtm_plans;
 create trigger trg_company_gtm_plans_updated
 before update on public.company_gtm_plans
 for each row execute function public.set_updated_at();
 
+create or replace function public.upsert_company_gtm_plan_atomic(
+  p_company_id uuid,
+  p_source text,
+  p_title text,
+  p_content_markdown text,
+  p_content_json jsonb default '{}',
+  p_source_run_id uuid default null
+)
+returns public.company_gtm_plans
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_plan public.company_gtm_plans;
+begin
+  update public.company_gtm_plans
+    set is_active = false
+    where company_id = p_company_id
+      and is_active = true;
+
+  insert into public.company_gtm_plans (
+    company_id,
+    source,
+    title,
+    content_markdown,
+    content_json,
+    source_run_id,
+    is_active
+  ) values (
+    p_company_id,
+    p_source,
+    p_title,
+    p_content_markdown,
+    coalesce(p_content_json, '{}'::jsonb),
+    p_source_run_id,
+    true
+  )
+  returning * into v_plan;
+
+  return v_plan;
+end;
+$$;
+
 create table if not exists public.gtm_plan_messages (
   id uuid primary key default gen_random_uuid(),
   company_id uuid not null references public.companies (id) on delete cascade,
-  plan_id uuid references public.company_gtm_plans (id) on delete set null,
+  plan_id uuid,
   role text not null check (role in ('user', 'assistant', 'system')),
   content text not null default '',
   parts jsonb not null default '{}',
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  constraint gtm_plan_messages_plan_company_fk
+    foreign key (plan_id, company_id)
+    references public.company_gtm_plans (id, company_id)
 );
 
 create index if not exists idx_gtm_plan_messages_company_created

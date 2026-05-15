@@ -32,6 +32,7 @@ export function GtmWorkspace({ accessToken, companies }: { accessToken: string; 
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const uploadRef = useRef<HTMLTextAreaElement | null>(null);
+  const loadRequestRef = useRef(0);
 
   const activeCompany = useMemo(() => companies.find((company) => company.id === activeId) ?? companies[0], [activeId, companies]);
 
@@ -52,18 +53,22 @@ export function GtmWorkspace({ accessToken, companies }: { accessToken: string; 
   }, []);
 
   async function loadPlan(companyId: string) {
+    const requestId = ++loadRequestRef.current;
     setLoading(true);
     setNotice(null);
     try {
       const res = await apiFetch(`/v1/companies/${companyId}/gtm-plan`, { accessToken });
       const body = res.ok ? await res.json() : { plan: null, messages: [] };
+      if (requestId !== loadRequestRef.current) return;
       setPlan(body.plan ?? null);
       setMessages(body.messages ?? []);
     } catch {
+      if (requestId !== loadRequestRef.current) return;
       setPlan(null);
       setMessages([]);
       setNotice("Could not load the GTM workspace.");
     } finally {
+      if (requestId !== loadRequestRef.current) return;
       setLoading(false);
     }
   }

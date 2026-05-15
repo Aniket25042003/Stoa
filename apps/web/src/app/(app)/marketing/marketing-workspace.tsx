@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { ACTIVE_COMPANY_EVENT, getStoredActiveCompanyId, setStoredActiveCompanyId } from "@/lib/active-company";
 import { MarketingChat } from "./[companyId]/chats/[chatId]/marketing-chat";
@@ -31,6 +31,7 @@ export function MarketingWorkspace({ accessToken, companies }: { accessToken: st
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const loadRequestRef = useRef(0);
 
   const activeCompany = useMemo(() => companies.find((company) => company.id === activeId) ?? companies[0], [activeId, companies]);
   const hasBaseline = Boolean(summary?.readiness?.has_marketing_baseline);
@@ -51,11 +52,12 @@ export function MarketingWorkspace({ accessToken, companies }: { accessToken: st
     return () => window.removeEventListener(ACTIVE_COMPANY_EVENT, onActiveCompany);
   }, []);
 
-  async function ensureChat(companyId: string) {
+  async function ensureChat(companyId: string, requestId: number) {
     const chatsRes = await apiFetch(`/v1/companies/${companyId}/chats`, { accessToken });
     const chatsBody = chatsRes.ok ? await chatsRes.json() : { chats: [] };
     const existing = chatsBody.chats?.[0]?.id;
     if (existing) {
+      if (requestId !== loadRequestRef.current) return existing;
       setChatId(existing);
       return existing;
     }
@@ -66,24 +68,29 @@ export function MarketingWorkspace({ accessToken, companies }: { accessToken: st
     });
     const createBody = await createRes.json();
     if (!createRes.ok) throw new Error(createBody.detail || "Could not create marketing chat");
+    if (requestId !== loadRequestRef.current) return createBody.id;
     setChatId(createBody.id);
     return createBody.id;
   }
 
   async function load(companyId: string) {
+    const requestId = ++loadRequestRef.current;
     setLoading(true);
     setMessage(null);
     setChatId(null);
     try {
       const summaryRes = await apiFetch(`/v1/companies/${companyId}/summary`, { accessToken });
       const summaryBody = summaryRes.ok ? await summaryRes.json() : null;
+      if (requestId !== loadRequestRef.current) return;
       setSummary(summaryBody);
       if (summaryBody?.readiness?.has_marketing_baseline) {
-        await ensureChat(companyId);
+        await ensureChat(companyId, requestId);
       }
     } catch (error) {
+      if (requestId !== loadRequestRef.current) return;
       setMessage(error instanceof Error ? error.message : "Could not load marketing workspace");
     } finally {
+      if (requestId !== loadRequestRef.current) return;
       setLoading(false);
     }
   }

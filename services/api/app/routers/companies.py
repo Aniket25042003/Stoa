@@ -59,7 +59,7 @@ class MarketingBaselineBody(BaseModel):
     brand_voice_notes: str | None = Field(None, max_length=32000)
     design_notes: str | None = Field(None, max_length=32000)
     campaign_goals: str | None = Field(None, max_length=32000)
-    channels: list[str] = Field(default_factory=list)
+    channels: list[str] | None = None
 
 
 def _require_company(company_id: str, user_id: str) -> dict[str, Any]:
@@ -113,6 +113,10 @@ def company_summary(company_id: str, user_id: str = Depends(verify_supabase_jwt)
     knowledge = supabase_db.list_knowledge_for_company(company_id, limit=50)
     plan = supabase_db.get_active_gtm_plan(company_id)
     artifacts = supabase_db.list_company_marketing_artifacts(company_id, limit=10)
+    run_count = supabase_db.count_gtm_runs_for_company(company_id)
+    chat_count = supabase_db.count_marketing_chats_for_company(company_id)
+    knowledge_count = supabase_db.count_knowledge_for_company(company_id)
+    artifact_count = supabase_db.count_company_marketing_artifacts(company_id)
     profile_fields = [
         "name",
         "description",
@@ -127,10 +131,10 @@ def company_summary(company_id: str, user_id: str = Depends(verify_supabase_jwt)
         "company": company,
         "stats": {
             "profile_completion": round(completed / len(profile_fields), 2),
-            "gtm_runs": len(runs),
-            "marketing_chats": len(chats),
-            "knowledge_items": len(knowledge),
-            "marketing_artifacts": len(artifacts),
+            "gtm_runs": run_count,
+            "marketing_chats": chat_count,
+            "knowledge_items": knowledge_count,
+            "marketing_artifacts": artifact_count,
         },
         "readiness": {
             "has_company_profile": bool(company.get("onboarding_completed_at")),
@@ -172,21 +176,27 @@ def list_company_gtm_runs(company_id: str, user_id: str = Depends(verify_supabas
 @router.post("/{company_id}/marketing-baseline")
 def save_marketing_baseline(company_id: str, body: MarketingBaselineBody, user_id: str = Depends(verify_supabase_jwt)) -> dict[str, Any]:
     company = _require_company(company_id, user_id)
-    brand_voice = {
-        **(company.get("brand_voice") or {}),
-        "notes": body.brand_voice_notes or (company.get("brand_voice") or {}).get("notes") or "",
-        "design_notes": body.design_notes or "",
-        "campaign_goals": body.campaign_goals or "",
-        "channels": body.channels,
-    }
+    payload = body.model_dump(exclude_unset=True)
+    brand_voice = {**(company.get("brand_voice") or {})}
+    if "brand_voice_notes" in payload:
+        brand_voice["notes"] = body.brand_voice_notes or ""
+    if "design_notes" in payload:
+        brand_voice["design_notes"] = body.design_notes or ""
+    if "campaign_goals" in payload:
+        brand_voice["campaign_goals"] = body.campaign_goals or ""
+    if "channels" in payload:
+        brand_voice["channels"] = body.channels or []
     updated = supabase_db.update_company_profile(company_id, brand_voice=brand_voice)
+    merged_channels = brand_voice.get("channels")
+    if not isinstance(merged_channels, list):
+        merged_channels = []
     content = "\n".join(
         part
         for part in [
-            f"Brand voice: {body.brand_voice_notes}" if body.brand_voice_notes else "",
-            f"Design notes: {body.design_notes}" if body.design_notes else "",
-            f"Campaign goals: {body.campaign_goals}" if body.campaign_goals else "",
-            f"Channels: {', '.join(body.channels)}" if body.channels else "",
+            f"Brand voice: {brand_voice.get('notes')}" if brand_voice.get("notes") else "",
+            f"Design notes: {brand_voice.get('design_notes')}" if brand_voice.get("design_notes") else "",
+            f"Campaign goals: {brand_voice.get('campaign_goals')}" if brand_voice.get("campaign_goals") else "",
+            f"Channels: {', '.join(merged_channels)}" if merged_channels else "",
         ]
         if part
     )
@@ -206,9 +216,11 @@ def save_marketing_baseline(company_id: str, body: MarketingBaselineBody, user_i
 @router.get("/{company_id}/gtm-plan")
 def get_gtm_plan(company_id: str, user_id: str = Depends(verify_supabase_jwt)) -> dict[str, Any]:
     _require_company(company_id, user_id)
+    plan = supabase_db.get_active_gtm_plan(company_id)
+    plan_id = str(plan["id"]) if plan else None
     return {
-        "plan": supabase_db.get_active_gtm_plan(company_id),
-        "messages": supabase_db.list_gtm_plan_messages(company_id),
+        "plan": plan,
+        "messages": supabase_db.list_gtm_plan_messages(company_id, plan_id=plan_id),
     }
 
 
@@ -254,14 +266,17 @@ def post_gtm_plan_message(company_id: str, body: GtmPlanMessageBody, user_id: st
         raise HTTPException(409, "Create or upload a GTM plan first")
     plan_id = str(plan["id"])
     supabase_db.insert_gtm_plan_message(company_id, "user", body.content, plan_id=plan_id)
-    messages = supabase_db.list_gtm_plan_messages(company_id)
+    messages = supabase_db.list_gtm_plan_messages(company_id, plan_id=plan_id)
     edited = edit_gtm_plan(company=company, plan=plan, messages=messages, user_message=body.content)
     updated_plan = supabase_db.update_company_gtm_plan(
         plan_id,
+        expected_updated_at=plan.get("updated_at"),
         content_markdown=edited["updated_markdown"],
         content_json=edited["updated_json"],
         title=edited.get("title"),
     )
+    if not updated_plan:
+        raise HTTPException(409, "The GTM plan was updated in another session. Refresh and try again.")
     assistant_content = str(edited["assistant_reply"])
     assistant_id = supabase_db.insert_gtm_plan_message(
         company_id,
