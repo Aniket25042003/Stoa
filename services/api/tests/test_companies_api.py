@@ -96,3 +96,37 @@ def test_gtm_plan_message_updates_active_plan(monkeypatch) -> None:
     assert res.status_code == 200
     assert res.json()["assistant"]["content"] == "Updated."
     assert calls["update"]["content_markdown"] == "# Updated plan"  # type: ignore[index]
+
+
+def test_marketing_baseline_updates_company_and_knowledge(monkeypatch) -> None:
+    calls: dict[str, object] = {}
+
+    monkeypatch.setattr(
+        companies_router.supabase_db,
+        "get_company",
+        lambda _cid: {"id": "company-1", "user_id": "user-123", "name": "Acme", "brand_voice": {}},
+    )
+
+    def _update_company(company_id, **profile):
+        calls["profile"] = {"company_id": company_id, **profile}
+        return {"id": company_id, **profile}
+
+    def _insert_knowledge(company_id, **kwargs):
+        calls["knowledge"] = {"company_id": company_id, **kwargs}
+        return "knowledge-1"
+
+    monkeypatch.setattr(companies_router.supabase_db, "update_company_profile", _update_company)
+    monkeypatch.setattr(companies_router.supabase_db, "insert_company_knowledge", _insert_knowledge)
+    app.dependency_overrides[verify_supabase_jwt] = lambda: "user-123"
+    try:
+        client = TestClient(app)
+        res = client.post(
+            "/v1/companies/company-1/marketing-baseline",
+            json={"brand_voice_notes": "Clear and direct", "channels": ["LinkedIn"]},
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert res.status_code == 200
+    assert calls["profile"]["brand_voice"]["notes"] == "Clear and direct"  # type: ignore[index]
+    assert calls["knowledge"]["kind"] == "brand_decision"  # type: ignore[index]

@@ -55,6 +55,13 @@ class GtmPlanMessageBody(BaseModel):
     content: str = Field(..., min_length=1, max_length=32000)
 
 
+class MarketingBaselineBody(BaseModel):
+    brand_voice_notes: str | None = Field(None, max_length=32000)
+    design_notes: str | None = Field(None, max_length=32000)
+    campaign_goals: str | None = Field(None, max_length=32000)
+    channels: list[str] = Field(default_factory=list)
+
+
 def _require_company(company_id: str, user_id: str) -> dict[str, Any]:
     row = supabase_db.get_company(company_id)
     if not row or row.get("user_id") != user_id:
@@ -160,6 +167,40 @@ def list_knowledge(
 def list_company_gtm_runs(company_id: str, user_id: str = Depends(verify_supabase_jwt)) -> dict[str, Any]:
     _require_company(company_id, user_id)
     return {"runs": supabase_db.list_gtm_runs_for_company(company_id)}
+
+
+@router.post("/{company_id}/marketing-baseline")
+def save_marketing_baseline(company_id: str, body: MarketingBaselineBody, user_id: str = Depends(verify_supabase_jwt)) -> dict[str, Any]:
+    company = _require_company(company_id, user_id)
+    brand_voice = {
+        **(company.get("brand_voice") or {}),
+        "notes": body.brand_voice_notes or (company.get("brand_voice") or {}).get("notes") or "",
+        "design_notes": body.design_notes or "",
+        "campaign_goals": body.campaign_goals or "",
+        "channels": body.channels,
+    }
+    updated = supabase_db.update_company_profile(company_id, brand_voice=brand_voice)
+    content = "\n".join(
+        part
+        for part in [
+            f"Brand voice: {body.brand_voice_notes}" if body.brand_voice_notes else "",
+            f"Design notes: {body.design_notes}" if body.design_notes else "",
+            f"Campaign goals: {body.campaign_goals}" if body.campaign_goals else "",
+            f"Channels: {', '.join(body.channels)}" if body.channels else "",
+        ]
+        if part
+    )
+    if not content:
+        content = f"Marketing foundation for {company.get('name')}: keep future campaign work aligned with the company profile."
+    kid = supabase_db.insert_company_knowledge(
+        company_id,
+        kind="brand_decision",
+        title="Marketing foundation",
+        content=content,
+        tags=["marketing", "baseline"],
+        source_system="marketing",
+    )
+    return {"company": updated, "knowledge_id": kid}
 
 
 @router.get("/{company_id}/gtm-plan")

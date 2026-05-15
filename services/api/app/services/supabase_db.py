@@ -296,6 +296,35 @@ def search_knowledge_text(company_id: str, query: str, kinds: list[str] | None =
         return []
 
 
+def insert_company_knowledge(
+    company_id: str,
+    *,
+    kind: str,
+    title: str,
+    content: str,
+    tags: list[str] | None = None,
+    source_system: str | None = None,
+) -> str:
+    sb = get_supabase_admin()
+    res = (
+        sb.table("company_knowledge")
+        .insert(
+            {
+                "company_id": company_id,
+                "kind": kind,
+                "title": title,
+                "content": content,
+                "tags": tags or [],
+                "source_system": source_system,
+            }
+        )
+        .execute()
+    )
+    if not res.data:
+        raise RuntimeError("Failed to insert company knowledge")
+    return str(res.data[0]["id"])
+
+
 def get_active_gtm_plan(company_id: str) -> dict[str, Any] | None:
     sb = get_supabase_admin()
     res = (
