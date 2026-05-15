@@ -1,0 +1,26 @@
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { CompanyOnboardingForm } from "./company-onboarding-form";
+
+export default async function OnboardingPage() {
+  const supabase = await createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) redirect("/login");
+
+  return (
+    <div className="mx-auto max-w-5xl space-y-8">
+      <div className="rounded-[2rem] bg-slate-deep p-7 text-white shadow-card md:p-10">
+        <p className="eyebrow text-inverse-primary">Company setup</p>
+        <h1 className="mt-4 font-display text-4xl font-extrabold tracking-[-0.045em] md:text-5xl">Tell nexara about your company.</h1>
+        <p className="mt-4 max-w-2xl text-sm leading-7 text-white/68">
+          This profile becomes the shared context for Dashboard, GTM, and Marketing. You can create more companies later from the switcher.
+        </p>
+      </div>
+      <div className="rounded-3xl p-6 card-glass md:p-8">
+        <CompanyOnboardingForm accessToken={session.access_token} />
+      </div>
+    </div>
+  );
+}
