@@ -4,38 +4,38 @@ import { SectionHeader } from "@/components/marketing/SectionHeader";
 
 const steps = [
   {
-    title: "Founder input",
-    body: "You describe the product, stage, constraints, and horizon. That context seeds the main agent's master plan - nothing executes until you approve it.",
+    title: "Create a company workspace",
+    body: "Add the basics once: who you serve, what you sell, where you compete, and the goals you care about right now.",
   },
   {
-    title: "Master plan approval",
-    body: "The draft plan is yours to edit. Request changes in natural language; the main agent regenerates until you approve the top-level operating plan.",
+    title: "Build or upload your GTM plan",
+    body: "Start from a guided plan or bring your own. Either way, the plan becomes a living strategy your team can revisit and improve.",
   },
   {
-    title: "Research layer",
-    body: "The research stage gathers web and competitive context, structures observations, and checks back with the main agent before moving on.",
+    title: "Chat with your GTM workspace",
+    body: "Ask for positioning changes, ICP refinements, channel ideas, or launch priorities. Updates stay attached to the company you selected.",
   },
   {
-    title: "Reasoning layer",
-    body: "Segmentation, positioning, and channel strategy synthesize the evidence bundle. Gaps become concrete revision instructions instead of vague failures.",
+    title: "Set your marketing foundation",
+    body: "Capture brand voice, design notes, messaging preferences, and campaign context so future marketing work starts from the right baseline.",
   },
   {
-    title: "Writing layer",
-    body: "The writer turns approved reasoning into a crisp GTM document - editable Markdown first, with optional PDF when the run completes.",
+    title: "Work through marketing tasks",
+    body: "Brainstorm ads, draft copy, shape scripts, plan calendars, and organize campaign outputs without switching tools.",
   },
   {
-    title: "Report + visibility",
-    body: "The workspace stays transparent while work is in flight: you see phase updates and activity as the pipeline progresses, so nothing feels like a black box.",
+    title: "Keep companies separate",
+    body: "Each company has its own strategy, brand voice, chats, and assets, even when the same user manages multiple businesses.",
   },
 ];
 
 const atAGlance = [
   "Secure sign-in",
-  "Your inputs stay in your workspace",
-  "Approvals before automated steps run",
-  "Layered research → reasoning → writing",
-  "Shareable strategy doc + optional PDF",
-  "Activity you can follow end to end",
+  "Multiple companies in one account",
+  "Separate context for every company",
+  "GTM planning and marketing execution",
+  "Editable plans and reusable campaign assets",
+  "Simple tabs for Dashboard, GTM, and Marketing",
 ];
 
 export default function HowItWorksPage() {
@@ -43,9 +43,9 @@ export default function HowItWorksPage() {
     <div className="container-page py-16 md:py-24">
       <RevealOnScroll>
         <SectionHeader
-          eyebrow="Pipeline"
-          title="From prompt to GTM doc, with gates you can trust."
-          lead="Autonomy where it helps, approvals where it matters - you first, then the main agent, then each stage in sequence."
+          eyebrow="How it works"
+          title="From company context to GTM and marketing execution."
+          lead="nexara keeps strategy, brand, and campaign work connected while giving every company its own private workspace."
         />
       </RevealOnScroll>
 
@@ -74,11 +74,11 @@ export default function HowItWorksPage() {
               </ul>
               <p className="mt-8 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-[rgb(200,201,255)]">Flow</p>
               <pre className="mt-3 whitespace-pre-wrap font-mono text-[11px] leading-relaxed text-white/64">
-                {`You approve the plan
-    → Research
-    → Reasoning
-    → Writing
-    → GTM report (+ PDF optional)`}
+                {`Company profile
+    -> GTM plan
+    -> Marketing foundation
+    -> Campaign work
+    -> Team-ready outputs`}
               </pre>
             </div>
           </div>
@@ -100,7 +100,7 @@ export default function HowItWorksPage() {
       <RevealOnScroll>
         <div className="mt-20 rounded-3xl p-8 text-center card-glass">
           <p className="font-display text-xl font-bold text-on-surface">Try it now</p>
-          <p className="mt-2 text-sm text-on-surface-variant">Sign in, create a run, approve the plan, and watch the pipeline.</p>
+          <p className="mt-2 text-sm text-on-surface-variant">Sign in, add a company, and start building strategy and marketing from one workspace.</p>
           <Link href="/login" className="btn-primary mt-6 px-6 py-3 text-sm">
             Get started
           </Link>

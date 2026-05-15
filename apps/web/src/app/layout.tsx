@@ -10,8 +10,8 @@ const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope", displa
 const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-space-grotesk", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "GTM Agent",
-  description: "High-performance multi-agent go-to-market strategy generator",
+  title: "nexara",
+  description: "Company workspaces for GTM strategy, marketing planning, and campaign execution",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

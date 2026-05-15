@@ -36,13 +36,13 @@ export function Navbar() {
           <Link
             href="/"
             className="group inline-flex min-w-0 items-center gap-3 justify-self-start"
-            aria-label="GTM Agent home"
+            aria-label="nexara home"
           >
             <span className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-primary via-indigo-pulse to-violet-pulse shadow-glow">
               <span className="absolute inset-0 bg-[radial-gradient(circle_at_35%_20%,rgb(255_255_255_/_0.55),transparent_34%)]" />
-              <span className="relative font-mono text-sm font-semibold text-white">G</span>
+              <span className="relative font-mono text-sm font-semibold text-white">N</span>
             </span>
-            <span className="truncate font-display text-lg font-extrabold tracking-[-0.03em] text-on-surface">GTM Agent</span>
+            <span className="truncate font-display text-lg font-extrabold tracking-[-0.03em] text-on-surface">nexara</span>
           </Link>
 
           <nav className="hidden items-center justify-center gap-7 justify-self-center md:flex" aria-label="Primary">

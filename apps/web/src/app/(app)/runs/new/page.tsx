@@ -1,30 +1,12 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { NewRunForm } from "./ui";
 
-export default async function NewRunPage({ searchParams }: { searchParams: Promise<{ company_id?: string }> }) {
+export default async function NewRunPage({ searchParams }: { searchParams: Promise<{ company_id?: string | string[] | undefined }> }) {
   const sp = await searchParams;
-  const supabase = await createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  if (!session) redirect("/login");
-
-  return (
-    <div className="space-y-7">
-      <div className="rounded-[2rem] bg-slate-deep p-7 text-white shadow-card md:p-10">
-        <Link href="/dashboard" className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-inverse-primary hover:text-white">
-          Back to dashboard
-        </Link>
-        <h1 className="mt-5 font-display text-4xl font-extrabold tracking-[-0.045em] md:text-5xl">New GTM run</h1>
-        <p className="mt-4 max-w-2xl text-sm leading-7 text-white/68">
-          Describe your product. The multi-agent pipeline will draft a master plan for your approval, then research, reason, and write your GTM document.
-        </p>
-      </div>
-      <div className="rounded-3xl p-6 card-glass md:p-8">
-        <NewRunForm accessToken={session.access_token} defaultCompanyId={sp.company_id} />
-      </div>
-    </div>
-  );
+  const raw = sp.company_id;
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  const cid = typeof value === "string" ? value.trim() : "";
+  if (cid) {
+    redirect(`/gtm?company_id=${encodeURIComponent(cid)}`);
+  }
+  redirect("/gtm");
 }

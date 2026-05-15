@@ -211,6 +211,18 @@ def run_pipeline_task(run_id: str, user_id: str) -> dict[str, Any]:
 
                 md = str(result.get("final_markdown") or "")
                 supabase_db.insert_report(run_id, md)
+                if cid and md.strip():
+                    try:
+                        supabase_db.upsert_company_gtm_plan(
+                            str(cid),
+                            source="generated",
+                            title=f"GTM plan for {str((inp or {}).get('product_name') or 'company')}",
+                            content_markdown=md,
+                            content_json={"master_plan": approved_plan, "run_id": run_id},
+                            source_run_id=run_id,
+                        )
+                    except Exception as e:
+                        _emit(run_id, "writer", "writing", f"GTM plan persistence warning: {e}")
                 _record_task(run_id, "writer", "completed", result={"markdown_chars": len(md)})
                 _record_artifact(run_id, "final_report_markdown", {"markdown": md})
                 _emit(run_id, "writer", "writing", "GTM Markdown report saved")

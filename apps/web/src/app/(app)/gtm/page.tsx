@@ -2,18 +2,19 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { apiFetch } from "@/lib/api";
 import { CompaniesLoadError } from "../companies-load-error";
-import { MarketingWorkspace } from "./marketing-workspace";
+import { GtmWorkspace } from "./gtm-workspace";
 
-type Company = { id: string; name: string; description?: string | null };
-
-export default async function MarketingPage() {
+export default async function GtmPage({ searchParams }: { searchParams: Promise<{ company_id?: string }> }) {
   const supabase = await createClient();
   const {
     data: { session },
   } = await supabase.auth.getSession();
   if (!session) redirect("/login");
 
-  let companies: Company[] = [];
+  const sp = await searchParams;
+  const initialCompanyId = typeof sp.company_id === "string" && sp.company_id.trim() ? sp.company_id.trim() : undefined;
+
+  let companies: { id: string; name: string; description?: string | null }[] = [];
   let companiesRequestFailed = false;
   try {
     const res = await apiFetch("/v1/companies", { accessToken: session.access_token });
@@ -27,9 +28,9 @@ export default async function MarketingPage() {
     companiesRequestFailed = true;
   }
 
-  if (companiesRequestFailed) return <CompaniesLoadError retryHref="/marketing" />;
+  if (companiesRequestFailed) return <CompaniesLoadError retryHref="/gtm" />;
 
   if (companies.length === 0) redirect("/onboarding");
 
-  return <MarketingWorkspace accessToken={session.access_token} companies={companies} />;
+  return <GtmWorkspace accessToken={session.access_token} companies={companies} initialCompanyId={initialCompanyId} />;
 }

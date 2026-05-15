@@ -233,7 +233,7 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
 
       <section className={`${card} ai-insight-card`} aria-live="polite">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <p className="eyebrow text-[10px]">Current backend activity</p>
+          <p className="eyebrow text-[10px]">Current workspace activity</p>
           <div className="h-1 w-28 overflow-hidden rounded-full bg-surface-container-high">
             <div className="h-full w-3/4 animate-shimmer rounded-full progress-shimmer" />
           </div>
@@ -244,7 +244,7 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
             Latest: [{latestEvent.phase ?? "system"}] {latestEvent.agent ?? "agent"} - {latestEvent.message ?? "Working"}
           </p>
         ) : (
-          <p className="mt-3 text-sm text-on-surface-variant">Waiting for the first backend event.</p>
+          <p className="mt-3 text-sm text-on-surface-variant">Waiting for the first update.</p>
         )}
       </section>
 
@@ -252,7 +252,7 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
         <section className={card}>
           <h2 className="font-display text-2xl font-bold tracking-[-0.03em] text-on-surface">Master plan is being drafted</h2>
           <p className="mt-3 text-sm leading-7 text-on-surface-variant">
-            The main agent is preparing the plan for approval. This page will update when the plan is ready.
+            Your GTM plan is being prepared for approval. This page will update when the plan is ready.
           </p>
         </section>
       )}

@@ -18,7 +18,7 @@ export function ActivityTickerTeaser() {
   return (
     <div className="ai-insight-card rounded-2xl border border-outline-variant/70 p-5 shadow-soft">
       <div className="flex items-center justify-between gap-4">
-        <p className="eyebrow text-[10px]">Sample backend activity</p>
+        <p className="eyebrow text-[10px]">Sample workspace activity</p>
         <span className="h-2 w-2 rounded-full bg-primary shadow-[0_0_20px_rgb(73_75_214_/_0.8)]" />
       </div>
       <motion.p

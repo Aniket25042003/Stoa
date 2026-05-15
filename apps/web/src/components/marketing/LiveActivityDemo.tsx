@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { ACTIVITY_MESSAGES } from "@/lib/activity-messages";
 import { cn } from "@/lib/cn";
 
-const phases = ["Plan", "Research", "Reason", "Write"];
+const phases = ["Profile", "Plan", "Brand", "Campaign"];
 
 export function LiveActivityDemo({ className }: { className?: string }) {
   const messages = useMemo(() => Object.values(ACTIVITY_MESSAGES).flat(), []);
@@ -25,10 +25,10 @@ export function LiveActivityDemo({ className }: { className?: string }) {
         <div>
           <p className="eyebrow">Live activity</p>
           <h3 className="mt-3 font-display text-3xl font-bold leading-tight tracking-[-0.03em] text-on-surface md:text-4xl">
-            A transparent cockpit while agents execute.
+            A clear workspace while strategy and marketing take shape.
           </h3>
           <p className="mt-4 text-sm leading-7 text-on-surface-variant">
-            The UI keeps backend progress readable with phase labels, live event copy, and lightweight evidence previews.
+            Follow company setup, plan updates, brand decisions, and campaign work without losing context.
           </p>
           <div className="mt-7 grid grid-cols-4 gap-2">
             {phases.map((phase, i) => (
@@ -43,7 +43,7 @@ export function LiveActivityDemo({ className }: { className?: string }) {
         </div>
         <div className="relative rounded-3xl bg-slate-deep p-5 text-white shadow-card">
           <div className="absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-inverse-primary to-transparent" />
-          <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-inverse-primary">Current backend activity</p>
+          <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-inverse-primary">Current workspace activity</p>
           <motion.div
             key={msg}
             initial={{ opacity: 0, y: 10 }}
@@ -52,7 +52,7 @@ export function LiveActivityDemo({ className }: { className?: string }) {
             className="mt-4 rounded-2xl border border-white/10 bg-white/6 px-5 py-4 backdrop-blur-md"
           >
             <p className="text-base font-semibold leading-snug">{msg}</p>
-            <p className="mt-3 font-mono text-[11px] text-white/48">Mirrors run detail UI</p>
+            <p className="mt-3 font-mono text-[11px] text-white/48">Company workspace update</p>
           </motion.div>
           <div className="mt-5 rounded-2xl border border-white/10 bg-white/4 p-4 font-mono text-xs text-white/70">
             <p className="text-inverse-primary">Product input</p>

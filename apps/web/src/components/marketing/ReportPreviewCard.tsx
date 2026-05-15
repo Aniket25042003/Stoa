@@ -3,20 +3,20 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/cn";
 
-const excerpt = `# GTM Strategy - Acme
+const excerpt = `# Growth Plan - Acme
 
 ## Executive summary
 - ICP: Seed-stage B2B founders replacing spreadsheets with AI workflows
 - Wedge: onboarding in under 10 minutes with a guided template library
-- Launch: founder communities + web crawl signals + targeted outbound to design partners
+- Launch: founder communities + targeted outbound to design partners
 
 ## Positioning
-For technical founders who need repeatable GTM narrative, GTM Agent ships a living strategy doc. Unlike static consultants, agents refresh research every run.
+For technical founders who need repeatable growth narrative, nexara keeps strategy and marketing execution in one living workspace.
 
-## Evidence map
-- Competitor SERP density: medium
-- Community pull: high
-- Sales motion: founder-led outbound first
+## Marketing brief
+- Hook: replace scattered spreadsheets with a repeatable operating rhythm
+- Channel focus: founder communities, partner posts, and warm outbound
+- Creative angle: launch faster without losing strategic clarity
 `;
 
 export function ReportPreviewCard({ className }: { className?: string }) {
@@ -33,7 +33,7 @@ export function ReportPreviewCard({ className }: { className?: string }) {
           <span className="h-2.5 w-2.5 rounded-full bg-secondary-container" />
           <span className="h-2.5 w-2.5 rounded-full bg-primary-container" />
         </div>
-        <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">report.md</span>
+        <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">plan.md</span>
       </div>
       <pre className="max-h-[360px] overflow-hidden p-6 font-mono text-[12px] leading-7 text-on-surface/86 [mask-image:linear-gradient(to_bottom,black_72%,transparent)]">
         {excerpt}
