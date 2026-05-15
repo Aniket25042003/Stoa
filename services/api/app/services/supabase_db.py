@@ -201,18 +201,42 @@ def list_runs_for_user(user_id: str, limit: int = 50) -> list[dict[str, Any]]:
 # --- Companies & marketing (shared KB workspace) ---
 
 
-def insert_company(user_id: str, name: str, description: str | None = None, brand_voice: dict[str, Any] | None = None) -> str:
+COMPANY_PROFILE_FIELDS = (
+    "description",
+    "brand_voice",
+    "website_url",
+    "industry",
+    "target_customers",
+    "geography",
+    "business_model",
+    "stage",
+    "goals",
+    "known_competitors",
+    "constraints",
+    "onboarding_completed_at",
+)
+
+
+def insert_company(
+    user_id: str,
+    name: str,
+    description: str | None = None,
+    brand_voice: dict[str, Any] | None = None,
+    **profile: Any,
+) -> str:
     sb = get_supabase_admin()
+    body: dict[str, Any] = {
+        "user_id": user_id,
+        "name": name,
+        "description": description,
+        "brand_voice": brand_voice or {},
+    }
+    for key in COMPANY_PROFILE_FIELDS:
+        if key in profile and profile[key] is not None:
+            body[key] = profile[key]
     res = (
         sb.table("companies")
-        .insert(
-            {
-                "user_id": user_id,
-                "name": name,
-                "description": description,
-                "brand_voice": brand_voice or {},
-            }
-        )
+        .insert(body)
         .execute()
     )
     if not res.data:
@@ -230,6 +254,20 @@ def list_companies_for_user(user_id: str, limit: int = 50) -> list[dict[str, Any
     sb = get_supabase_admin()
     res = sb.table("companies").select("*").eq("user_id", user_id).order("created_at", desc=True).limit(limit).execute()
     return list(res.data or [])
+
+
+def update_company_profile(company_id: str, **profile: Any) -> dict[str, Any] | None:
+    sb = get_supabase_admin()
+    body: dict[str, Any] = {}
+    if "name" in profile and profile["name"] is not None:
+        body["name"] = profile["name"]
+    for key in COMPANY_PROFILE_FIELDS:
+        if key in profile and profile[key] is not None:
+            body[key] = profile[key]
+    if not body:
+        return get_company(company_id)
+    res = sb.table("companies").update(body).eq("id", company_id).execute()
+    return res.data[0] if res.data else get_company(company_id)
 
 
 def list_knowledge_for_company(company_id: str, kind: str | None = None, limit: int = 100) -> list[dict[str, Any]]:
@@ -256,6 +294,123 @@ def search_knowledge_text(company_id: str, query: str, kinds: list[str] | None =
         return list(res.data or [])
     except Exception:
         return []
+
+
+def get_active_gtm_plan(company_id: str) -> dict[str, Any] | None:
+    sb = get_supabase_admin()
+    res = (
+        sb.table("company_gtm_plans")
+        .select("*")
+        .eq("company_id", company_id)
+        .eq("is_active", True)
+        .order("updated_at", desc=True)
+        .limit(1)
+        .execute()
+    )
+    return res.data[0] if res.data else None
+
+
+def upsert_company_gtm_plan(
+    company_id: str,
+    *,
+    source: str,
+    title: str,
+    content_markdown: str,
+    content_json: dict[str, Any] | None = None,
+    source_run_id: str | None = None,
+) -> dict[str, Any]:
+    sb = get_supabase_admin()
+    # Keep a single active plan per company while retaining older rows for history.
+    sb.table("company_gtm_plans").update({"is_active": False}).eq("company_id", company_id).eq("is_active", True).execute()
+    res = (
+        sb.table("company_gtm_plans")
+        .insert(
+            {
+                "company_id": company_id,
+                "source": source,
+                "title": title,
+                "content_markdown": content_markdown,
+                "content_json": content_json or {},
+                "source_run_id": source_run_id,
+                "is_active": True,
+            }
+        )
+        .execute()
+    )
+    if not res.data:
+        raise RuntimeError("Failed to upsert GTM plan")
+    return res.data[0]
+
+
+def update_company_gtm_plan(
+    plan_id: str,
+    *,
+    content_markdown: str,
+    content_json: dict[str, Any] | None = None,
+    title: str | None = None,
+) -> dict[str, Any] | None:
+    sb = get_supabase_admin()
+    body: dict[str, Any] = {
+        "content_markdown": content_markdown,
+        "content_json": content_json or {},
+    }
+    if title:
+        body["title"] = title
+    res = sb.table("company_gtm_plans").update(body).eq("id", plan_id).execute()
+    return res.data[0] if res.data else None
+
+
+def insert_gtm_plan_message(
+    company_id: str,
+    role: str,
+    content: str,
+    *,
+    plan_id: str | None = None,
+    parts: dict[str, Any] | None = None,
+) -> str:
+    sb = get_supabase_admin()
+    res = (
+        sb.table("gtm_plan_messages")
+        .insert(
+            {
+                "company_id": company_id,
+                "plan_id": plan_id,
+                "role": role,
+                "content": content,
+                "parts": parts or {},
+            }
+        )
+        .execute()
+    )
+    if not res.data:
+        raise RuntimeError("Failed to insert GTM plan message")
+    return str(res.data[0]["id"])
+
+
+def list_gtm_plan_messages(company_id: str, limit: int = 100) -> list[dict[str, Any]]:
+    sb = get_supabase_admin()
+    res = (
+        sb.table("gtm_plan_messages")
+        .select("*")
+        .eq("company_id", company_id)
+        .order("created_at", desc=False)
+        .limit(limit)
+        .execute()
+    )
+    return list(res.data or [])
+
+
+def list_company_marketing_artifacts(company_id: str, limit: int = 20) -> list[dict[str, Any]]:
+    sb = get_supabase_admin()
+    res = (
+        sb.table("marketing_artifacts")
+        .select("*, marketing_chats!inner(company_id)")
+        .eq("marketing_chats.company_id", company_id)
+        .order("created_at", desc=True)
+        .limit(limit)
+        .execute()
+    )
+    return list(res.data or [])
 
 
 def insert_marketing_chat(user_id: str, company_id: str, title: str | None = None) -> str:
