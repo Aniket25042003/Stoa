@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { ACTIVE_COMPANY_EVENT, getStoredActiveCompanyId, setStoredActiveCompanyId } from "@/lib/active-company";
 import { MarketingChat } from "./[companyId]/chats/[chatId]/marketing-chat";
@@ -52,53 +52,59 @@ export function MarketingWorkspace({ accessToken, companies }: { accessToken: st
     return () => window.removeEventListener(ACTIVE_COMPANY_EVENT, onActiveCompany);
   }, []);
 
-  async function ensureChat(companyId: string, requestId: number) {
-    const chatsRes = await apiFetch(`/v1/companies/${companyId}/chats`, { accessToken });
-    const chatsBody = chatsRes.ok ? await chatsRes.json() : { chats: [] };
-    const existing = chatsBody.chats?.[0]?.id;
-    if (existing) {
-      if (requestId !== loadRequestRef.current) return existing;
-      setChatId(existing);
-      return existing;
-    }
-    const createRes = await apiFetch(`/v1/companies/${companyId}/chats`, {
-      method: "POST",
-      accessToken,
-      body: JSON.stringify({ title: "Marketing workspace" }),
-    });
-    const createBody = await createRes.json();
-    if (!createRes.ok) throw new Error(createBody.detail || "Could not create marketing chat");
-    if (requestId !== loadRequestRef.current) return createBody.id;
-    setChatId(createBody.id);
-    return createBody.id;
-  }
-
-  async function load(companyId: string) {
-    const requestId = ++loadRequestRef.current;
-    setLoading(true);
-    setMessage(null);
-    setChatId(null);
-    try {
-      const summaryRes = await apiFetch(`/v1/companies/${companyId}/summary`, { accessToken });
-      const summaryBody = summaryRes.ok ? await summaryRes.json() : null;
-      if (requestId !== loadRequestRef.current) return;
-      setSummary(summaryBody);
-      if (summaryBody?.readiness?.has_marketing_baseline) {
-        await ensureChat(companyId, requestId);
+  const ensureChat = useCallback(
+    async (companyId: string, requestId: number) => {
+      const chatsRes = await apiFetch(`/v1/companies/${companyId}/chats`, { accessToken });
+      const chatsBody = chatsRes.ok ? await chatsRes.json() : { chats: [] };
+      const existing = chatsBody.chats?.[0]?.id;
+      if (existing) {
+        if (requestId !== loadRequestRef.current) return existing;
+        setChatId(existing);
+        return existing;
       }
-    } catch (error) {
-      if (requestId !== loadRequestRef.current) return;
-      setMessage(error instanceof Error ? error.message : "Could not load marketing workspace");
-    } finally {
-      if (requestId !== loadRequestRef.current) return;
-      setLoading(false);
-    }
-  }
+      const createRes = await apiFetch(`/v1/companies/${companyId}/chats`, {
+        method: "POST",
+        accessToken,
+        body: JSON.stringify({ title: "Marketing workspace" }),
+      });
+      const createBody = await createRes.json();
+      if (!createRes.ok) throw new Error(createBody.detail || "Could not create marketing chat");
+      if (requestId !== loadRequestRef.current) return createBody.id;
+      setChatId(createBody.id);
+      return createBody.id;
+    },
+    [accessToken],
+  );
+
+  const load = useCallback(
+    async (companyId: string) => {
+      const requestId = ++loadRequestRef.current;
+      setLoading(true);
+      setMessage(null);
+      setChatId(null);
+      try {
+        const summaryRes = await apiFetch(`/v1/companies/${companyId}/summary`, { accessToken });
+        const summaryBody = summaryRes.ok ? await summaryRes.json() : null;
+        if (requestId !== loadRequestRef.current) return;
+        setSummary(summaryBody);
+        if (summaryBody?.readiness?.has_marketing_baseline) {
+          await ensureChat(companyId, requestId);
+        }
+      } catch (error) {
+        if (requestId !== loadRequestRef.current) return;
+        setMessage(error instanceof Error ? error.message : "Could not load marketing workspace");
+      } finally {
+        if (requestId !== loadRequestRef.current) return;
+        setLoading(false);
+      }
+    },
+    [accessToken, ensureChat],
+  );
 
   useEffect(() => {
     if (!activeId) return;
     void load(activeId);
-  }, [activeId, accessToken]);
+  }, [activeId, load]);
 
   async function saveBaseline(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();

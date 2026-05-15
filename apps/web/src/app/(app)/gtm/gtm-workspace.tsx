@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { ACTIVE_COMPANY_EVENT, getStoredActiveCompanyId, setStoredActiveCompanyId } from "@/lib/active-company";
 
@@ -61,7 +61,7 @@ export function GtmWorkspace({
     return () => window.removeEventListener(ACTIVE_COMPANY_EVENT, onActiveCompany);
   }, []);
 
-  async function loadPlan(companyId: string) {
+  const loadPlan = useCallback(async (companyId: string) => {
     const requestId = ++loadRequestRef.current;
     setLoading(true);
     setNotice(null);
@@ -80,12 +80,12 @@ export function GtmWorkspace({
       if (requestId !== loadRequestRef.current) return;
       setLoading(false);
     }
-  }
+  }, [accessToken]);
 
   useEffect(() => {
     if (!activeId) return;
     void loadPlan(activeId);
-  }, [activeId, accessToken]);
+  }, [activeId, loadPlan]);
 
   async function generatePlan() {
     if (!activeId) return;
