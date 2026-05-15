@@ -170,7 +170,7 @@ export function MarketingWorkspace({ accessToken, companies }: { accessToken: st
           </form>
         </section>
       ) : chatId ? (
-        <MarketingChat chatId={chatId} accessToken={accessToken} />
+        <MarketingChat chatId={chatId} companyId={activeId ?? ""} accessToken={accessToken} />
       ) : (
         <div className="rounded-3xl p-8 text-center card-glass">Preparing marketing chat...</div>
       )}

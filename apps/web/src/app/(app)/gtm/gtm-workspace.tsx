@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { ACTIVE_COMPANY_EVENT, getStoredActiveCompanyId, setStoredActiveCompanyId } from "@/lib/active-company";
@@ -206,9 +205,9 @@ export function GtmWorkspace({ accessToken, companies }: { accessToken: string; 
                 <h2 className="mt-2 font-display text-3xl font-bold tracking-[-0.03em] text-on-surface">{plan.title}</h2>
                 <p className="mt-2 text-sm text-on-surface-variant">Source: {plan.source === "uploaded" ? "uploaded by you" : "generated from company context"}</p>
               </div>
-              <Link href="/runs/new" className="btn-secondary px-4 py-2 text-sm">
+              <button type="button" disabled={busy} onClick={() => void generatePlan()} className="btn-secondary px-4 py-2 text-sm disabled:opacity-60">
                 Generate another
-              </Link>
+              </button>
             </div>
             <pre className="mt-6 max-h-[620px] overflow-auto whitespace-pre-wrap rounded-2xl bg-surface-container-low p-5 font-mono text-xs leading-6 text-on-surface-variant">
               {plan.content_markdown}
