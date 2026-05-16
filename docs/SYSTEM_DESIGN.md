@@ -511,4 +511,3 @@ Use this table when tracing a feature across the stack:
 | Coder spec | `AGENT.md` |
 
 ---
-*
