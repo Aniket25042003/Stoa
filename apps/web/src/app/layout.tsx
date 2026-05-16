@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Manrope, Space_Grotesk } from "next/font/google";
 import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
+import { BRAND_NAME, BRAND_SUBHEAD, BRAND_TAGLINE } from "@/lib/brand";
 import { ThemeProvider } from "@/lib/theme";
 import "./globals.css";
 
@@ -10,8 +11,8 @@ const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope", displa
 const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-space-grotesk", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "nexara",
-  description: "Company workspaces for GTM strategy, marketing planning, and campaign execution",
+  title: BRAND_NAME,
+  description: `${BRAND_TAGLINE} ${BRAND_SUBHEAD}`,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

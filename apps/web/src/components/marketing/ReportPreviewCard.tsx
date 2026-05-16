@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
+import { BRAND_NAME, BRAND_TAGLINE } from "@/lib/brand";
 import { cn } from "@/lib/cn";
 
 const excerpt = `# Growth Plan - Acme
@@ -11,7 +12,7 @@ const excerpt = `# Growth Plan - Acme
 - Launch: founder communities + targeted outbound to design partners
 
 ## Positioning
-For technical founders who need repeatable growth narrative, nexara keeps strategy and marketing execution in one living workspace.
+For technical founders who need a repeatable growth narrative, ${BRAND_NAME} keeps teams aligned from strategy to execution. ${BRAND_TAGLINE}
 
 ## Marketing brief
 - Hook: replace scattered spreadsheets with a repeatable operating rhythm

@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { FaqItem } from "@/components/marketing/FaqItem";
 import { RevealOnScroll } from "@/components/marketing/RevealOnScroll";
 import { SectionHeader } from "@/components/marketing/SectionHeader";
+import { BRAND_NAME, BRAND_SUBHEAD, BRAND_TAGLINE } from "@/lib/brand";
 import { cn } from "@/lib/cn";
 
 type Cat = "Product" | "GTM" | "Marketing" | "Pricing" | "Privacy";
@@ -13,8 +14,8 @@ const faqs: { id: string; cat: Cat; q: string; a: string }[] = [
   {
     id: "p1",
     cat: "Product",
-    q: "What is nexara?",
-    a: "nexara is a company workspace for GTM planning and marketing execution. You keep each company's profile, strategy, brand direction, chats, and outputs in one place.",
+    q: `What is ${BRAND_NAME}?`,
+    a: `${BRAND_NAME} is a company workspace for GTM planning and marketing execution. ${BRAND_TAGLINE} You keep each company's profile, strategy, brand direction, chats, and outputs in one place.`,
   },
   {
     id: "p2",
@@ -32,7 +33,7 @@ const faqs: { id: string; cat: Cat; q: string; a: string }[] = [
     id: "g2",
     cat: "GTM",
     q: "What if I do not have a plan yet?",
-    a: "Start from your company profile and nexara will help create a first GTM plan you can review, edit, and keep improving over time.",
+    a: `Start from your company profile and ${BRAND_NAME} will help create a first GTM plan you can review, edit, and keep improving over time.`,
   },
   {
     id: "m1",
@@ -86,7 +87,7 @@ export default function FaqPage() {
         <SectionHeader
           eyebrow="FAQ"
           title="Answers for strategy and marketing teams."
-          lead="Still curious after this? Sign in, add a company, and start building from your own context."
+          lead={BRAND_SUBHEAD}
         />
       </RevealOnScroll>
 

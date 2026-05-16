@@ -6,6 +6,7 @@ import { useState } from "react";
 import { PricingCard } from "@/components/marketing/PricingCard";
 import { RevealOnScroll } from "@/components/marketing/RevealOnScroll";
 import { SectionHeader } from "@/components/marketing/SectionHeader";
+import { BRAND_SUBHEAD } from "@/lib/brand";
 import { cn } from "@/lib/cn";
 
 const tiers = (yearly: boolean) => [
@@ -86,7 +87,7 @@ export default function PricingPage() {
         <SectionHeader
           eyebrow="Pricing"
           title="Simple tiers for strategy and marketing teams."
-          lead="Pricing shown is illustrative. Start with one company workspace, then add more when your portfolio grows."
+          lead={`${BRAND_SUBHEAD} Pricing shown is illustrative—start with one company workspace, then add more when your portfolio grows.`}
         />
       </RevealOnScroll>
 

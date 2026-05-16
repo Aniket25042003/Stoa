@@ -91,7 +91,7 @@ export function DashboardWorkspace({ accessToken, companies, email }: { accessTo
           <div>
             <p className="eyebrow text-inverse-primary">Dashboard</p>
             <h1 className="mt-4 font-display text-4xl font-extrabold tracking-[-0.045em] md:text-5xl">
-              {activeCompany?.name ?? "Your company"} command center
+              {activeCompany?.name ?? "Your company"} workspace
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-white/68">
               Signed in as {email}. Track company readiness, GTM progress, marketing work, and recent activity from one place.
