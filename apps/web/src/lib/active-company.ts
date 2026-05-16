@@ -1,5 +1,7 @@
-export const ACTIVE_COMPANY_KEY = "nexara.activeCompanyId";
-export const ACTIVE_COMPANY_EVENT = "nexara:active-company";
+import { migrateLegacyActiveCompanyStorage } from "@/lib/brand";
+
+export const ACTIVE_COMPANY_KEY = "stoa.activeCompanyId";
+export const ACTIVE_COMPANY_EVENT = "stoa:active-company";
 
 export type ActiveCompanyEventDetail = {
   companyId: string | null;
@@ -7,6 +9,7 @@ export type ActiveCompanyEventDetail = {
 
 export function getStoredActiveCompanyId() {
   if (typeof window === "undefined") return null;
+  migrateLegacyActiveCompanyStorage();
   return window.localStorage.getItem(ACTIVE_COMPANY_KEY);
 }
 

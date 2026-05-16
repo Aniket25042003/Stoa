@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { ACTIVITY_MESSAGES } from "@/lib/activity-messages";
+import { BRAND_TAGLINE } from "@/lib/brand";
 import { cn } from "@/lib/cn";
 
 const phases = ["Profile", "Plan", "Brand", "Campaign"];
@@ -25,10 +26,10 @@ export function LiveActivityDemo({ className }: { className?: string }) {
         <div>
           <p className="eyebrow">Live activity</p>
           <h3 className="mt-3 font-display text-3xl font-bold leading-tight tracking-[-0.03em] text-on-surface md:text-4xl">
-            A clear workspace while strategy and marketing take shape.
+            {BRAND_TAGLINE}
           </h3>
           <p className="mt-4 text-sm leading-7 text-on-surface-variant">
-            Follow company setup, plan updates, brand decisions, and campaign work without losing context.
+            Follow company setup, plan updates, brand decisions, and campaign work in one shelter—without losing context.
           </p>
           <div className="mt-7 grid grid-cols-4 gap-2">
             {phases.map((phase, i) => (

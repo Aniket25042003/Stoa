@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BRAND_NAME, BRAND_SUBHEAD, BRAND_TAGLINE } from "@/lib/brand";
 
 const cols = [
   {
@@ -30,11 +31,10 @@ export function Footer() {
           <div className="md:col-span-2">
             <div className="inline-flex items-center gap-3">
               <span className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-violet-pulse shadow-glow" />
-              <p className="font-display text-xl font-extrabold tracking-[-0.03em] text-white">nexara</p>
+              <p className="font-display text-xl font-extrabold tracking-[-0.03em] text-white">{BRAND_NAME}</p>
             </div>
-            <p className="mt-4 max-w-md text-sm leading-7 text-white/78">
-              Company workspaces for go-to-market strategy, marketing planning, and campaign-ready creative.
-            </p>
+            <p className="mt-4 max-w-md text-sm leading-7 text-white/78">{BRAND_TAGLINE}</p>
+            <p className="mt-3 max-w-md text-sm leading-7 text-white/62">{BRAND_SUBHEAD}</p>
           </div>
           {cols.map((col) => (
             <div key={col.title}>
@@ -52,7 +52,7 @@ export function Footer() {
           ))}
         </div>
         <p className="mt-12 border-t border-white/15 pt-8 font-mono text-xs text-white/45">
-          © {new Date().getFullYear()} nexara. Strategy and marketing workflows for focused teams.
+          © {new Date().getFullYear()} {BRAND_NAME}. {BRAND_TAGLINE}
         </p>
       </div>
     </footer>

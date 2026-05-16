@@ -11,7 +11,7 @@ const excerpt = `# Growth Plan - Acme
 - Launch: founder communities + targeted outbound to design partners
 
 ## Positioning
-For technical founders who need repeatable growth narrative, nexara keeps strategy and marketing execution in one living workspace.
+For technical founders who need a repeatable growth narrative, Stoa keeps GTM strategy and marketing execution in one shelter.
 
 ## Marketing brief
 - Hook: replace scattered spreadsheets with a repeatable operating rhythm

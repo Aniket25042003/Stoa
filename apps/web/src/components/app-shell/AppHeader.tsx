@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { CompanySwitcher } from "@/components/app-shell/CompanySwitcher";
+import { BRAND_NAME } from "@/lib/brand";
 import { createClient } from "@/lib/supabase/client";
 
 const navItems = [
@@ -28,7 +29,7 @@ export function AppHeader({ email, accessToken }: { email: string; accessToken: 
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 md:px-6">
         <Link href="/dashboard" className="inline-flex items-center gap-3">
           <span className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-violet-pulse shadow-glow" />
-          <span className="font-display text-lg font-extrabold tracking-[-0.03em] text-on-surface">nexara</span>
+          <span className="font-display text-lg font-extrabold tracking-[-0.03em] text-on-surface">{BRAND_NAME}</span>
         </Link>
         <nav className="order-3 flex w-full items-center gap-2 overflow-x-auto md:order-none md:w-auto" aria-label="App sections">
           {navItems.map((item) => {

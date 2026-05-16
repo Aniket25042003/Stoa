@@ -11,6 +11,7 @@ import { RadialOrbitalTimeline } from "@/components/marketing/RadialOrbitalTimel
 import { ReportPreviewCard } from "@/components/marketing/ReportPreviewCard";
 import { RevealOnScroll } from "@/components/marketing/RevealOnScroll";
 import { SectionHeader } from "@/components/marketing/SectionHeader";
+import { BRAND_NAME, BRAND_SUBHEAD, BRAND_TAGLINE } from "@/lib/brand";
 import { ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
 
 const marqueeItems = [
@@ -26,7 +27,7 @@ const marqueeItems = [
 const metrics = [
   { k: "2", v: "Focused workspaces", d: "GTM planning and marketing execution side by side" },
   { k: "Many", v: "Company memories", d: "Each company keeps its own strategy, voice, and assets" },
-  { k: "1", v: "Command center", d: "Dashboard, GTM, and Marketing stay connected" },
+  { k: "1", v: "One shelter", d: "Dashboard, GTM, and Marketing stay connected" },
 ];
 
 export default function LandingPage() {
@@ -39,14 +40,14 @@ export default function LandingPage() {
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-surface-container-low/70 px-3 py-2 shadow-soft backdrop-blur-md">
                 <Sparkles className="h-3.5 w-3.5 text-primary" />
-                <p className="eyebrow text-[11px]">Strategy and marketing workspace</p>
+                <p className="eyebrow text-[11px]">{BRAND_NAME}</p>
               </div>
               <AnimatedHeadline
-                text="One command center for GTM and marketing."
+                text={BRAND_TAGLINE}
                 className="mt-7 max-w-5xl font-display text-5xl font-extrabold leading-[1.02] tracking-[-0.055em] text-on-surface md:text-7xl lg:text-8xl"
               />
               <p className="mt-7 max-w-2xl text-lg leading-8 text-on-surface-variant md:text-xl">
-                nexara helps you shape company strategy, build editable GTM plans, and turn marketing ideas into campaign-ready copy, scripts, and creative direction.
+                {BRAND_SUBHEAD}
               </p>
               <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <Link href="/login" className="btn-primary px-6 py-3 text-center text-sm sm:inline-flex sm:items-center sm:justify-center">
@@ -78,7 +79,7 @@ export default function LandingPage() {
           <SectionHeader
             eyebrow="Connected workspace"
             title="Strategy and creative stay in sync."
-            lead="Start with company context, build a GTM plan, then keep marketing work aligned with the same positioning and brand voice."
+            lead={BRAND_SUBHEAD}
           />
         </RevealOnScroll>
         <RevealOnScroll delay={0.05}>
@@ -100,7 +101,7 @@ export default function LandingPage() {
             <SectionHeader
               eyebrow="Output"
               title="Plans, briefs, copy, scripts, and assets your team can use."
-              lead="Keep strategy and marketing execution together so each campaign reflects the company you are building."
+              lead="Every campaign stays tied to the same GTM plan, brand voice, and company context—without switching tools."
             />
           </RevealOnScroll>
           <RevealOnScroll delay={0.06}>
@@ -130,7 +131,7 @@ export default function LandingPage() {
             <div className="max-w-2xl">
               <p className="eyebrow text-inverse-primary">Ready</p>
               <h2 className="mt-4 font-display text-4xl font-bold tracking-[-0.04em] md:text-5xl">Build your first company workspace.</h2>
-              <p className="mt-4 text-sm leading-7 text-white/68">Sign in, add your company details, and start planning GTM and marketing from one place.</p>
+              <p className="mt-4 text-sm leading-7 text-white/68">{BRAND_SUBHEAD}</p>
             </div>
             <EmailCta />
           </div>

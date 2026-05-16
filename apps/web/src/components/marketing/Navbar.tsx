@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { BRAND_LOGO_LETTER, BRAND_NAME } from "@/lib/brand";
 import { cn } from "@/lib/cn";
 
 const nav = [
@@ -36,13 +37,13 @@ export function Navbar() {
           <Link
             href="/"
             className="group inline-flex min-w-0 items-center gap-3 justify-self-start"
-            aria-label="nexara home"
+            aria-label={`${BRAND_NAME} home`}
           >
             <span className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-primary via-indigo-pulse to-violet-pulse shadow-glow">
               <span className="absolute inset-0 bg-[radial-gradient(circle_at_35%_20%,rgb(255_255_255_/_0.55),transparent_34%)]" />
-              <span className="relative font-mono text-sm font-semibold text-white">N</span>
+              <span className="relative font-mono text-sm font-semibold text-white">{BRAND_LOGO_LETTER}</span>
             </span>
-            <span className="truncate font-display text-lg font-extrabold tracking-[-0.03em] text-on-surface">nexara</span>
+            <span className="truncate font-display text-lg font-extrabold tracking-[-0.03em] text-on-surface">{BRAND_NAME}</span>
           </Link>
 
           <nav className="hidden items-center justify-center gap-7 justify-self-center md:flex" aria-label="Primary">

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { RevealOnScroll } from "@/components/marketing/RevealOnScroll";
 import { SectionHeader } from "@/components/marketing/SectionHeader";
+import { BRAND_SUBHEAD, BRAND_TAGLINE } from "@/lib/brand";
 
 const steps = [
   {
@@ -45,7 +46,7 @@ export default function HowItWorksPage() {
         <SectionHeader
           eyebrow="How it works"
           title="From company context to GTM and marketing execution."
-          lead="nexara keeps strategy, brand, and campaign work connected while giving every company its own private workspace."
+          lead={`${BRAND_TAGLINE} ${BRAND_SUBHEAD}`}
         />
       </RevealOnScroll>
 
@@ -100,7 +101,7 @@ export default function HowItWorksPage() {
       <RevealOnScroll>
         <div className="mt-20 rounded-3xl p-8 text-center card-glass">
           <p className="font-display text-xl font-bold text-on-surface">Try it now</p>
-          <p className="mt-2 text-sm text-on-surface-variant">Sign in, add a company, and start building strategy and marketing from one workspace.</p>
+          <p className="mt-2 text-sm text-on-surface-variant">{BRAND_SUBHEAD}</p>
           <Link href="/login" className="btn-primary mt-6 px-6 py-3 text-sm">
             Get started
           </Link>

@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { ActivityTickerTeaser } from "@/components/marketing/ActivityTickerTeaser";
+import { BRAND_NAME, BRAND_SUBHEAD, BRAND_TAGLINE } from "@/lib/brand";
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -63,16 +64,15 @@ function LoginForm() {
         <div className="flex-1 space-y-7 lg:max-w-lg">
           <Link href="/" className="inline-flex items-center gap-3">
             <span className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-violet-pulse shadow-glow" />
-            <span className="font-display text-xl font-extrabold tracking-[-0.03em] text-on-surface">nexara</span>
+            <span className="font-display text-xl font-extrabold tracking-[-0.03em] text-on-surface">{BRAND_NAME}</span>
           </Link>
           <div>
             <p className="eyebrow">Secure workspace</p>
-            <h1 className="mt-4 font-display text-4xl font-extrabold leading-tight tracking-[-0.045em] text-on-surface md:text-6xl">
-              Sign in to build your company workspace.
+            <h1 className="mt-4 font-display text-4xl font-extrabold leading-tight tracking-[-0.045em] text-on-surface md:text-5xl">
+              {BRAND_TAGLINE}
             </h1>
-            <p className="mt-5 text-base leading-8 text-on-surface-variant">
-              One click with your Google account. Keep GTM plans, marketing tasks, and company context together.
-            </p>
+            <p className="mt-5 text-base leading-8 text-on-surface-variant">{BRAND_SUBHEAD}</p>
+            <p className="mt-4 text-sm leading-7 text-on-surface-variant">Sign in with Google to open your company workspace.</p>
           </div>
           <div className="hidden lg:block">
             <ActivityTickerTeaser />
