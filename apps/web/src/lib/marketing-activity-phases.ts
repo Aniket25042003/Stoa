@@ -29,7 +29,7 @@ export function resolveMarketingStep(busy: boolean, events: MarketingEventPayloa
   if (!busy && events.length === 0) return "idle";
   const last = events.at(-1);
   const msg = (last?.message ?? "").toLowerCase();
-  if (msg.includes("pipeline completed") || msg.includes("completed")) return "done";
+  if (msg.includes("pipeline completed")) return "done";
   if (msg.includes("failed") || last?.phase === "error") return "failed";
 
   const agent = (last?.agent ?? "").toLowerCase();

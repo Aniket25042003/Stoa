@@ -239,7 +239,7 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
 
         {showPipeline ? (
           <div className="mt-5">
-            <PipelinePhaseVisualizer phase={currentActivityPhase} />
+            <PipelinePhaseVisualizer phase={currentActivityPhase} events={events} />
           </div>
         ) : null}
 
@@ -279,14 +279,16 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
           </button>
           <AnimatePresence initial={false}>
             {planExpanded ? (
-              <motion.pre
+              <motion.div
                 initial={reduce ? false : { height: 0, opacity: 0 }}
                 animate={{ height: "auto", opacity: 1 }}
                 exit={reduce ? undefined : { height: 0, opacity: 0 }}
-                className={`mt-3 max-h-[360px] overflow-auto whitespace-pre-wrap ${codePanel}`}
+                className="overflow-hidden"
               >
-                {JSON.stringify(masterPlan, null, 2)}
-              </motion.pre>
+                <pre className={`mt-3 max-h-[360px] overflow-auto whitespace-pre-wrap ${codePanel}`}>
+                  {JSON.stringify(masterPlan, null, 2)}
+                </pre>
+              </motion.div>
             ) : null}
           </AnimatePresence>
           <label htmlFor="plan-feedback" className="mt-5 block eyebrow text-[11px]">

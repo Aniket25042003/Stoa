@@ -33,6 +33,24 @@ export function pipelineStepIndex(phase: ActivityPhase): number {
   return -1;
 }
 
+/** Step to highlight when the run failed (falls back to writing if unknown). */
+function indexFromEventPhase(phase?: string): number {
+  if (phase === "planning") return 0;
+  if (phase === "research") return 1;
+  if (phase === "reasoning") return 2;
+  if (phase === "writing") return 3;
+  return -1;
+}
+
+export function pipelineActiveStepIndex(phase: ActivityPhase, events: EventRow[] = []): number {
+  if (phase !== "failed") return pipelineStepIndex(phase);
+  for (let i = events.length - 1; i >= 0; i--) {
+    const idx = indexFromEventPhase(events[i]?.phase);
+    if (idx >= 0) return idx;
+  }
+  return 3;
+}
+
 export function isPipelineTerminal(phase: ActivityPhase): boolean {
   return phase === "completed" || phase === "failed";
 }

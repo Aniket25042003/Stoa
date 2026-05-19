@@ -4,19 +4,22 @@ import { Check } from "lucide-react";
 import {
   PIPELINE_STEPS,
   isPipelineTerminal,
-  pipelineStepIndex,
+  pipelineActiveStepIndex,
+  type EventRow,
 } from "@/lib/pipeline-phases";
 import type { ActivityPhase } from "@/lib/activity-messages";
 import { cn } from "@/lib/cn";
 
 export function PipelinePhaseVisualizer({
   phase,
+  events = [],
   className,
 }: {
   phase: ActivityPhase;
+  events?: EventRow[];
   className?: string;
 }) {
-  const activeIdx = pipelineStepIndex(phase);
+  const activeIdx = pipelineActiveStepIndex(phase, events);
   const terminal = isPipelineTerminal(phase);
   const failed = phase === "failed";
   const completed = phase === "completed";
@@ -25,9 +28,9 @@ export function PipelinePhaseVisualizer({
     <nav className={cn("w-full", className)} aria-label="GTM pipeline progress">
       <ol className="flex items-start justify-between gap-2">
         {PIPELINE_STEPS.map((step, i) => {
-          const done = terminal ? completed : activeIdx > i;
-          const active = !terminal && activeIdx === i;
-          const pending = !terminal && activeIdx < i;
+          const done = failed ? i < activeIdx : terminal ? completed && i <= 3 : activeIdx > i;
+          const active = failed ? i === activeIdx : !terminal && activeIdx === i;
+          const pending = !terminal && !failed && activeIdx < i;
 
           return (
             <li key={step.id} className="flex flex-1 flex-col items-center gap-2 text-center">
@@ -46,7 +49,7 @@ export function PipelinePhaseVisualizer({
               <span
                 className={cn(
                   "font-mono text-[10px] font-semibold uppercase tracking-[0.1em]",
-                  active ? "text-primary" : done ? "text-on-surface" : "text-on-surface-variant"
+                  active && failed ? "text-error" : active ? "text-primary" : done ? "text-on-surface" : "text-on-surface-variant"
                 )}
                 aria-current={active ? "step" : undefined}
               >
@@ -83,7 +86,7 @@ function StepDot({
       )}
     >
       {done ? <Check className="h-4 w-4" strokeWidth={2.5} /> : null}
-      {active && !done ? <span className="h-2 w-2 rounded-full bg-primary pipeline-dot-pulse" /> : null}
+      {active && !done && !failed ? <span className="h-2 w-2 rounded-full bg-primary pipeline-dot-pulse" /> : null}
     </span>
   );
 }

@@ -34,7 +34,7 @@ export function MarketingPhaseVisualizer({
               <span
                 className={cn(
                   "font-mono text-[9px] font-semibold uppercase tracking-[0.08em]",
-                  active ? "text-primary" : isFailed ? "text-red-500" : isDone ? "text-on-surface" : "text-on-surface-variant"
+                  active ? "text-primary" : isFailed ? "text-error" : isDone ? "text-on-surface" : "text-on-surface-variant"
                 )}
                 aria-current={active ? "step" : undefined}
               >
@@ -69,7 +69,7 @@ function StepDot({
         size,
         done && "border-primary bg-primary text-on-primary",
         active && "border-primary bg-primary/15 pipeline-step-pulse",
-        failed && "border-red-500 bg-red-500/15 text-red-500",
+        failed && "border-error bg-error-container text-error",
         pending && "border-outline-variant/50 bg-surface-container-low"
       )}
     >
