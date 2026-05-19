@@ -1,12 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { apiFetch } from "@/lib/api";
-import { ACTIVITY_MESSAGES, type ActivityPhase } from "@/lib/activity-messages";
+import { ACTIVITY_MESSAGES, PHASE_LABELS } from "@/lib/activity-messages";
 import { StatusPill } from "@/components/app-shell/StatusPill";
+import { ActivitySurface } from "@/components/motion/ActivitySurface";
+import { CollapsibleDevLog } from "@/components/motion/CollapsibleDevLog";
+import { PipelinePhaseVisualizer } from "@/components/motion/PipelinePhaseVisualizer";
+import { StaggerInView } from "@/components/motion/StaggerInView";
+import { formatDevLogLine, resolveActivityPhase, type EventRow } from "@/lib/pipeline-phases";
 import { consumeSse } from "./stream";
 
-type EventRow = { message?: string; agent?: string; phase?: string; detail?: Record<string, unknown> };
 type RunRow = { status?: string; master_plan?: Record<string, unknown> };
 type SourceRow = {
   id: string;
@@ -16,19 +21,6 @@ type SourceRow = {
   excerpt?: string | null;
   metadata?: Record<string, unknown>;
 };
-
-function activityPhase(status: string, events: EventRow[]): ActivityPhase {
-  if (status === "awaiting_plan_approval") return "awaiting_plan_approval";
-  if (status === "planning") return "planning";
-  if (status === "completed") return "completed";
-  if (status === "failed") return "failed";
-  const latestPhase = events.at(-1)?.phase;
-  if (latestPhase === "planning" || latestPhase === "research" || latestPhase === "reasoning" || latestPhase === "writing") {
-    return latestPhase;
-  }
-  if (status === "queued") return "queued";
-  return "research";
-}
 
 const card = "rounded-3xl p-5 shadow-soft card-glass md:p-6";
 const btn = "btn-secondary px-4 py-2 text-sm disabled:opacity-50";
@@ -43,12 +35,16 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
   const [masterPlan, setMasterPlan] = useState<Record<string, unknown> | null>(null);
   const [planFeedback, setPlanFeedback] = useState("");
   const [planBusy, setPlanBusy] = useState(false);
+  const [planExpanded, setPlanExpanded] = useState(false);
   const [activityIndex, setActivityIndex] = useState(0);
-  const currentActivityPhase = activityPhase(status, events);
+  const reduce = useReducedMotion();
+  const currentActivityPhase = resolveActivityPhase(status, events);
   const currentActivityMessages = ACTIVITY_MESSAGES[currentActivityPhase];
   const currentActivity = currentActivityMessages[activityIndex % currentActivityMessages.length];
-  const latestEvent = events.at(-1);
+  const phaseLabel = PHASE_LABELS[currentActivityPhase];
   const pollInFlight = useRef(false);
+  const showPipeline =
+    status !== "awaiting_plan_approval" && status !== "planning" && status !== "...";
 
   const refreshSnapshot = useCallback(
     async (includeArtifacts = true) => {
@@ -224,6 +220,8 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
     }
   }
 
+  const devLogLines = events.map(formatDevLogLine);
+
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-center gap-3">
@@ -238,14 +236,19 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
             <div className="h-full w-3/4 animate-shimmer rounded-full progress-shimmer" />
           </div>
         </div>
-        <p className="mt-3 font-display text-xl font-bold tracking-[-0.02em] text-on-surface">{currentActivity}</p>
-        {latestEvent ? (
-          <p className="mt-3 font-mono text-xs text-on-surface-variant">
-            Latest: [{latestEvent.phase ?? "system"}] {latestEvent.agent ?? "agent"} - {latestEvent.message ?? "Working"}
-          </p>
-        ) : (
-          <p className="mt-3 text-sm text-on-surface-variant">Waiting for the first update.</p>
-        )}
+
+        {showPipeline ? (
+          <div className="mt-5">
+            <PipelinePhaseVisualizer phase={currentActivityPhase} />
+          </div>
+        ) : null}
+
+        <div className="mt-5">
+          <ActivitySurface phase={currentActivityPhase} />
+        </div>
+
+        <p className="mt-5 font-display text-xl font-bold tracking-[-0.02em] text-on-surface">{currentActivity}</p>
+        <p className="mt-2 text-sm text-on-surface-variant">{phaseLabel}</p>
       </section>
 
       {status === "planning" && (
@@ -254,6 +257,9 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
           <p className="mt-3 text-sm leading-7 text-on-surface-variant">
             Your GTM plan is being prepared for approval. This page will update when the plan is ready.
           </p>
+          <div className="mt-5">
+            <ActivitySurface phase="planning" />
+          </div>
         </section>
       )}
 
@@ -263,7 +269,26 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
           <p className="mt-3 text-sm leading-7 text-on-surface-variant">
             Review the main agent&apos;s master plan. You can request edits; the main agent will regenerate the plan before any layer starts.
           </p>
-          <pre className={`mt-5 max-h-[360px] overflow-auto whitespace-pre-wrap ${codePanel}`}>{JSON.stringify(masterPlan, null, 2)}</pre>
+          <button
+            type="button"
+            className="mt-5 text-sm font-semibold text-primary hover:underline"
+            onClick={() => setPlanExpanded((v) => !v)}
+            aria-expanded={planExpanded}
+          >
+            {planExpanded ? "Hide plan details" : "View plan details"}
+          </button>
+          <AnimatePresence initial={false}>
+            {planExpanded ? (
+              <motion.pre
+                initial={reduce ? false : { height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={reduce ? undefined : { height: 0, opacity: 0 }}
+                className={`mt-3 max-h-[360px] overflow-auto whitespace-pre-wrap ${codePanel}`}
+              >
+                {JSON.stringify(masterPlan, null, 2)}
+              </motion.pre>
+            ) : null}
+          </AnimatePresence>
           <label htmlFor="plan-feedback" className="mt-5 block eyebrow text-[11px]">
             Plan edits or updates
           </label>
@@ -286,12 +311,7 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
         </section>
       )}
 
-      <section className={card}>
-        <h2 className="font-display text-xl font-bold tracking-[-0.02em] text-on-surface">Live events</h2>
-        <pre className={`mt-4 max-h-[280px] overflow-auto ${codePanel}`}>
-          {events.map((e) => `[${e.phase ?? ""}] ${e.agent ?? ""}: ${e.message ?? JSON.stringify(e)}`).join("\n")}
-        </pre>
-      </section>
+      <CollapsibleDevLog lines={devLogLines} />
 
       <section className={card}>
         <h2 className="font-display text-xl font-bold tracking-[-0.02em] text-on-surface">Sources</h2>
@@ -299,18 +319,20 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
           <p className="mt-3 text-sm text-on-surface-variant">No persisted research sources yet.</p>
         ) : (
           <div className="mt-5 space-y-3">
-            {sources.map((s) => (
-              <div key={s.id} className="rounded-2xl border border-outline-variant/55 bg-surface-container-low/75 p-5 backdrop-blur-md">
-                <strong className="font-mono text-xs uppercase tracking-[0.12em] text-primary">{s.source_type}</strong>{" "}
-                {s.source_url ? (
-                  <a href={s.source_url} target="_blank" rel="noreferrer" className="font-semibold text-on-surface underline-offset-4 hover:text-primary hover:underline">
-                    {s.title || s.source_url}
-                  </a>
-                ) : (
-                  <span className="font-semibold text-on-surface">{s.title || "Untitled source"}</span>
-                )}
-                <p className="mt-2 text-sm leading-7 text-on-surface-variant">{s.excerpt}</p>
-              </div>
+            {sources.map((s, i) => (
+              <StaggerInView key={s.id} delay={i * 0.06}>
+                <div className="rounded-2xl border border-outline-variant/55 bg-surface-container-low/75 p-5 backdrop-blur-md">
+                  <strong className="font-mono text-xs uppercase tracking-[0.12em] text-primary">{s.source_type}</strong>{" "}
+                  {s.source_url ? (
+                    <a href={s.source_url} target="_blank" rel="noreferrer" className="font-semibold text-on-surface underline-offset-4 hover:text-primary hover:underline">
+                      {s.title || s.source_url}
+                    </a>
+                  ) : (
+                    <span className="font-semibold text-on-surface">{s.title || "Untitled source"}</span>
+                  )}
+                  <p className="mt-2 text-sm leading-7 text-on-surface-variant">{s.excerpt}</p>
+                </div>
+              </StaggerInView>
             ))}
           </div>
         )}
@@ -318,16 +340,25 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
 
       <section className={card}>
         <h2 className="font-display text-xl font-bold tracking-[-0.02em] text-on-surface">Report</h2>
-        {markdown ? (
-          <div className="mt-5 space-y-4">
-            <button type="button" className={btnPrimary} onClick={() => void downloadPdf()}>
-              Download PDF
-            </button>
-            <pre className={`whitespace-pre-wrap ${codePanel}`}>{markdown}</pre>
-          </div>
-        ) : (
-          <p className="mt-3 text-sm text-on-surface-variant">Report will appear when the run completes...</p>
-        )}
+        <AnimatePresence mode="wait">
+          {markdown ? (
+            <motion.div
+              key="report"
+              initial={reduce ? false : { opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-5 space-y-4"
+            >
+              <button type="button" className={btnPrimary} onClick={() => void downloadPdf()}>
+                Download PDF
+              </button>
+              <pre className={`whitespace-pre-wrap ${codePanel}`}>{markdown}</pre>
+            </motion.div>
+          ) : (
+            <motion.p key="empty" className="mt-3 text-sm text-on-surface-variant">
+              Report will appear when the run completes...
+            </motion.p>
+          )}
+        </AnimatePresence>
       </section>
     </div>
   );
