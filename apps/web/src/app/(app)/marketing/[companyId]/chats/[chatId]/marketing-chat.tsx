@@ -1,8 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { apiFetch } from "@/lib/api";
 import { consumeSse } from "@/app/(app)/runs/[id]/stream";
+import { ActivitySurface } from "@/components/motion/ActivitySurface";
+import { CollapsibleDevLog } from "@/components/motion/CollapsibleDevLog";
+import { MarketingPhaseVisualizer } from "@/components/motion/MarketingPhaseVisualizer";
+import {
+  formatMarketingDevLog,
+  MARKETING_STATUS_MESSAGES,
+  resolveMarketingStep,
+  type MarketingEventPayload,
+} from "@/lib/marketing-activity-phases";
 
 type Msg = { id: string; role: string; content: string; agent?: string | null; created_at?: string };
 type Artifact = { id: string; kind: string; title: string; storage_path?: string | null; mime_type?: string | null };
@@ -21,8 +31,21 @@ export function MarketingChat({
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
-  const [events, setEvents] = useState<string[]>([]);
+  const [rawEvents, setRawEvents] = useState<MarketingEventPayload[]>([]);
   const acRef = useRef<AbortController | null>(null);
+  const reduce = useReducedMotion();
+
+  const activityStep = resolveMarketingStep(busy, rawEvents);
+  const statusLine = MARKETING_STATUS_MESSAGES[activityStep];
+  const devLogLines = rawEvents.map(formatMarketingDevLog);
+
+  const surfacePhase = useMemo(() => {
+    if (activityStep === "review") return "reasoning" as const;
+    if (activityStep === "create") return "writing" as const;
+    if (activityStep === "route") return "research" as const;
+    if (activityStep === "done") return "completed" as const;
+    return "queued" as const;
+  }, [activityStep]);
 
   const refresh = useCallback(async () => {
     const res = await apiFetch(`/v1/chats/${chatId}`, { accessToken });
@@ -47,7 +70,7 @@ export function MarketingChat({
     if (!text || busy) return;
     setBusy(true);
     setInput("");
-    setEvents([]);
+    setRawEvents([]);
     try {
       const res = await apiFetch(`/v1/chats/${chatId}/messages`, {
         method: "POST",
@@ -65,15 +88,16 @@ export function MarketingChat({
         url,
         accessToken,
         (data) => {
-          const m = typeof data.message === "string" ? data.message : JSON.stringify(data);
-          setEvents((prev) => [...prev.slice(-40), `${data.agent || "?"}: ${m}`]);
+          const payload = data as MarketingEventPayload;
+          setRawEvents((prev) => [...prev.slice(-40), payload]);
+          const m = typeof payload.message === "string" ? payload.message : "";
           if (m === "Pipeline completed") void refresh();
         },
         acRef.current.signal
       );
       await refresh();
     } catch (e) {
-      setEvents((p) => [...p, String(e)]);
+      setRawEvents((p) => [...p, { message: String(e) }]);
     } finally {
       setBusy(false);
     }
@@ -83,21 +107,26 @@ export function MarketingChat({
     <div className="grid gap-6 lg:grid-cols-3">
       <div className="lg:col-span-2 space-y-4 rounded-3xl border border-outline-variant/50 bg-surface-container-low/80 p-5">
         <div className="max-h-[480px] space-y-3 overflow-y-auto pr-1">
-          {messages.map((m) => (
-            <div
-              key={m.id}
-              className={
-                m.role === "user"
-                  ? "ml-8 rounded-2xl bg-primary/15 px-4 py-3 text-sm text-on-surface"
-                  : "mr-8 rounded-2xl border border-outline-variant/40 bg-surface-container/90 px-4 py-3 text-sm text-on-surface"
-              }
-            >
-              {m.role !== "user" ? (
-                <span className="mb-1 block font-mono text-[10px] uppercase tracking-wider text-primary">{m.agent || m.role}</span>
-              ) : null}
-              <div className="whitespace-pre-wrap">{m.content}</div>
-            </div>
-          ))}
+          <AnimatePresence initial={false}>
+            {messages.map((m) => (
+              <motion.div
+                key={m.id}
+                layout={!reduce}
+                initial={reduce ? false : { opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={
+                  m.role === "user"
+                    ? "ml-8 rounded-2xl bg-primary/15 px-4 py-3 text-sm text-on-surface"
+                    : "mr-8 rounded-2xl border border-outline-variant/40 bg-surface-container/90 px-4 py-3 text-sm text-on-surface"
+                }
+              >
+                {m.role !== "user" ? (
+                  <span className="mb-1 block font-mono text-[10px] uppercase tracking-wider text-primary">{m.agent || m.role}</span>
+                ) : null}
+                <div className="whitespace-pre-wrap">{m.content}</div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
         <div className="flex gap-2">
           <textarea
@@ -113,14 +142,23 @@ export function MarketingChat({
         </div>
       </div>
       <div className="space-y-4">
-        <div className="rounded-3xl border border-outline-variant/50 bg-surface-container-low/80 p-4">
+        <div className="rounded-3xl border border-outline-variant/50 bg-surface-container-low/80 p-4" aria-live="polite">
           <h3 className="font-display text-sm font-bold text-on-surface">Activity</h3>
-          <ul className="mt-2 max-h-40 overflow-y-auto font-mono text-[10px] text-on-surface-variant">
-            {events.map((e, i) => (
-              <li key={i}>{e}</li>
-            ))}
-          </ul>
+          {busy || rawEvents.length > 0 ? (
+            <>
+              <div className="mt-3">
+                <MarketingPhaseVisualizer step={activityStep} />
+              </div>
+              <div className="mt-3">
+                <ActivitySurface phase={surfacePhase} compact />
+              </div>
+              <p className="mt-3 text-sm font-medium text-on-surface">{statusLine}</p>
+            </>
+          ) : (
+            <p className="mt-2 text-sm text-on-surface-variant">{statusLine}</p>
+          )}
         </div>
+        <CollapsibleDevLog lines={devLogLines} title="Technical log" className="!p-4" />
         <div className="rounded-3xl border border-outline-variant/50 bg-surface-container-low/80 p-4">
           <h3 className="font-display text-sm font-bold text-on-surface">Artifacts</h3>
           <ul className="mt-2 space-y-2 text-sm">
