@@ -1,4 +1,4 @@
-export type MarketingActivityStep = "idle" | "route" | "create" | "review" | "done";
+export type MarketingActivityStep = "idle" | "route" | "create" | "review" | "done" | "failed";
 
 export const MARKETING_ACTIVITY_STEPS: { id: MarketingActivityStep; label: string }[] = [
   { id: "route", label: "Understanding" },
@@ -30,7 +30,7 @@ export function resolveMarketingStep(busy: boolean, events: MarketingEventPayloa
   const last = events.at(-1);
   const msg = (last?.message ?? "").toLowerCase();
   if (msg.includes("pipeline completed") || msg.includes("completed")) return "done";
-  if (msg.includes("failed") || last?.phase === "error") return "done";
+  if (msg.includes("failed") || last?.phase === "error") return "failed";
 
   const agent = (last?.agent ?? "").toLowerCase();
   if (REVIEW_AGENTS.has(agent) || last?.phase === "review") return "review";
@@ -45,6 +45,7 @@ export function marketingStepIndex(step: MarketingActivityStep): number {
   if (step === "create") return 1;
   if (step === "review") return 2;
   if (step === "done") return 3;
+  if (step === "failed") return 3;
   return -1;
 }
 
@@ -54,6 +55,7 @@ export const MARKETING_STATUS_MESSAGES: Record<MarketingActivityStep, string> = 
   create: "Creating campaign assets",
   review: "Reviewing for brand fit",
   done: "Your update is ready",
+  failed: "The update failed",
 };
 
 export function formatMarketingDevLog(data: MarketingEventPayload): string {

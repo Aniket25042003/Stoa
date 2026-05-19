@@ -44,6 +44,7 @@ export function MarketingChat({
     if (activityStep === "create") return "writing" as const;
     if (activityStep === "route") return "research" as const;
     if (activityStep === "done") return "completed" as const;
+    if (activityStep === "failed") return "failed" as const;
     return "queued" as const;
   }, [activityStep]);
 
