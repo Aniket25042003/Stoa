@@ -25,7 +25,7 @@ export function PipelinePhaseVisualizer({
     <nav className={cn("w-full", className)} aria-label="GTM pipeline progress">
       <ol className="flex items-start justify-between gap-2">
         {PIPELINE_STEPS.map((step, i) => {
-          const done = terminal ? completed && i <= 3 : activeIdx > i;
+          const done = terminal ? completed : activeIdx > i;
           const active = !terminal && activeIdx === i;
           const pending = !terminal && activeIdx < i;
 
