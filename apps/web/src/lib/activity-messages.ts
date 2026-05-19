@@ -27,3 +27,14 @@ export const ACTIVITY_MESSAGES = {
 } as const;
 
 export type ActivityPhase = keyof typeof ACTIVITY_MESSAGES;
+
+export const PHASE_LABELS: Record<ActivityPhase, string> = {
+  planning: "Planning your strategy",
+  queued: "Preparing to run",
+  research: "Researching the market",
+  reasoning: "Reasoning about positioning",
+  writing: "Writing your GTM report",
+  completed: "Complete",
+  failed: "Something went wrong",
+  awaiting_plan_approval: "Awaiting your approval",
+};

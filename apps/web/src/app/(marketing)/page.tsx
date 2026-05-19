@@ -112,8 +112,8 @@ export default function LandingPage() {
 
       <section className="container-page py-12 md:py-16">
         <div className="grid gap-6 md:grid-cols-3">
-          {metrics.map((s) => (
-            <RevealOnScroll key={s.k}>
+          {metrics.map((s, i) => (
+            <RevealOnScroll key={s.k} delay={i * 0.08}>
               <div className="rounded-3xl p-7 card-glass">
                 <p className="font-display text-5xl font-extrabold tracking-[-0.05em] gradient-text">{s.k}</p>
                 <p className="mt-3 font-display text-xl font-bold text-on-surface">{s.v}</p>

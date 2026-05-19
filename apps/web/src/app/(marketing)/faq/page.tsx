@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { AnimatePresence, motion } from "framer-motion";
 import { useMemo, useState } from "react";
 import { FaqItem } from "@/components/marketing/FaqItem";
 import { RevealOnScroll } from "@/components/marketing/RevealOnScroll";
@@ -115,9 +116,26 @@ export default function FaqPage() {
           </nav>
         </aside>
         <div className="rounded-3xl border border-outline-variant/50 bg-transparent px-4 py-1 backdrop-blur-[2px] md:px-7">
-          {filtered.map((item) => (
-            <FaqItem key={item.id} question={item.q} answer={item.a} open={openId === item.id} onToggle={() => setOpenId((cur) => (cur === item.id ? null : item.id))} />
-          ))}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeCat}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.25 }}
+            >
+              {filtered.map((item, i) => (
+                <RevealOnScroll key={item.id} delay={i * 0.05}>
+                  <FaqItem
+                    question={item.q}
+                    answer={item.a}
+                    open={openId === item.id}
+                    onToggle={() => setOpenId((cur) => (cur === item.id ? null : item.id))}
+                  />
+                </RevealOnScroll>
+              ))}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </div>
 
