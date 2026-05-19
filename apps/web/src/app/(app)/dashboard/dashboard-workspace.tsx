@@ -2,8 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import { apiFetch } from "@/lib/api";
 import { ACTIVE_COMPANY_EVENT, getStoredActiveCompanyId, setStoredActiveCompanyId } from "@/lib/active-company";
+import { AnimatedStatCard } from "@/components/motion/AnimatedStatCard";
+import { ReadinessStepper } from "@/components/motion/ReadinessStepper";
+import { StaggerInView } from "@/components/motion/StaggerInView";
 
 type Company = {
   id: string;
@@ -35,14 +39,18 @@ type Summary = {
   };
 };
 
-function pct(value: number) {
-  return `${Math.round(value * 100)}%`;
+function recencyWidth(createdAt: string): string {
+  const age = Date.now() - new Date(createdAt).getTime();
+  const day = 24 * 60 * 60 * 1000;
+  const pct = Math.max(12, Math.min(100, 100 - (age / (14 * day)) * 88));
+  return `${pct}%`;
 }
 
 export function DashboardWorkspace({ accessToken, companies, email }: { accessToken: string; companies: Company[]; email: string }) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
+  const reduce = useReducedMotion();
 
   useEffect(() => {
     const stored = getStoredActiveCompanyId();
@@ -84,9 +92,23 @@ export function DashboardWorkspace({ accessToken, companies, email }: { accessTo
   const activeCompany = useMemo(() => companies.find((company) => company.id === activeId) ?? companies[0], [activeId, companies]);
   const readiness = summary?.readiness;
 
+  const statCards = [
+    { label: "Profile", variant: "percent" as const, value: summary?.stats.profile_completion },
+    { label: "GTM runs", variant: "number" as const, value: summary?.stats.gtm_runs },
+    { label: "Marketing chats", variant: "number" as const, value: summary?.stats.marketing_chats },
+    { label: "Saved knowledge", variant: "number" as const, value: summary?.stats.knowledge_items },
+    { label: "Marketing artifacts", variant: "number" as const, value: summary?.stats.marketing_artifacts },
+  ];
+
   return (
     <div className="space-y-8">
-      <section className="rounded-[2rem] bg-slate-deep p-7 text-white shadow-card md:p-10">
+      <motion.section
+        key={activeId ?? "hero"}
+        initial={reduce ? false : { opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+        className="rounded-[2rem] bg-slate-deep p-7 text-white shadow-card md:p-10"
+      >
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="eyebrow text-inverse-primary">Dashboard</p>
@@ -106,19 +128,18 @@ export function DashboardWorkspace({ accessToken, companies, email }: { accessTo
             </Link>
           </div>
         </div>
-      </section>
+      </motion.section>
 
-      <section className="grid gap-4 md:grid-cols-4">
-        {[
-          { label: "Profile", value: summary ? pct(summary.stats.profile_completion) : "--" },
-          { label: "GTM runs", value: summary?.stats.gtm_runs ?? "--" },
-          { label: "Marketing chats", value: summary?.stats.marketing_chats ?? "--" },
-          { label: "Saved knowledge", value: summary?.stats.knowledge_items ?? "--" },
-        ].map((item) => (
-          <div key={item.label} className="rounded-3xl p-6 card-glass">
-            <p className="eyebrow text-[10px]">{item.label}</p>
-            <p className="mt-3 font-display text-4xl font-extrabold tracking-[-0.04em] text-on-surface">{item.value}</p>
-          </div>
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        {statCards.map((item, i) => (
+          <StaggerInView key={item.label} delay={i * 0.08}>
+            <AnimatedStatCard
+              label={item.label}
+              loading={loading}
+              variant={item.variant}
+              value={item.value}
+            />
+          </StaggerInView>
         ))}
       </section>
 
@@ -131,19 +152,8 @@ export function DashboardWorkspace({ accessToken, companies, email }: { accessTo
             </div>
             {loading ? <span className="text-sm text-on-surface-variant">Loading...</span> : null}
           </div>
-          <div className="mt-6 grid gap-3">
-            {[
-              { label: "Company profile", ready: readiness?.has_company_profile },
-              { label: "GTM plan", ready: readiness?.has_gtm_plan },
-              { label: "Marketing foundation", ready: readiness?.has_marketing_baseline },
-            ].map((item) => (
-              <div key={item.label} className="flex items-center justify-between rounded-2xl border border-outline-variant/60 bg-surface-container-low/70 px-4 py-3">
-                <span className="font-semibold text-on-surface">{item.label}</span>
-                <span className={item.ready ? "text-sm font-bold text-primary" : "text-sm font-bold text-on-surface-variant"}>
-                  {item.ready ? "Ready" : "Needs setup"}
-                </span>
-              </div>
-            ))}
+          <div className="mt-6">
+            <ReadinessStepper readiness={readiness} />
           </div>
         </div>
 
@@ -178,10 +188,17 @@ export function DashboardWorkspace({ accessToken, companies, email }: { accessTo
           <div>
             <h3 className="font-display text-xl font-bold text-on-surface">GTM</h3>
             <div className="mt-3 space-y-2 text-sm text-on-surface-variant">
-              {(summary?.recent?.runs ?? []).slice(0, 4).map((run) => (
-                <Link key={run.id} href={`/runs/${run.id}`} className="block rounded-xl bg-surface-container-low/70 px-3 py-2 hover:text-primary">
-                  {run.status}
-                </Link>
+              {(summary?.recent?.runs ?? []).slice(0, 4).map((run, i) => (
+                <StaggerInView key={run.id} delay={i * 0.05}>
+                  <Link href={`/runs/${run.id}`} className="relative block overflow-hidden rounded-xl bg-surface-container-low/70 px-3 py-2 hover:text-primary">
+                    <span
+                      className="absolute bottom-0 left-0 h-0.5 bg-primary/40"
+                      style={{ width: recencyWidth(run.created_at) }}
+                      aria-hidden
+                    />
+                    {run.status}
+                  </Link>
+                </StaggerInView>
               ))}
               {(summary?.recent?.runs ?? []).length === 0 ? <p>No GTM activity yet.</p> : null}
             </div>
@@ -189,10 +206,17 @@ export function DashboardWorkspace({ accessToken, companies, email }: { accessTo
           <div>
             <h3 className="font-display text-xl font-bold text-on-surface">Marketing</h3>
             <div className="mt-3 space-y-2 text-sm text-on-surface-variant">
-              {(summary?.recent?.chats ?? []).slice(0, 4).map((chat) => (
-                <p key={chat.id} className="rounded-xl bg-surface-container-low/70 px-3 py-2">
-                  {chat.title || "Marketing chat"}
-                </p>
+              {(summary?.recent?.chats ?? []).slice(0, 4).map((chat, i) => (
+                <StaggerInView key={chat.id} delay={i * 0.05}>
+                  <p className="relative overflow-hidden rounded-xl bg-surface-container-low/70 px-3 py-2">
+                    <span
+                      className="absolute bottom-0 left-0 h-0.5 bg-primary/40"
+                      style={{ width: recencyWidth(chat.created_at) }}
+                      aria-hidden
+                    />
+                    {chat.title || "Marketing chat"}
+                  </p>
+                </StaggerInView>
               ))}
               {(summary?.recent?.chats ?? []).length === 0 ? <p>No marketing activity yet.</p> : null}
             </div>
@@ -200,10 +224,17 @@ export function DashboardWorkspace({ accessToken, companies, email }: { accessTo
           <div>
             <h3 className="font-display text-xl font-bold text-on-surface">Knowledge</h3>
             <div className="mt-3 space-y-2 text-sm text-on-surface-variant">
-              {(summary?.recent?.knowledge ?? []).slice(0, 4).map((item) => (
-                <p key={item.id} className="rounded-xl bg-surface-container-low/70 px-3 py-2">
-                  {item.title || item.kind}
-                </p>
+              {(summary?.recent?.knowledge ?? []).slice(0, 4).map((item, i) => (
+                <StaggerInView key={item.id} delay={i * 0.05}>
+                  <p className="relative overflow-hidden rounded-xl bg-surface-container-low/70 px-3 py-2">
+                    <span
+                      className="absolute bottom-0 left-0 h-0.5 bg-primary/40"
+                      style={{ width: recencyWidth(item.created_at) }}
+                      aria-hidden
+                    />
+                    {item.title || item.kind}
+                  </p>
+                </StaggerInView>
               ))}
               {(summary?.recent?.knowledge ?? []).length === 0 ? <p>No saved company notes yet.</p> : null}
             </div>
