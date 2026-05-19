@@ -144,6 +144,16 @@ html.dark {
       transform: scaleY(1);
     }
   }
+
+  @keyframes pipeline-step-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgb(99 102 241 / 0.35); }
+    50% { box-shadow: 0 0 0 6px rgb(99 102 241 / 0); }
+  }
+
+  @keyframes pipeline-dot-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.65; transform: scale(1.25); }
+  }
 }
 
 @layer base {
@@ -175,9 +185,22 @@ html.dark {
     animation: hero-grid-pulse 3.2s ease-in-out infinite;
   }
 
+  .pipeline-step-pulse {
+    animation: pipeline-step-pulse 2.4s ease-in-out infinite;
+  }
+
+  .pipeline-dot-pulse {
+    animation: pipeline-dot-pulse 1.6s ease-in-out infinite;
+  }
+
   @media (prefers-reduced-motion: reduce) {
-    .hero-dashboard-grid {
+    .hero-dashboard-grid,
+    .pipeline-step-pulse,
+    .pipeline-dot-pulse {
       animation: none;
+    }
+
+    .hero-dashboard-grid {
       opacity: 0.42;
     }
   }
