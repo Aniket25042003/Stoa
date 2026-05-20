@@ -15,3 +15,4 @@ __pycache__
 htmlcov
 AGENT.md
 .vscode/
+.pnpm-store/

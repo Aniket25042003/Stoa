@@ -20,7 +20,7 @@ export default async function OnboardingPage() {
         </p>
       </div>
       <div className="rounded-3xl p-6 card-glass md:p-8">
-        <CompanyOnboardingForm accessToken={session.access_token} />
+        <CompanyOnboardingForm />
       </div>
     </div>
   );

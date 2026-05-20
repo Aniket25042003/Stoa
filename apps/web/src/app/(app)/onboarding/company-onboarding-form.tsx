@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { apiFetch } from "@/lib/api";
 import { setStoredActiveCompanyId } from "@/lib/active-company";
 
 function lines(value: FormDataEntryValue | null) {
@@ -12,7 +11,7 @@ function lines(value: FormDataEntryValue | null) {
     .filter(Boolean);
 }
 
-export function CompanyOnboardingForm({ accessToken }: { accessToken: string }) {
+export function CompanyOnboardingForm() {
   const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -47,13 +46,15 @@ export function CompanyOnboardingForm({ accessToken }: { accessToken: string }) 
     }
 
     try {
-      const res = await apiFetch("/v1/companies", {
+      const res = await fetch("/api/companies", {
         method: "POST",
-        accessToken,
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(payload),
       });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.detail || "Could not create company");
+      const body = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(body?.detail || "Could not create company");
       setStoredActiveCompanyId(body.id);
       router.push("/dashboard");
       router.refresh();
