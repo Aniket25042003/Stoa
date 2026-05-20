@@ -37,7 +37,7 @@ services:
       - key: SUPABASE_JWT_SECRET
         sync: false
       - key: CORS_ORIGINS
-        value: https://nexara-flame.vercel.app,http://localhost:3000
+        value: https://stoaai.vercel.app,https://nexara-flame.vercel.app,http://localhost:3000
       - key: GTM_LLM_PROVIDER
         value: vertex
       - key: GTM_LLM_AUTO_FAILOVER
