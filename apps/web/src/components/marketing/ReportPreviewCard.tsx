@@ -1,44 +1,120 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
-import { BRAND_NAME, BRAND_TAGLINE } from "@/lib/brand";
+import { useState } from "react";
 import { cn } from "@/lib/cn";
 
-const excerpt = `# Growth Plan - Acme
+const FILES = {
+  "strategy.md": `# Strategy Blueprint: Q3 Launch
 
-## Executive summary
-- ICP: Seed-stage B2B founders replacing spreadsheets with AI workflows
-- Wedge: onboarding in under 10 minutes with a guided template library
-- Launch: founder communities + targeted outbound to design partners
+## Target Segment
+- Developers, Technical Founders
 
-## Positioning
-For technical founders who need a repeatable growth narrative, ${BRAND_NAME} keeps teams aligned from strategy to execution. ${BRAND_TAGLINE}
+## Channels
+- HN Launch Show
+- GitHub Developer Showcases
+- Engineering blogs
 
-## Marketing brief
-- Hook: replace scattered spreadsheets with a repeatable operating rhythm
-- Channel focus: founder communities, partner posts, and warm outbound
-- Creative angle: launch faster without losing strategic clarity
-`;
+## Priorities
+- 1. Open-core transparency
+- 2. Self-hosting docs`,
+
+  "brief.yaml": `brief:
+  objective: "Drive signups for Stoa self-serve engine"
+  target_audience: "CTOs & Solo Devs"
+  key_metrics:
+    - active_nodes
+    - cost_per_lead: <$10
+  creative_direction:
+    tone: "technical, minimalist, hyper-efficient"`,
+
+  "campaign.json": `{
+  "campaign": "stoa-q3-rollout",
+  "schedule": "2026-06-15",
+  "budget_allocation": {
+    "organic_vectors": "80%",
+    "newsletter_sponsorships": "20%"
+  },
+  "telemetry": {
+    "latency_check": "ok",
+    "conversion_thrust": "optimal"
+  }
+}`
+};
+
+type FileKey = keyof typeof FILES;
 
 export function ReportPreviewCard({ className }: { className?: string }) {
-  const reduce = useReducedMotion();
+  const [activeTab, setActiveTab] = useState<FileKey>("strategy.md");
+
+  const activeContent = FILES[activeTab];
+  const lines = activeContent.split("\n");
+
   return (
-    <motion.div
-      className={cn("relative overflow-hidden rounded-3xl card-glass", className)}
-      whileHover={reduce ? undefined : { y: -6, boxShadow: "var(--shadow-glow)" }}
-      transition={{ type: "spring", stiffness: 260, damping: 24 }}
-    >
-      <div className="flex items-center justify-between gap-3 border-b border-outline-variant/50 px-5 py-4">
-        <div className="flex items-center gap-2">
-          <span className="h-2.5 w-2.5 rounded-full bg-error" />
-          <span className="h-2.5 w-2.5 rounded-full bg-secondary-container" />
-          <span className="h-2.5 w-2.5 rounded-full bg-primary-container" />
+    <div className={cn("relative overflow-hidden border border-outline-variant bg-surface-container-lowest font-mono text-xs text-on-surface shadow-card flex flex-col", className)}>
+      {/* Editor Header */}
+      <div className="flex items-center justify-between border-b border-outline-variant/60 bg-surface px-4 py-2 select-none">
+        <div className="flex items-center gap-1.5">
+          <span className="h-2 w-2 bg-primary" />
+          <span className="h-2 w-2 bg-secondary" />
+          <span className="h-2 w-2 bg-outline-variant" />
         </div>
-        <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">plan.md</span>
+        <span className="text-[10px] text-on-surface-variant font-bold">STOA_WORKSPACE_EDITOR</span>
       </div>
-      <pre className="max-h-[360px] overflow-hidden p-6 font-mono text-[12px] leading-7 text-on-surface/86 [mask-image:linear-gradient(to_bottom,black_72%,transparent)]">
-        {excerpt}
-      </pre>
-    </motion.div>
+
+      {/* Editor Tabs */}
+      <div className="flex border-b border-outline-variant/60 bg-surface/50 select-none">
+        {(Object.keys(FILES) as FileKey[]).map((tab) => {
+          const isActive = tab === activeTab;
+          return (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={cn(
+                "px-4 py-2 text-[10px] border-r border-outline-variant/60 font-semibold cursor-pointer transition-colors",
+                isActive
+                  ? "bg-surface-dim text-primary border-b-2 border-b-primary"
+                  : "text-on-surface-variant/80 hover:text-on-surface hover:bg-surface/20"
+              )}
+            >
+              {tab}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Editor Text Area */}
+      <div className="p-4 bg-surface-dim flex-1 flex gap-3 min-h-[220px] select-text overflow-y-auto">
+        {/* Line Numbers */}
+        <div className="text-outline-variant/60 text-right pr-2 border-r border-outline-variant/20 flex flex-col gap-0.5 select-none font-mono">
+          {lines.map((_, idx) => (
+            <span key={idx}>{(idx + 1).toString().padStart(2, "0")}</span>
+          ))}
+        </div>
+        
+        {/* Code Content */}
+        <pre className="text-on-surface text-[11px] leading-normal font-mono overflow-x-auto whitespace-pre flex-1">
+          {lines.map((line, idx) => {
+            let colorClass = "text-on-surface";
+            
+            // Basic syntax color overlays based on markdown, yaml, and json structure
+            if (activeTab === "strategy.md") {
+              if (line.startsWith("#")) colorClass = "text-primary font-bold";
+              else if (line.startsWith("-")) colorClass = "text-secondary";
+            } else if (activeTab === "brief.yaml") {
+              if (line.includes(":")) colorClass = "text-secondary";
+              if (line.trim().startsWith("-")) colorClass = "text-primary/90";
+            } else if (activeTab === "campaign.json") {
+              if (line.includes('"')) colorClass = "text-secondary";
+            }
+            
+            return (
+              <div key={idx} className={colorClass}>
+                {line}
+              </div>
+            );
+          })}
+        </pre>
+      </div>
+    </div>
   );
 }

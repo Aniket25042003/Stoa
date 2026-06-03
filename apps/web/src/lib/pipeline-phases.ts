@@ -3,10 +3,10 @@ import type { ActivityPhase } from "@/lib/activity-messages";
 export type PipelineStepId = "planning" | "research" | "reasoning" | "writing";
 
 export const PIPELINE_STEPS: { id: PipelineStepId; label: string }[] = [
-  { id: "planning", label: "Planning" },
-  { id: "research", label: "Research" },
-  { id: "reasoning", label: "Reasoning" },
-  { id: "writing", label: "Writing" },
+  { id: "planning", label: "Prepare" },
+  { id: "research", label: "Explore" },
+  { id: "reasoning", label: "Analyze" },
+  { id: "writing", label: "Create" },
 ];
 
 export type EventRow = { message?: string; agent?: string; phase?: string };
@@ -63,6 +63,6 @@ export function activitySurfaceVariant(phase: ActivityPhase): ActivityPhase {
 }
 
 export function formatDevLogLine(e: EventRow): string {
-  if (e.message) return `[${e.phase ?? ""}] ${e.agent ?? ""}: ${e.message}`;
+  if (e.message) return `Activity: ${e.message}`;
   return JSON.stringify(e);
 }

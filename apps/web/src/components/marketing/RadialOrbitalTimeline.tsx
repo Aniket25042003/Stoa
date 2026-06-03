@@ -1,127 +1,190 @@
 "use client";
 
-import { Search, Sparkles, Telescope, PenLine } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { useState } from "react";
 
-const CX = 320;
-const CY = 250;
-
-type OrbitNode = {
-  id: string;
-  label: string;
-  sub: string;
-  Icon: LucideIcon;
-  rx: number;
-  ry: number;
-  speed: number;
-  phase: number;
-};
-
-const ORBITS: OrbitNode[] = [
-  { id: "research", label: "Research", sub: "Discovers market signals", Icon: Search, rx: 102, ry: 48, speed: 0.38, phase: 0 },
-  { id: "master", label: "Master Agent", sub: "Orchestrates strategy", Icon: Sparkles, rx: 150, ry: 72, speed: -0.3, phase: 1.2 },
-  { id: "reasoning", label: "Reasoning", sub: "Scores ICP + channels", Icon: Telescope, rx: 198, ry: 94, speed: 0.26, phase: 2.45 },
-  { id: "writing", label: "Writing", sub: "Builds execution narrative", Icon: PenLine, rx: 232, ry: 108, speed: -0.22, phase: 4 },
+const INPUTS = [
+  { id: "brief", name: "campaign_brief.txt", size: "4.2kb", type: "text/plain", data: "Goal: Introduce Stoa to dev-focused founders" },
+  { id: "signals", name: "competitor_signals.json", size: "12.8kb", type: "application/json", data: "Competitors: Hydra, Codag. Target channels: GitHub, HN" },
+  { id: "docs", name: "workspace_wiki.md", size: "8.5kb", type: "text/markdown", data: "Core product features: High performance engine, minimal latency" },
+  { id: "metrics", name: "acquisition_history.csv", size: "2.1kb", type: "text/csv", data: "Past conversions: Organic leads 42% higher on technical blogs" },
 ];
 
-/** Extra radial gap so label cards sit outside the planet + orbit stroke (reduces overlap while orbiting) */
-const LABEL_RADIAL_PAD = 44;
+const OUTPUT_YAML = `---
+strategy:
+  target_audience: "technical_founders"
+  routing:
+    - path: "github/developer-showcase"
+      thrust: 0.95
+      priority: HIGH
+    - path: "hn/launch-thread"
+      thrust: 0.82
+      priority: HIGH
+  tactics:
+    - vector: "open_core_transparency"
+      conversion_est: "2.4x"
+    - vector: "telemetry_monitors"
+      conversion_est: "1.8x"
+  metadata:
+    compiled_by: "stoa-core-v2"
+    integrity: 1.00
+    latency: "180ms"`;
 
 export function RadialOrbitalTimeline() {
-  const reduceMotion = useReducedMotion();
-  const [elapsedSec, setElapsedSec] = useState(0);
-  const startRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    if (reduceMotion) return;
-    let frame = 0;
-    const loop = (now: number) => {
-      if (startRef.current === null) startRef.current = now;
-      const t = (now - startRef.current) / 1000;
-      setElapsedSec(t);
-      frame = requestAnimationFrame(loop);
-    };
-    frame = requestAnimationFrame(loop);
-    return () => {
-      cancelAnimationFrame(frame);
-      startRef.current = null;
-    };
-  }, [reduceMotion]);
+  const [activeInput, setActiveInput] = useState<string>("brief");
 
   return (
-    <div className="relative overflow-hidden rounded-[2rem] border border-outline-variant/60 bg-slate-deep px-3 py-6 text-white shadow-card sm:px-4 md:px-8 md:py-10">
-      <div className="pointer-events-none absolute inset-0 opacity-[0.22] [background-image:linear-gradient(to_right,rgb(255_255_255_/_0.07)_1px,transparent_1px),linear-gradient(to_bottom,rgb(255_255_255_/_0.07)_1px,transparent_1px)] [background-size:40px_40px]" />
-      <div className="absolute left-1/2 top-[22%] h-48 w-48 -translate-x-1/2 rounded-full bg-primary/25 blur-3xl" />
-      <div className="relative px-1">
-        <p className="text-center font-display text-2xl font-bold tracking-[-0.03em] sm:text-3xl md:text-4xl">Radial Orbital Timeline</p>
-        <p className="mt-2 text-center text-xs text-white/70 sm:text-sm">
-          Master plan at the center — four stages orbit on their own rings, like planets around a star.
+    <div className="relative overflow-hidden border border-outline-variant bg-surface-container-lowest p-6 text-on-surface shadow-card">
+      {/* Subtle CRT line scanner overlay */}
+      <div className="pointer-events-none absolute inset-0 opacity-[0.15] [background-image:linear-gradient(to_bottom,rgb(255_255_255_/_0.07)_1px,transparent_1px)] [background-size:100%_4px]" />
+      
+      <div className="mb-6">
+        <span className="text-[10px] text-primary font-bold uppercase tracking-wider font-mono">Pipeline Funnel</span>
+        <h2 className="mt-1 font-display text-2xl font-bold tracking-tight sm:text-3xl text-on-surface">
+          Unstructured Intake to Strategic Blueprint
+        </h2>
+        <p className="mt-1 text-xs text-on-surface-variant font-mono">
+          Feed raw logs, competitor telemetry, and documents. Compile a structured strategy roadmap.
         </p>
       </div>
 
-      <div className="relative mt-4 min-h-[280px] w-full overflow-x-auto overflow-y-hidden sm:min-h-[320px] md:mt-6 md:min-h-0">
-        <svg
-          viewBox="0 0 640 460"
-          className="min-w-[min(100%,520px)] w-full max-w-full sm:min-w-0"
-          role="img"
-          aria-label="Orbital diagram with Master Plan at center and four orbiting stages"
-          preserveAspectRatio="xMidYMid meet"
-        >
-          <ellipse cx={CX} cy={CY} rx="250" ry="118" fill="none" stroke="rgb(99 102 241 / 32%)" strokeWidth="1.2" />
-          <ellipse cx={CX} cy={CY} rx="200" ry="95" fill="none" stroke="rgb(99 102 241 / 28%)" strokeWidth="1.2" />
-          <ellipse cx={CX} cy={CY} rx="150" ry="72" fill="none" stroke="rgb(99 102 241 / 24%)" strokeWidth="1.2" />
-          <ellipse cx={CX} cy={CY} rx="102" ry="48" fill="none" stroke="rgb(139 92 246 / 30%)" strokeWidth="1.2" />
-
-          <circle cx={CX} cy={CY} r="50" fill="rgb(192 193 255 / 18%)" />
-          <circle cx={CX} cy={CY} r="34" fill="rgb(139 92 246 / 38%)" />
-          <text x={CX} y={CY - 4} textAnchor="middle" className="fill-white text-[13px] font-bold">
-            Master
-          </text>
-          <text x={CX} y={CY + 12} textAnchor="middle" className="fill-white text-[13px] font-bold">
-            Plan
-          </text>
-
-          {ORBITS.map((node) => {
-            const theta = reduceMotion ? node.phase : node.phase + node.speed * elapsedSec;
-            const px = CX + node.rx * Math.cos(theta);
-            const py = CY + node.ry * Math.sin(theta);
-            const rdx = px - CX;
-            const rdy = py - CY;
-            const rlen = Math.hypot(rdx, rdy) || 1;
-            const ux = rdx / rlen;
-            const uy = rdy / rlen;
-            const Icon = node.Icon;
-            const labelFx = ux * LABEL_RADIAL_PAD;
-            const labelFy = uy * LABEL_RADIAL_PAD;
-            const cardW = 188;
-            const cardH = 56;
-            /* Mirror card horizontal placement so it stays on-screen and clears the center */
-            const cardX = ux >= 0 ? 6 : -cardW - 6;
-            const cardY = uy >= 0 ? -cardH / 2 : -cardH / 2;
-
+      {/* Funnel Workspace Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+        
+        {/* Left Side: Unstructured Inputs (4 Cols) */}
+        <div className="lg:col-span-4 flex flex-col gap-3">
+          <div className="text-[10px] font-mono text-secondary uppercase tracking-widest mb-1">
+            [Input Data Slots]
+          </div>
+          {INPUTS.map((item) => {
+            const isActive = activeInput === item.id;
             return (
-              <g key={node.id} transform={`translate(${px}, ${py})`}>
-                <circle r="17" fill="rgb(117 119 255 / 40%)" />
-                <circle r="12" fill="rgb(12 16 30)" stroke="rgb(192 193 255 / 40%)" strokeWidth="1" />
-                <g transform={`translate(${labelFx}, ${labelFy})`}>
-                  <foreignObject x={cardX} y={cardY} width={cardW} height={cardH}>
-                    <div className="flex h-full items-start gap-2 rounded-lg border border-white/10 bg-black/40 px-2 py-1.5 shadow-lg backdrop-blur-md">
-                      <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-white/10">
-                        <Icon className="h-4 w-4 text-[rgb(200,201,255)]" strokeWidth={2} aria-hidden />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[11px] font-semibold leading-tight text-white">{node.label}</p>
-                        <p className="mt-0.5 text-[10px] leading-snug text-white/55">{node.sub}</p>
-                      </div>
-                    </div>
-                  </foreignObject>
-                </g>
-              </g>
+              <button
+                key={item.id}
+                onClick={() => setActiveInput(item.id)}
+                className={`w-full text-left p-3 border font-mono transition-all duration-200 select-none cursor-pointer ${
+                  isActive
+                    ? "border-primary bg-primary/5 text-on-surface"
+                    : "border-outline-variant/60 bg-surface/20 text-on-surface-variant hover:border-secondary hover:text-on-surface"
+                }`}
+              >
+                <div className="flex justify-between items-center text-xs">
+                  <span className={isActive ? "text-primary font-bold" : ""}>
+                    {item.name}
+                  </span>
+                  <span className="text-[10px] text-secondary">{item.size}</span>
+                </div>
+                <div className="mt-1 text-[10px] truncate opacity-60">
+                  {item.data}
+                </div>
+              </button>
             );
           })}
-        </svg>
+        </div>
+
+        {/* Middle Side: SVG Interactive Flow (3 Cols) */}
+        <div className="lg:col-span-3 h-48 lg:h-64 flex items-center justify-center relative">
+          <svg
+            className="w-full h-full overflow-visible"
+            viewBox="0 0 200 240"
+            preserveAspectRatio="none"
+          >
+            {/* Input Paths converging to center */}
+            {/* Paths: Left points are Y=30, 90, 150, 210. Right point is Y=120 */}
+            <path d="M 0 30 Q 80 30, 140 120" fill="none" stroke="var(--outline)" strokeWidth="1.5" strokeDasharray="4 4" opacity="0.45" />
+            <path d="M 0 90 Q 80 90, 140 120" fill="none" stroke="var(--outline)" strokeWidth="1.5" strokeDasharray="4 4" opacity="0.45" />
+            <path d="M 0 150 Q 80 150, 140 120" fill="none" stroke="var(--outline)" strokeWidth="1.5" strokeDasharray="4 4" opacity="0.45" />
+            <path d="M 0 210 Q 80 210, 140 120" fill="none" stroke="var(--outline)" strokeWidth="1.5" strokeDasharray="4 4" opacity="0.45" />
+            
+            {/* Funnel Merge Neck */}
+            <path d="M 140 120 L 200 120" fill="none" stroke="var(--outline)" strokeWidth="2" opacity="0.7" />
+
+            {/* Glowing flowing particles along the active path */}
+            {activeInput === "brief" && (
+              <circle r="4.5" fill="#FF571A">
+                <animateMotion
+                  path="M 0 30 Q 80 30, 140 120 L 200 120"
+                  dur="1.5s"
+                  repeatCount="indefinite"
+                />
+              </circle>
+            )}
+            {activeInput === "signals" && (
+              <circle r="4.5" fill="#FF571A">
+                <animateMotion
+                  path="M 0 90 Q 80 90, 140 120 L 200 120"
+                  dur="1.5s"
+                  repeatCount="indefinite"
+                />
+              </circle>
+            )}
+            {activeInput === "docs" && (
+              <circle r="4.5" fill="#FF571A">
+                <animateMotion
+                  path="M 0 150 Q 80 150, 140 120 L 200 120"
+                  dur="1.5s"
+                  repeatCount="indefinite"
+                />
+              </circle>
+            )}
+            {activeInput === "metrics" && (
+              <circle r="4.5" fill="#FF571A">
+                <animateMotion
+                  path="M 0 210 Q 80 210, 140 120 L 200 120"
+                  dur="1.5s"
+                  repeatCount="indefinite"
+                />
+              </circle>
+            )}
+
+            {/* Funnel Center compiling junction circle */}
+            <g transform="translate(140, 120)">
+              <circle r="12" fill="var(--surface)" stroke="var(--outline)" strokeWidth="2" />
+              <circle r="6" fill="#FF571A" className="animate-ping" />
+            </g>
+          </svg>
+        </div>
+
+        {/* Right Side: Compiled Structured Output (5 Cols) */}
+        <div className="lg:col-span-5 flex flex-col h-full gap-3">
+          <div className="text-[10px] font-mono text-secondary uppercase tracking-widest mb-1 flex justify-between items-center">
+            <span>[Output Strategic Capsule]</span>
+            <span className="text-[9px] text-emerald-400 font-bold tracking-normal uppercase border border-emerald-400/30 bg-emerald-400/10 px-1.5 py-0.5 select-none">
+              Compiled OK
+            </span>
+          </div>
+
+          <div className="flex-1 bg-surface border border-outline-variant/60 p-4 font-mono text-[11px] leading-relaxed relative overflow-hidden h-[260px] flex flex-col">
+            {/* Syntax line counts */}
+            <div className="flex-1 overflow-y-auto select-all flex gap-3 text-on-surface-variant">
+              <div className="text-outline-variant/60 text-right select-none pr-1 border-r border-outline-variant/20 flex flex-col gap-0.5 font-mono">
+                {OUTPUT_YAML.split("\n").map((_, idx) => (
+                  <span key={idx}>{(idx + 1).toString().padStart(2, "0")}</span>
+                ))}
+              </div>
+              <pre className="text-on-surface text-[10px] overflow-x-auto whitespace-pre font-mono flex-1">
+                {OUTPUT_YAML.split("\n").map((line, idx) => {
+                  let colorClass = "text-on-surface";
+                  if (line.trim().startsWith("-")) colorClass = "text-primary/90";
+                  if (line.includes(":")) {
+                    const key = line.substring(0, line.indexOf(":"));
+                    return (
+                      <div key={idx}>
+                        <span className="text-secondary">{key}:</span>
+                        <span className="text-on-surface">{line.substring(line.indexOf(":") + 1)}</span>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div key={idx} className={colorClass}>
+                      {line}
+                    </div>
+                  );
+                })}
+              </pre>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );
