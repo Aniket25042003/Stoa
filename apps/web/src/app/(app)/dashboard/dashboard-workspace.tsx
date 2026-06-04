@@ -94,10 +94,10 @@ export function DashboardWorkspace({ accessToken, companies, email }: { accessTo
 
   const statCards = [
     { label: "Profile", variant: "percent" as const, value: summary?.stats.profile_completion },
-    { label: "GTM runs", variant: "number" as const, value: summary?.stats.gtm_runs },
-    { label: "Marketing chats", variant: "number" as const, value: summary?.stats.marketing_chats },
-    { label: "Saved knowledge", variant: "number" as const, value: summary?.stats.knowledge_items },
-    { label: "Marketing artifacts", variant: "number" as const, value: summary?.stats.marketing_artifacts },
+    { label: "Strategies", variant: "number" as const, value: summary?.stats.gtm_runs },
+    { label: "Conversations", variant: "number" as const, value: summary?.stats.marketing_chats },
+    { label: "Insights", variant: "number" as const, value: summary?.stats.knowledge_items },
+    { label: "Creatives", variant: "number" as const, value: summary?.stats.marketing_artifacts },
   ];
 
   return (
@@ -111,20 +111,20 @@ export function DashboardWorkspace({ accessToken, companies, email }: { accessTo
       >
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="eyebrow text-inverse-primary">Dashboard</p>
+            <p className="eyebrow text-primary">Dashboard</p>
             <h1 className="mt-4 font-display text-4xl font-extrabold tracking-[-0.045em] md:text-5xl">
-              {activeCompany?.name ?? "Your company"} workspace
+              {activeCompany?.name ?? "Your brand"} workspace
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-white/68">
-              Signed in as {email}. Track company readiness, GTM progress, marketing work, and recent activity from one place.
+              Signed in as {email}. Track brand progress, strategy development, campaign creative, and recent activity from one place.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
             <Link href="/gtm" className="btn-primary px-5 py-3 text-sm">
-              Open GTM
+              Open Strategy
             </Link>
             <Link href="/marketing" className="btn-secondary px-5 py-3 text-sm">
-              Open Marketing
+              Open Campaigns
             </Link>
           </div>
         </div>
@@ -147,7 +147,7 @@ export function DashboardWorkspace({ accessToken, companies, email }: { accessTo
         <div className="rounded-3xl p-6 card-glass md:p-7">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="eyebrow">Company readiness</p>
+              <p className="eyebrow">Your progress</p>
               <h2 className="mt-2 font-display text-2xl font-bold tracking-[-0.03em] text-on-surface">What is ready for {activeCompany?.name}</h2>
             </div>
             {loading ? <span className="text-sm text-on-surface-variant">Loading...</span> : null}
@@ -158,7 +158,7 @@ export function DashboardWorkspace({ accessToken, companies, email }: { accessTo
         </div>
 
         <div className="rounded-3xl p-6 card-glass md:p-7">
-          <p className="eyebrow">All companies</p>
+          <p className="eyebrow">All brands</p>
           <div className="mt-5 grid gap-3">
             {companies.map((company) => (
               <button
@@ -176,7 +176,7 @@ export function DashboardWorkspace({ accessToken, companies, email }: { accessTo
               </button>
             ))}
             <Link href="/onboarding" className="btn-secondary justify-center px-4 py-3 text-sm">
-              Add another company
+              Add another brand
             </Link>
           </div>
         </div>
@@ -186,7 +186,7 @@ export function DashboardWorkspace({ accessToken, companies, email }: { accessTo
         <p className="eyebrow">Recent activity</p>
         <div className="mt-5 grid gap-4 md:grid-cols-3">
           <div>
-            <h3 className="font-display text-xl font-bold text-on-surface">GTM</h3>
+            <h3 className="font-display text-xl font-bold text-on-surface">Strategy</h3>
             <div className="mt-3 space-y-2 text-sm text-on-surface-variant">
               {(summary?.recent?.runs ?? []).slice(0, 4).map((run, i) => (
                 <StaggerInView key={run.id} delay={i * 0.05}>
@@ -200,11 +200,11 @@ export function DashboardWorkspace({ accessToken, companies, email }: { accessTo
                   </Link>
                 </StaggerInView>
               ))}
-              {(summary?.recent?.runs ?? []).length === 0 ? <p>No GTM activity yet.</p> : null}
+              {(summary?.recent?.runs ?? []).length === 0 ? <p>No strategy activity yet.</p> : null}
             </div>
           </div>
           <div>
-            <h3 className="font-display text-xl font-bold text-on-surface">Marketing</h3>
+            <h3 className="font-display text-xl font-bold text-on-surface">Campaigns</h3>
             <div className="mt-3 space-y-2 text-sm text-on-surface-variant">
               {(summary?.recent?.chats ?? []).slice(0, 4).map((chat, i) => (
                 <StaggerInView key={chat.id} delay={i * 0.05}>
@@ -214,15 +214,15 @@ export function DashboardWorkspace({ accessToken, companies, email }: { accessTo
                       style={{ width: recencyWidth(chat.created_at) }}
                       aria-hidden
                     />
-                    {chat.title || "Marketing chat"}
+                    {chat.title || "Campaign conversation"}
                   </p>
                 </StaggerInView>
               ))}
-              {(summary?.recent?.chats ?? []).length === 0 ? <p>No marketing activity yet.</p> : null}
+              {(summary?.recent?.chats ?? []).length === 0 ? <p>No campaign activity yet.</p> : null}
             </div>
           </div>
           <div>
-            <h3 className="font-display text-xl font-bold text-on-surface">Knowledge</h3>
+            <h3 className="font-display text-xl font-bold text-on-surface">Insights</h3>
             <div className="mt-3 space-y-2 text-sm text-on-surface-variant">
               {(summary?.recent?.knowledge ?? []).slice(0, 4).map((item, i) => (
                 <StaggerInView key={item.id} delay={i * 0.05}>
@@ -236,7 +236,7 @@ export function DashboardWorkspace({ accessToken, companies, email }: { accessTo
                   </p>
                 </StaggerInView>
               ))}
-              {(summary?.recent?.knowledge ?? []).length === 0 ? <p>No saved company notes yet.</p> : null}
+              {(summary?.recent?.knowledge ?? []).length === 0 ? <p>No saved brand insights yet.</p> : null}
             </div>
           </div>
         </div>

@@ -41,7 +41,7 @@ export function CompanyOnboardingForm() {
 
     if (!payload.name || !payload.description || !payload.target_customers) {
       setSubmitting(false);
-      setMessage("Company name, description, and target customers are required.");
+      setMessage("Brand name, description, and target customers are required.");
       return;
     }
 
@@ -54,12 +54,12 @@ export function CompanyOnboardingForm() {
         body: JSON.stringify(payload),
       });
       const body = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(body?.detail || "Could not create company");
+      if (!res.ok) throw new Error(body?.detail || "Could not create brand");
       setStoredActiveCompanyId(body.id);
       router.push("/dashboard");
       router.refresh();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Could not create company");
+      setMessage(error instanceof Error ? error.message : "Could not create brand");
     } finally {
       setSubmitting(false);
     }
@@ -69,7 +69,7 @@ export function CompanyOnboardingForm() {
     <form onSubmit={(event) => void onSubmit(event)} className="grid gap-5">
       <div className="grid gap-5 md:grid-cols-2">
         <label className="grid gap-2 text-sm font-semibold text-on-surface">
-          Company name
+          Brand name
           <input name="name" required className="rounded-2xl border border-outline-variant/70 bg-surface-container-low px-4 py-3 font-normal outline-none focus:border-primary" placeholder="Acme" />
         </label>
         <label className="grid gap-2 text-sm font-semibold text-on-surface">
@@ -87,8 +87,8 @@ export function CompanyOnboardingForm() {
       </div>
 
       <label className="grid gap-2 text-sm font-semibold text-on-surface">
-        What does the company do?
-        <textarea name="description" required rows={4} className="rounded-2xl border border-outline-variant/70 bg-surface-container-low px-4 py-3 font-normal outline-none focus:border-primary" placeholder="Describe the product, customer problem, and core value." />
+        What&apos;s the big idea?
+        <textarea name="description" required rows={4} className="rounded-2xl border border-outline-variant/70 bg-surface-container-low px-4 py-3 font-normal outline-none focus:border-primary" placeholder="Describe the product, the problem it solves, and why it matters." />
       </label>
 
       <div className="grid gap-5 md:grid-cols-2">
@@ -127,7 +127,7 @@ export function CompanyOnboardingForm() {
 
       {message ? <p className="text-sm text-error">{message}</p> : null}
       <button type="submit" disabled={submitting} className="btn-primary justify-center px-6 py-3 text-sm disabled:opacity-60">
-        {submitting ? "Saving company..." : "Create company workspace"}
+        {submitting ? "Saving brand..." : "Let's go"}
       </button>
     </form>
   );

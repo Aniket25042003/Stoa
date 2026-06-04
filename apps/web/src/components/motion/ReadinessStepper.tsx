@@ -4,9 +4,9 @@ import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { cn } from "@/lib/cn";
 
 const STEPS = [
-  { key: "has_company_profile" as const, label: "Company profile" },
-  { key: "has_gtm_plan" as const, label: "GTM plan" },
-  { key: "has_marketing_baseline" as const, label: "Marketing foundation" },
+  { key: "has_company_profile" as const, label: "Brand profile" },
+  { key: "has_gtm_plan" as const, label: "Strategy blueprint" },
+  { key: "has_marketing_baseline" as const, label: "Creative direction" },
 ];
 
 export function ReadinessStepper({
