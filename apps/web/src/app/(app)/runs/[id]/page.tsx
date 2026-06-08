@@ -7,9 +7,9 @@ export default async function RunDetailPage({ params }: { params: Promise<{ id: 
   const { id } = await params;
   const supabase = await createClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  if (!session) redirect("/login");
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
 
   return (
     <div className="space-y-7">
@@ -19,7 +19,7 @@ export default async function RunDetailPage({ params }: { params: Promise<{ id: 
         </Link>
         <h1 className="mt-5 font-display text-4xl font-extrabold tracking-[-0.045em] md:text-5xl">Run {id.slice(0, 8)}...</h1>
       </div>
-      <RunDetail runId={id} accessToken={session.access_token} />
+      <RunDetail runId={id} />
     </div>
   );
 }

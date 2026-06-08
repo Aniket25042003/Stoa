@@ -72,7 +72,7 @@ function LoginForm() {
               {BRAND_TAGLINE}
             </h1>
             <p className="mt-5 text-base leading-8 text-on-surface-variant">{BRAND_SUBHEAD}</p>
-            <p className="mt-4 text-sm leading-7 text-on-surface-variant">Sign in with Google to open your company workspace.</p>
+            <p className="mt-4 text-sm leading-7 text-on-surface-variant">Sign in with Google to open your marketing intelligence workspace.</p>
           </div>
           <div className="hidden lg:block">
             <ActivityTickerTeaser />

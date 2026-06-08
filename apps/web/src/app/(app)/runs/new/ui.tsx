@@ -7,7 +7,7 @@ import { apiFetch } from "@/lib/api";
 const field = "mt-2 block input-field px-3 py-3 text-sm";
 const label = "eyebrow text-[11px]";
 
-export function NewRunForm({ accessToken, defaultCompanyId }: { accessToken: string; defaultCompanyId?: string }) {
+export function NewRunForm({ defaultCompanyId }: { defaultCompanyId?: string }) {
   const router = useRouter();
   const [desc, setDesc] = useState("");
   const [name, setName] = useState("");
@@ -27,7 +27,7 @@ export function NewRunForm({ accessToken, defaultCompanyId }: { accessToken: str
   useEffect(() => {
     void (async () => {
       try {
-        const res = await apiFetch("/v1/companies", { accessToken });
+        const res = await apiFetch("/v1/companies", { });
         if (res.ok) {
           const body = await res.json();
           setCompanies(body.companies ?? []);
@@ -36,7 +36,7 @@ export function NewRunForm({ accessToken, defaultCompanyId }: { accessToken: str
         setCompanies([]);
       }
     })();
-  }, [accessToken]);
+  }, []);
 
   useEffect(() => {
     if (defaultCompanyId) setCompanyId(defaultCompanyId);
@@ -49,7 +49,6 @@ export function NewRunForm({ accessToken, defaultCompanyId }: { accessToken: str
     try {
       const res = await apiFetch("/v1/runs", {
         method: "POST",
-        accessToken,
         body: JSON.stringify({
           product_description: desc,
           product_name: name || undefined,

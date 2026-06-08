@@ -11,9 +11,9 @@ export default async function MarketingChatPage({
   const { companyId, chatId } = await params;
   const supabase = await createClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  if (!session) redirect("/login");
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
 
   return (
     <div className="space-y-6">
@@ -27,7 +27,7 @@ export default async function MarketingChatPage({
         <h1 className="mt-4 font-display text-3xl font-extrabold tracking-[-0.04em]">Marketing chat</h1>
         <p className="mt-2 font-mono text-xs text-white/60">{chatId}</p>
       </div>
-      <MarketingChat chatId={chatId} companyId={companyId} accessToken={session.access_token} />
+      <MarketingChat chatId={chatId} companyId={companyId} />
     </div>
   );
 }
