@@ -28,7 +28,7 @@ export function ActivitySurface({
       )}
       aria-hidden
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-transparent to-violet-pulse/10" />
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-transparent to-secondary/10" />
       {variant === "planning" || variant === "queued" || variant === "awaiting_plan_approval" ? (
         <PlanningVisual reduced={reduced} />
       ) : null}
@@ -63,7 +63,7 @@ function ResearchVisual({ reduced }: { reduced: boolean }) {
         {[0.35, 0.55, 0.75, 0.5, 0.9, 0.65].map((h, i) => (
           <div
             key={i}
-            className="flex-1 rounded-t-md bg-gradient-to-t from-primary/50 to-violet-pulse/40 origin-bottom"
+            className="flex-1 rounded-t-md bg-gradient-to-t from-primary/50 to-secondary/40 origin-bottom"
             style={{
               height: `${h * 100}%`,
               animation: reduced ? undefined : `bar-rise 1.2s ease-out ${i * 0.08}s both`,
@@ -107,7 +107,7 @@ function ReasoningVisual({ reduced }: { reduced: boolean }) {
       ctx.clearRect(0, 0, w, h);
 
       const pulse = 0.35 + 0.15 * Math.sin(t * 2);
-      ctx.strokeStyle = `rgb(99 102 241 / ${pulse})`;
+      ctx.strokeStyle = `rgb(255 107 53 / ${pulse})`;
       ctx.lineWidth = 1;
       for (let i = 0; i < nodes.length; i++) {
         for (let j = i + 1; j < nodes.length; j++) {
@@ -124,7 +124,7 @@ function ReasoningVisual({ reduced }: { reduced: boolean }) {
         const r = 4 + 2 * Math.sin(t * 3 + i);
         ctx.beginPath();
         ctx.arc(n.x * w, n.y * h, r, 0, Math.PI * 2);
-        ctx.fillStyle = i % 2 === 0 ? "rgb(99 102 241 / 0.7)" : "rgb(139 92 246 / 0.6)";
+        ctx.fillStyle = i % 2 === 0 ? "rgba(255, 107, 53, 0.7)" : "rgba(196, 162, 101, 0.6)";
         ctx.fill();
       }
 
@@ -140,7 +140,7 @@ function ReasoningVisual({ reduced }: { reduced: boolean }) {
     <>
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
       {!reduced ? (
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgb(99_102_241_/_0.12),transparent_55%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgb(255_107_53_/_0.12),transparent_55%)]" />
       ) : null}
     </>
   );

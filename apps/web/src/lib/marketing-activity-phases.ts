@@ -1,9 +1,9 @@
 export type MarketingActivityStep = "idle" | "route" | "create" | "review" | "done" | "failed";
 
 export const MARKETING_ACTIVITY_STEPS: { id: MarketingActivityStep; label: string }[] = [
-  { id: "route", label: "Understanding" },
+  { id: "route", label: "Listening" },
   { id: "create", label: "Creating" },
-  { id: "review", label: "Reviewing" },
+  { id: "review", label: "Polishing" },
   { id: "done", label: "Ready" },
 ];
 
@@ -50,15 +50,15 @@ export function marketingStepIndex(step: MarketingActivityStep): number {
 }
 
 export const MARKETING_STATUS_MESSAGES: Record<MarketingActivityStep, string> = {
-  idle: "Ready when you are",
-  route: "Understanding your brief",
-  create: "Creating campaign assets",
-  review: "Reviewing for brand fit",
-  done: "Your update is ready",
+  idle: "Ready to launch",
+  route: "Listening to your creative brief...",
+  create: "Creating campaign assets...",
+  review: "Polishing for brand alignment...",
+  done: "Assets are ready for deployment",
   failed: "The update failed",
 };
 
 export function formatMarketingDevLog(data: MarketingEventPayload): string {
   const m = typeof data.message === "string" ? data.message : JSON.stringify(data);
-  return `${data.agent || "?"}: ${m}`;
+  return `Activity: ${m}`;
 }

@@ -20,7 +20,7 @@ export function MarketingPhaseVisualizer({
   const failed = step === "failed";
 
   return (
-    <nav className={cn("w-full", className)} aria-label="Marketing activity progress">
+    <nav className={cn("w-full", className)} aria-label="Campaign activity progress">
       <ol className="flex items-start justify-between gap-1">
         {MARKETING_ACTIVITY_STEPS.map((s, i) => {
           const isDone = done || activeIdx > i;
