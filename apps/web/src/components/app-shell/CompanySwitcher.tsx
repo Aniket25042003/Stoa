@@ -11,7 +11,7 @@ type Company = {
   description?: string | null;
 };
 
-export function CompanySwitcher(()) {
+export function CompanySwitcher() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);

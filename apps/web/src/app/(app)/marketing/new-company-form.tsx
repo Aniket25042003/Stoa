@@ -6,7 +6,7 @@ import { apiFetch } from "@/lib/api";
 const field = "mt-2 block input-field px-3 py-3 text-sm";
 const label = "eyebrow text-[11px]";
 
-export function NewCompanyForm(()) {
+export function NewCompanyForm() {
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [err, setErr] = useState<string | null>(null);
