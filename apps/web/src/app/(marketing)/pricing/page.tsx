@@ -6,36 +6,37 @@ import { useState } from "react";
 import { PricingCard } from "@/components/marketing/PricingCard";
 import { RevealOnScroll } from "@/components/marketing/RevealOnScroll";
 import { SectionHeader } from "@/components/marketing/SectionHeader";
+import { getAuthEntryPath } from "@/lib/auth-entry";
 import { BRAND_SUBHEAD } from "@/lib/brand";
 import { cn } from "@/lib/cn";
 
-const tiers = (yearly: boolean) => [
+const tiers = (yearly: boolean, authEntry: string) => [
   {
     name: "Starter",
     price: "$0",
     period: yearly ? "/ year" : "/ month",
-    description: "For solo founders organizing one company.",
-    features: ["1 company workspace", "GTM plan starter", "Marketing idea drafts", "Community support"],
+    description: "For founders mapping their first product narrative.",
+    features: ["1 brand workspace", "Strategy blueprint", "Campaign ideation", "Community access"],
     cta: "Start free",
-    href: "/login",
+    href: authEntry,
     highlighted: false,
   },
   {
     name: "Pro",
     price: yearly ? "$190" : "$19",
     period: yearly ? "/ year" : "/ month",
-    description: "For founders planning and shipping weekly campaigns.",
-    features: ["5 company workspaces", "Editable GTM plans", "Campaign copy and scripts", "Creative briefs", "Email support"],
+    description: "For growing companies launching dynamic weekly campaigns.",
+    features: ["5 brand workspaces", "Full strategy development", "Campaign-ready deliverables", "Creative direction tools", "Priority support"],
     cta: "Get Pro",
-    href: "/login",
+    href: authEntry,
     highlighted: true,
   },
   {
     name: "Team",
     price: yearly ? "$490" : "$49",
     period: yearly ? "/ year" : "/ month",
-    description: "For small teams managing several brands or products.",
-    features: ["Unlimited company workspaces", "Shared dashboard", "Priority support", "Team-ready exports"],
+    description: "For agencies and teams running campaign studios at scale.",
+    features: ["Unlimited brand workspaces", "Shared team dashboard", "Priority support", "Export-ready documents"],
     cta: "Talk to us",
     href: "/faq",
     highlighted: false,
@@ -43,10 +44,10 @@ const tiers = (yearly: boolean) => [
 ];
 
 const rows = [
-  { label: "Company workspaces", starter: "1", pro: "5", team: "Unlimited" },
-  { label: "GTM planning", starter: "yes", pro: "yes", team: "yes" },
-  { label: "Marketing briefs and scripts", starter: "Limited", pro: "yes", team: "yes" },
-  { label: "Team-ready exports", starter: "no", pro: "yes", team: "yes" },
+  { label: "Brand workspaces", starter: "1", pro: "5", team: "Unlimited" },
+  { label: "Strategy blueprinting", starter: "yes", pro: "yes", team: "yes" },
+  { label: "Campaign deliverables", starter: "Limited", pro: "yes", team: "yes" },
+  { label: "Export-ready documents", starter: "no", pro: "yes", team: "yes" },
 ];
 
 function CompareCell({ value }: { value: string }) {
@@ -79,7 +80,7 @@ function CompareCell({ value }: { value: string }) {
 
 export default function PricingPage() {
   const [yearly, setYearly] = useState(true);
-  const list = tiers(yearly);
+  const list = tiers(yearly, getAuthEntryPath());
 
   return (
     <div className="container-page py-16 md:py-24">
@@ -98,7 +99,7 @@ export default function PricingPage() {
             onClick={() => setYearly(false)}
             className={cn(
               "rounded-full px-5 py-2 text-sm font-bold transition-colors",
-              !yearly ? "bg-slate-deep text-white shadow-sm" : "text-on-surface-variant hover:text-on-surface"
+              !yearly ? "bg-slate-deep text-on-surface shadow-sm" : "text-on-surface-variant hover:text-on-surface"
             )}
           >
             Monthly
@@ -108,7 +109,7 @@ export default function PricingPage() {
             onClick={() => setYearly(true)}
             className={cn(
               "rounded-full px-5 py-2 text-sm font-bold transition-colors",
-              yearly ? "bg-slate-deep text-white shadow-sm" : "text-on-surface-variant hover:text-on-surface"
+              yearly ? "bg-slate-deep text-on-surface shadow-sm" : "text-on-surface-variant hover:text-on-surface"
             )}
           >
             Yearly

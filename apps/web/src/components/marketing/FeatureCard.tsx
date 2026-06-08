@@ -18,7 +18,7 @@ export function FeatureCard({
   const reduce = useReducedMotion();
   return (
     <motion.div
-      className={cn("group relative overflow-hidden rounded-2xl p-8 card-glass", className)}
+      className={cn("group relative overflow-hidden rounded-2xl p-8 energetic-card", className)}
       whileHover={reduce ? undefined : { y: -6, boxShadow: "var(--shadow-glow)" }}
       transition={{ type: "spring", stiffness: 260, damping: 24 }}
     >
