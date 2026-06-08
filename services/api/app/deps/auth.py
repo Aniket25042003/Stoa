@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from functools import lru_cache
-
+import time
 import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -10,34 +9,36 @@ from jwt import PyJWKClient
 from app.config import get_settings
 
 bearer_scheme = HTTPBearer(auto_error=False)
-
-# Supabase asymmetric signing keys (see https://supabase.com/docs/guides/auth/jwts)
 _ASYMMETRIC_ALGS = frozenset({"RS256", "RS384", "RS512", "ES256", "ES384", "ES512"})
-
-
-@lru_cache(maxsize=2)
-def _jwks_client(jwks_url: str) -> PyJWKClient:
-    return PyJWKClient(jwks_url)
+_JWKS_TTL_SECONDS = 3600
+_jwks_cache: dict[str, tuple[float, PyJWKClient]] = {}
 
 
 def _issuer(settings_url: str) -> str:
     return f"{settings_url.rstrip('/')}/auth/v1"
 
 
+def _jwks_client(jwks_url: str) -> PyJWKClient:
+    now = time.time()
+    cached = _jwks_cache.get(jwks_url)
+    if cached and now - cached[0] < _JWKS_TTL_SECONDS:
+        return cached[1]
+    client = PyJWKClient(jwks_url)
+    _jwks_cache[jwks_url] = (now, client)
+    return client
+
+
 def user_id_from_jwt(token: str) -> str:
     settings = get_settings()
     try:
         header = jwt.get_unverified_header(token)
-    except jwt.PyJWTError as e:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, f"Invalid token: {e}") from e
+    except jwt.PyJWTError:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid token") from None
 
     alg = header.get("alg")
     if alg in _ASYMMETRIC_ALGS:
         if not settings.supabase_url:
-            raise HTTPException(
-                status.HTTP_500_INTERNAL_SERVER_ERROR,
-                "SUPABASE_URL not configured (required for asymmetric JWT verification)",
-            )
+            raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "SUPABASE_URL not configured")
         jwks_url = _issuer(settings.supabase_url) + "/.well-known/jwks.json"
         signing_key = _jwks_client(jwks_url).get_signing_key_from_jwt(token)
         try:
@@ -50,16 +51,7 @@ def user_id_from_jwt(token: str) -> str:
                 options={"verify_aud": True, "verify_iss": True},
             )
         except jwt.PyJWTError:
-            try:
-                payload = jwt.decode(
-                    token,
-                    signing_key.key,
-                    algorithms=[alg],
-                    issuer=_issuer(settings.supabase_url),
-                    options={"verify_aud": False, "verify_iss": True},
-                )
-            except jwt.PyJWTError as e:
-                raise HTTPException(status.HTTP_401_UNAUTHORIZED, f"Invalid token: {e}") from e
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid token") from None
     elif alg == "HS256":
         if not settings.supabase_jwt_secret:
             raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "SUPABASE_JWT_SECRET not configured")
@@ -69,26 +61,17 @@ def user_id_from_jwt(token: str) -> str:
                 settings.supabase_jwt_secret,
                 algorithms=["HS256"],
                 audience="authenticated",
-                options={"verify_aud": True},
+                issuer=_issuer(settings.supabase_url) if settings.supabase_url else None,
+                options={"verify_aud": True, "verify_iss": bool(settings.supabase_url)},
             )
         except jwt.PyJWTError:
-            try:
-                payload = jwt.decode(
-                    token,
-                    settings.supabase_jwt_secret,
-                    algorithms=["HS256"],
-                    options={"verify_aud": False},
-                )
-            except jwt.PyJWTError as e:
-                raise HTTPException(status.HTTP_401_UNAUTHORIZED, f"Invalid token: {e}") from e
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid token") from None
     else:
-        raise HTTPException(
-            status.HTTP_401_UNAUTHORIZED,
-            f"Unsupported JWT algorithm: {alg!r}",
-        )
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid token")
+
     sub = payload.get("sub")
     if not sub:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Token missing sub")
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid token")
     return str(sub)
 
 
