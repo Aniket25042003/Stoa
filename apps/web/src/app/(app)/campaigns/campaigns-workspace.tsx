@@ -12,7 +12,7 @@ type Campaign = {
   created_at: string;
 };
 
-export function CampaignsWorkspace(()) {
+export function CampaignsWorkspace() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [brief, setBrief] = useState("");
   const [selected, setSelected] = useState<Campaign | null>(null);

@@ -22,7 +22,7 @@ type Completeness = {
 type Document = { id: string; title: string; doc_type: string; status: string };
 type Competitor = { id: string; name: string; website_url?: string | null };
 
-export function DataWorkspace(()) {
+export function DataWorkspace() {
   const [org, setOrg] = useState<Org | null>(null);
   const [completeness, setCompleteness] = useState<Completeness | null>(null);
   const [documents, setDocuments] = useState<Document[]>([]);
