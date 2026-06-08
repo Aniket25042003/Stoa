@@ -17,7 +17,10 @@ class _PiiRedactingFormatter(logging.Formatter):
         if isinstance(record.msg, str):
             record.msg = redact_pii_for_logs(record.msg)
         if record.args:
-            record.args = tuple(redact_pii_for_logs(str(a)) if isinstance(a, str) else a for a in record.args)
+            record.args = tuple(
+                redact_pii_for_logs(str(a)) if isinstance(a, str) else a
+                for a in record.args
+            )
         return super().format(record)
 
 

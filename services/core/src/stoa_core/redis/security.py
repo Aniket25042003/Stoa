@@ -46,7 +46,8 @@ def validate_redis_security(settings: Settings | None = None) -> None:
             )
         if settings.redis_require_tls_effective and not info.uses_tls:
             raise RedisSecurityError(
-                "Production requires TLS — use rediss:// in REDIS_URL (set REDIS_REQUIRE_TLS=false to override)"
+                "Production requires TLS — use rediss:// in REDIS_URL "
+                "(set REDIS_REQUIRE_TLS=false to override)"
             )
 
     backend = inspect_redis_url(settings.result_backend)

@@ -7,7 +7,8 @@ from typing import Any
 from stoa_core.llm.router import invoke_json
 
 EXTRACT_SYSTEM = """You extract structured customer intelligence signals from marketing/sales text.
-Return JSON: {"signals": [{"kind": "pain_point|objection|buying_trigger|segment|win_loss", "content": "...", "confidence": 0.0-1.0, "evidence_quote": "..."}]}
+Return JSON: {"signals": [{"kind": "pain_point|objection|buying_trigger|segment|win_loss",
+"content": "...", "confidence": 0.0-1.0, "evidence_quote": "..."}]}
 Only include signals clearly supported by the text. Max 8 signals per chunk."""
 
 

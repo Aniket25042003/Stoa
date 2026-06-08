@@ -64,7 +64,10 @@ def build_executive_summary(org_id: str, org_name: str) -> dict[str, Any]:
     )
     if not context:
         return {
-            "summary": f"No customer intelligence ingested yet for {org_name}. Add documents in the Data hub.",
+            "summary": (
+                f"No customer intelligence ingested yet for {org_name}. "
+                "Add documents in the Data hub."
+            ),
             "citations": [],
         }
     summary = answer_question(

@@ -5,12 +5,15 @@ from __future__ import annotations
 import json
 import logging
 import os
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable, Literal
+from typing import Any, Literal
 
 from stoa_core.config import get_settings
 
 logger = logging.getLogger(__name__)
+
+MessageFn = Callable[[list[tuple[str, str]]], str]
 
 PROVIDER_VERTEX = "vertex"
 PROVIDER_OPENAI = "openai"
@@ -73,8 +76,12 @@ class LLMConfig:
         if provider == PROVIDER_OPENAI:
             return (self.openai_model_fast if fast else self.openai_model_pro) or self.openai_model
         if provider == PROVIDER_ANTHROPIC:
-            return (self.anthropic_model_fast if fast else self.anthropic_model_pro) or self.anthropic_model
+            fast_model = self.anthropic_model_fast if fast else self.anthropic_model_pro
+            return fast_model or self.anthropic_model
         return None
+
+
+BuilderFn = Callable[[LLMConfig, TaskTier], MessageFn | None]
 
 
 def load_config() -> LLMConfig:
@@ -101,7 +108,7 @@ def load_config() -> LLMConfig:
     )
 
 
-def _vertex_invocation(cfg: LLMConfig, task_tier: TaskTier) -> Callable[[list[tuple[str, str]]], str] | None:
+def _vertex_invocation(cfg: LLMConfig, task_tier: TaskTier) -> MessageFn | None:
     try:
         from langchain_google_vertexai import ChatVertexAI
     except Exception as exc:
@@ -128,7 +135,7 @@ def _vertex_invocation(cfg: LLMConfig, task_tier: TaskTier) -> Callable[[list[tu
     return _invoke
 
 
-def _openai_invocation(cfg: LLMConfig, task_tier: TaskTier) -> Callable[[list[tuple[str, str]]], str] | None:
+def _openai_invocation(cfg: LLMConfig, task_tier: TaskTier) -> MessageFn | None:
     model = cfg.model_for(PROVIDER_OPENAI, task_tier)
     if not model or not os.getenv("OPENAI_API_KEY"):
         return None
@@ -149,7 +156,7 @@ def _openai_invocation(cfg: LLMConfig, task_tier: TaskTier) -> Callable[[list[tu
     return _invoke
 
 
-def _anthropic_invocation(cfg: LLMConfig, task_tier: TaskTier) -> Callable[[list[tuple[str, str]]], str] | None:
+def _anthropic_invocation(cfg: LLMConfig, task_tier: TaskTier) -> MessageFn | None:
     model = cfg.model_for(PROVIDER_ANTHROPIC, task_tier)
     if not model or not os.getenv("ANTHROPIC_API_KEY"):
         return None
@@ -170,7 +177,7 @@ def _anthropic_invocation(cfg: LLMConfig, task_tier: TaskTier) -> Callable[[list
     return _invoke
 
 
-_BUILDERS: dict[str, Callable[[LLMConfig, TaskTier], Callable[[list[tuple[str, str]]], str] | None]] = {
+_BUILDERS: dict[str, BuilderFn] = {
     PROVIDER_VERTEX: _vertex_invocation,
     PROVIDER_OPENAI: _openai_invocation,
     PROVIDER_ANTHROPIC: _anthropic_invocation,

@@ -1,6 +1,11 @@
 from unittest.mock import patch
 
-from stoa_core.rag.retrieve import _apply_token_budget, _mmr_dedup, _to_context_items, retrieve_context
+from stoa_core.rag.retrieve import (
+    _apply_token_budget,
+    _mmr_dedup,
+    _to_context_items,
+    retrieve_context,
+)
 
 
 def _cand(content: str, score: float = 1.0, tokens: int = 100) -> dict:
@@ -16,7 +21,11 @@ def _cand(content: str, score: float = 1.0, tokens: int = 100) -> dict:
 
 
 def test_apply_token_budget():
-    candidates = [_cand("a" * 400, tokens=100), _cand("b" * 400, tokens=100), _cand("c" * 400, tokens=100)]
+    candidates = [
+        _cand("a" * 400, tokens=100),
+        _cand("b" * 400, tokens=100),
+        _cand("c" * 400, tokens=100),
+    ]
     trimmed = _apply_token_budget(candidates, token_budget=250)
     assert len(trimmed) == 2
     assert sum(c["token_count"] for c in trimmed) <= 250

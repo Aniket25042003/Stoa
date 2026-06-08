@@ -41,7 +41,9 @@ class Settings(BaseSettings):
     vertex_location: str = "us-central1"
     gtm_vertex_location: str | None = Field(default=None, validation_alias="GTM_VERTEX_LOCATION")
     gtm_vertex_model: str | None = Field(default=None, validation_alias="GTM_VERTEX_MODEL")
-    gtm_vertex_model_fast: str | None = Field(default=None, validation_alias="GTM_VERTEX_MODEL_FAST")
+    gtm_vertex_model_fast: str | None = Field(
+        default=None, validation_alias="GTM_VERTEX_MODEL_FAST"
+    )
     openai_api_key: str | None = None
     openai_model: str | None = None
     openai_model_fast: str | None = None

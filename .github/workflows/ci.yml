@@ -5,6 +5,10 @@ on:
     branches: [main, master]
   pull_request:
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   web:
     runs-on: ubuntu-latest

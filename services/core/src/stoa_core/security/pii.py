@@ -9,7 +9,10 @@ from typing import Any
 EMAIL_RE = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b")
 PHONE_E164_RE = re.compile(r"\+[1-9]\d{7,14}\b")
 PHONE_US_RE = re.compile(r"\b(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b")
-PHONE_INTL_RE = re.compile(r"(?<!\d)(?:\+?\d{1,3}[-.\s.]?)?\(?\d{2,4}\)?[-.\s.]?\d{3,4}[-.\s.]?\d{3,4}(?!\d)")
+PHONE_INTL_RE = re.compile(
+    r"(?<!\d)(?:\+?\d{1,3}[-.\s.]?)?\(?\d{2,4}\)?"
+    r"[-.\s.]?\d{3,4}[-.\s.]?\d{3,4}(?!\d)"
+)
 SSN_RE = re.compile(r"\b\d{3}-\d{2}-\d{4}\b")
 UK_NINO_RE = re.compile(r"\b[A-CEGHJ-PR-TW-Z]{2}\d{6}[A-D]?\b", re.I)
 PASSPORT_RE = re.compile(r"\b[A-Z]{1,2}\d{6,9}\b")
