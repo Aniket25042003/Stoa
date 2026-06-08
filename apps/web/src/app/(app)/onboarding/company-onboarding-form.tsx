@@ -2,14 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { setStoredActiveCompanyId } from "@/lib/active-company";
-
-function lines(value: FormDataEntryValue | null) {
-  return String(value ?? "")
-    .split(/\r?\n|,/)
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
+import { createClient } from "@/lib/supabase/client";
+import { apiFetch } from "@/lib/api";
 
 export function CompanyOnboardingForm() {
   const router = useRouter();
@@ -25,110 +19,51 @@ export function CompanyOnboardingForm() {
       name: String(form.get("name") ?? "").trim(),
       website_url: String(form.get("website_url") ?? "").trim() || null,
       industry: String(form.get("industry") ?? "").trim() || null,
-      description: String(form.get("description") ?? "").trim(),
-      target_customers: String(form.get("target_customers") ?? "").trim(),
-      geography: String(form.get("geography") ?? "").trim() || null,
-      business_model: String(form.get("business_model") ?? "").trim() || null,
-      stage: String(form.get("stage") ?? "").trim() || null,
-      goals: lines(form.get("goals")),
-      known_competitors: lines(form.get("known_competitors")),
-      constraints: lines(form.get("constraints")),
-      brand_voice: {
-        notes: String(form.get("brand_voice") ?? "").trim(),
-      },
-      onboarding_completed: true,
     };
 
-    if (!payload.name || !payload.description || !payload.target_customers) {
+    if (!payload.name) {
       setSubmitting(false);
-      setMessage("Company name, description, and target customers are required.");
+      setMessage("Company name is required.");
       return;
     }
 
     try {
-      const res = await fetch("/api/companies", {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not signed in");
+      const res = await apiFetch("/v1/orgs/onboarding", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify(payload),
       });
       const body = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(body?.detail || "Could not create company");
-      setStoredActiveCompanyId(body.id);
-      router.push("/dashboard");
+      if (!res.ok) throw new Error(body?.detail || "Could not create workspace");
+      router.push("/data");
       router.refresh();
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Could not create company");
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <form onSubmit={(event) => void onSubmit(event)} className="grid gap-5">
-      <div className="grid gap-5 md:grid-cols-2">
-        <label className="grid gap-2 text-sm font-semibold text-on-surface">
-          Company name
-          <input name="name" required className="rounded-2xl border border-outline-variant/70 bg-surface-container-low px-4 py-3 font-normal outline-none focus:border-primary" placeholder="Acme" />
-        </label>
-        <label className="grid gap-2 text-sm font-semibold text-on-surface">
-          Website
-          <input name="website_url" className="rounded-2xl border border-outline-variant/70 bg-surface-container-low px-4 py-3 font-normal outline-none focus:border-primary" placeholder="https://example.com" />
-        </label>
-        <label className="grid gap-2 text-sm font-semibold text-on-surface">
-          Industry
-          <input name="industry" className="rounded-2xl border border-outline-variant/70 bg-surface-container-low px-4 py-3 font-normal outline-none focus:border-primary" placeholder="B2B SaaS" />
-        </label>
-        <label className="grid gap-2 text-sm font-semibold text-on-surface">
-          Stage
-          <input name="stage" className="rounded-2xl border border-outline-variant/70 bg-surface-container-low px-4 py-3 font-normal outline-none focus:border-primary" placeholder="Pre-seed, seed, growth..." />
-        </label>
+    <form onSubmit={onSubmit} className="space-y-5">
+      <div>
+        <label className="text-sm font-medium">Company name</label>
+        <input name="name" required className="mt-1 w-full rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-sm" />
       </div>
-
-      <label className="grid gap-2 text-sm font-semibold text-on-surface">
-        What does the company do?
-        <textarea name="description" required rows={4} className="rounded-2xl border border-outline-variant/70 bg-surface-container-low px-4 py-3 font-normal outline-none focus:border-primary" placeholder="Describe the product, customer problem, and core value." />
-      </label>
-
-      <div className="grid gap-5 md:grid-cols-2">
-        <label className="grid gap-2 text-sm font-semibold text-on-surface">
-          Target customers
-          <textarea name="target_customers" required rows={3} className="rounded-2xl border border-outline-variant/70 bg-surface-container-low px-4 py-3 font-normal outline-none focus:border-primary" placeholder="Who buys or uses it?" />
-        </label>
-        <label className="grid gap-2 text-sm font-semibold text-on-surface">
-          Geography
-          <textarea name="geography" rows={3} className="rounded-2xl border border-outline-variant/70 bg-surface-container-low px-4 py-3 font-normal outline-none focus:border-primary" placeholder="Regions, markets, or segments to prioritize." />
-        </label>
-        <label className="grid gap-2 text-sm font-semibold text-on-surface">
-          Business model
-          <textarea name="business_model" rows={3} className="rounded-2xl border border-outline-variant/70 bg-surface-container-low px-4 py-3 font-normal outline-none focus:border-primary" placeholder="Pricing, sales motion, contract size, or revenue model." />
-        </label>
-        <label className="grid gap-2 text-sm font-semibold text-on-surface">
-          Brand voice notes
-          <textarea name="brand_voice" rows={3} className="rounded-2xl border border-outline-variant/70 bg-surface-container-low px-4 py-3 font-normal outline-none focus:border-primary" placeholder="Tone, words to use, words to avoid, design notes." />
-        </label>
+      <div>
+        <label className="text-sm font-medium">Website</label>
+        <input name="website_url" type="url" className="mt-1 w-full rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-sm" placeholder="https://..." />
       </div>
-
-      <div className="grid gap-5 md:grid-cols-3">
-        <label className="grid gap-2 text-sm font-semibold text-on-surface">
-          Goals
-          <textarea name="goals" rows={4} className="rounded-2xl border border-outline-variant/70 bg-surface-container-low px-4 py-3 font-normal outline-none focus:border-primary" placeholder={"Launch beta\nBook demos\nTest ads"} />
-        </label>
-        <label className="grid gap-2 text-sm font-semibold text-on-surface">
-          Known competitors
-          <textarea name="known_competitors" rows={4} className="rounded-2xl border border-outline-variant/70 bg-surface-container-low px-4 py-3 font-normal outline-none focus:border-primary" placeholder={"Competitor A\nCompetitor B"} />
-        </label>
-        <label className="grid gap-2 text-sm font-semibold text-on-surface">
-          Constraints
-          <textarea name="constraints" rows={4} className="rounded-2xl border border-outline-variant/70 bg-surface-container-low px-4 py-3 font-normal outline-none focus:border-primary" placeholder={"Small budget\nFounder-led sales\nNo paid social yet"} />
-        </label>
+      <div>
+        <label className="text-sm font-medium">Industry</label>
+        <input name="industry" className="mt-1 w-full rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-sm" />
       </div>
-
-      {message ? <p className="text-sm text-error">{message}</p> : null}
-      <button type="submit" disabled={submitting} className="btn-primary justify-center px-6 py-3 text-sm disabled:opacity-60">
-        {submitting ? "Saving company..." : "Create company workspace"}
+      <button type="submit" disabled={submitting} className="btn-primary px-5 py-3 text-sm disabled:opacity-50">
+        {submitting ? "Creating..." : "Create workspace"}
       </button>
+      {message ? <p className="text-sm text-error">{message}</p> : null}
     </form>
   );
 }
