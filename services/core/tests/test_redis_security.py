@@ -1,0 +1,52 @@
+import pytest
+
+from stoa_core.config import Settings
+from stoa_core.redis.security import RedisSecurityError, inspect_redis_url, validate_redis_security
+
+
+def test_inspect_redis_url_detects_password_and_tls():
+    info = inspect_redis_url("rediss://:secret@redis.example.com:6379/0")
+    assert info.has_password is True
+    assert info.uses_tls is True
+
+
+def test_production_requires_password():
+    settings = Settings(
+        stoa_env="production",
+        redis_url="redis://localhost:6379/0",
+        celery_broker_url="",
+        celery_result_backend="",
+    )
+    with pytest.raises(RedisSecurityError, match="password"):
+        validate_redis_security(settings)
+
+
+def test_production_requires_tls_by_default():
+    settings = Settings(
+        stoa_env="production",
+        redis_url="redis://:secret@localhost:6379/0",
+        celery_broker_url="",
+        celery_result_backend="",
+    )
+    with pytest.raises(RedisSecurityError, match="TLS"):
+        validate_redis_security(settings)
+
+
+def test_production_accepts_rediss_with_password():
+    settings = Settings(
+        stoa_env="production",
+        redis_url="rediss://:secret@localhost:6379/0",
+        celery_broker_url="",
+        celery_result_backend="",
+    )
+    validate_redis_security(settings)
+
+
+def test_development_allows_unauthenticated_local():
+    settings = Settings(
+        stoa_env="development",
+        redis_url="redis://localhost:6379/0",
+        celery_broker_url="",
+        celery_result_backend="",
+    )
+    validate_redis_security(settings)
