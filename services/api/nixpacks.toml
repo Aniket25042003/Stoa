@@ -1,5 +1,0 @@
-# Extend the default Python build: install Chromium for Crawlee / Playwright on the worker image.
-# See docs/runbook.md for local `playwright install chromium --with-deps`.
-
-[phases.build]
-cmds = ["...", "playwright install chromium --with-deps"]
