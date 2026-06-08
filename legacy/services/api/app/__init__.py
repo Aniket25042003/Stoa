@@ -1,0 +1,1 @@
+"""FastAPI GTM API service."""
