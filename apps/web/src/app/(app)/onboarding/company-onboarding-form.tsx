@@ -88,8 +88,8 @@ export function CompanyOnboardingForm() {
 
       router.push("/data");
       router.refresh();
-    } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Something went wrong");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not create workspace");
     } finally {
       setSubmitting(false);
     }

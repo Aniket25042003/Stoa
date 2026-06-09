@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { getAuthEntryPath } from "@/lib/auth-entry";
 import { BRAND_LOGO_LETTER, BRAND_NAME } from "@/lib/brand";
 
 const nav = [
@@ -12,8 +11,6 @@ const nav = [
 ];
 
 export function Navbar() {
-  const authEntry = getAuthEntryPath();
-
   return (
     <header className="sticky top-0 z-50 w-full border-b border-outline-variant bg-surface/80 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 md:px-6">
@@ -45,7 +42,7 @@ export function Navbar() {
 
         <div className="flex shrink-0 items-center justify-end gap-3">
           <ThemeToggle />
-          <Link href={authEntry} className="btn-nav-purple px-3 py-1.5 text-xs uppercase tracking-wider font-mono">
+          <Link href="/waitlist" className="btn-nav-purple px-3 py-1.5 text-xs uppercase tracking-wider font-mono">
             Sign in
           </Link>
           <Link href="/waitlist" className="btn-primary hidden px-4 py-1.5 text-xs uppercase tracking-wider font-mono sm:inline-flex">
