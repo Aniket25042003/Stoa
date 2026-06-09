@@ -64,6 +64,7 @@ export function MarketingWorkspace({ companies }: { companies: Company[] }) {
       }
       const createRes = await apiFetch(`/v1/companies/${companyId}/chats`, {
         method: "POST",
+        accessToken,
         body: JSON.stringify({ title: "Campaign studio" }),
       });
       const createBody = await createRes.json();

@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { AnimatedHeadline } from "@/components/marketing/AnimatedHeadline";
 import { EmailCta } from "@/components/marketing/EmailCta";
-import { GradientOrb } from "@/components/marketing/GradientOrb";
 import { HeroDashboardOrbit } from "@/components/marketing/HeroDashboardOrbit";
 import { LiveActivityDemo } from "@/components/marketing/LiveActivityDemo";
 import { Marquee } from "@/components/marketing/Marquee";
@@ -11,56 +10,65 @@ import { RadialOrbitalTimeline } from "@/components/marketing/RadialOrbitalTimel
 import { ReportPreviewCard } from "@/components/marketing/ReportPreviewCard";
 import { RevealOnScroll } from "@/components/marketing/RevealOnScroll";
 import { SectionHeader } from "@/components/marketing/SectionHeader";
+import { ParticleField } from "@/components/marketing/ParticleField";
+import { AnimatedCounter } from "@/components/marketing/AnimatedCounter";
 import { BRAND_NAME, BRAND_SUBHEAD, BRAND_TAGLINE } from "@/lib/brand";
-import { ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 const marqueeItems = [
-  "Company-scoped workspaces",
-  "GTM plans you can edit",
-  "Marketing ideas and campaign assets",
-  "Brand voice that stays consistent",
-  "Strategy and creative in one place",
-  "Multiple companies, separate context",
-  "Launch-ready next steps",
+  "SYS_LATENCY: 180MS",
+  "THRUST_FACTOR: 98%",
+  "COMPILATION: OK",
+  "TRAFFIC_LOOPS: COMPILED",
+  "Blueprints compiled",
+  "Zero backend leak",
+  "Self-hosted docs ready",
+  "STOA_ENGINE_ACTIVE",
 ];
 
 const metrics = [
-  { k: "2", v: "Focused workspaces", d: "GTM planning and marketing execution side by side" },
-  { k: "Many", v: "Company memories", d: "Each company keeps its own strategy, voice, and assets" },
-  { k: "1", v: "One shelter", d: "Dashboard, GTM, and Marketing stay connected" },
+  { k: 180, s: "ms", v: "SYS.LATENCY", d: "Strategy synthesis happens in milliseconds, not months." },
+  { k: 100, s: "%", v: "CONTEXT.DEPTH", d: "Full workspace ingestion depth covers every competitor signal." },
+  { k: 98, s: "%", v: "ENGINE.THRUST", d: "Conversion probability verified across organic distribution paths." },
 ];
 
 export default function LandingPage() {
   return (
     <>
       <section className="relative overflow-hidden px-4 pb-20 pt-10 md:px-6 md:pb-28 md:pt-16">
-        <GradientOrb />
+        <ParticleField />
         <div className="container-page relative">
           <div className="grid gap-12 lg:grid-cols-[1.04fr_0.96fr] lg:items-center">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-surface-container-low/70 px-3 py-2 shadow-soft backdrop-blur-md">
-                <Sparkles className="h-3.5 w-3.5 text-primary" />
-                <p className="eyebrow text-[11px]">{BRAND_NAME}</p>
+              <div className="inline-flex items-center gap-2 border border-primary/30 bg-primary/5 px-3 py-1 font-mono">
+                <span className="h-1.5 w-1.5 bg-primary animate-pulse" />
+                <p className="text-[10px] uppercase font-bold tracking-widest text-primary">{BRAND_NAME}_SYSTEM_LOADED</p>
               </div>
               <AnimatedHeadline
                 text={BRAND_TAGLINE}
-                className="mt-7 max-w-5xl font-display text-5xl font-extrabold leading-[1.02] tracking-[-0.055em] text-on-surface md:text-7xl lg:text-8xl"
+                className="mt-7 max-w-5xl font-display text-4xl font-extrabold leading-[1.05] tracking-tight text-on-surface md:text-6xl lg:text-7xl uppercase"
               />
-              <p className="mt-7 max-w-2xl text-lg leading-8 text-on-surface-variant md:text-xl">
+              <p className="mt-6 max-w-2xl text-base leading-relaxed text-on-surface-variant font-mono">
                 {BRAND_SUBHEAD}
               </p>
-              <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                <Link href="/login" className="btn-primary px-6 py-3 text-center text-sm sm:inline-flex sm:items-center sm:justify-center">
-                  Start free <ArrowRight className="ml-2 inline h-4 w-4" />
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                <Link href="/waitlist" className="btn-primary px-6 py-3 text-center text-sm font-mono tracking-wider uppercase">
+                  RUN_GET_STARTED.SH <ArrowRight className="ml-2 inline h-4 w-4" />
                 </Link>
-                <Link href="/how-it-works" className="btn-secondary px-6 py-3 text-center text-sm">
-                  See how it works
+                <Link href="/see-it-in-action" className="btn-secondary px-6 py-3 text-center text-sm font-mono uppercase">
+                  [SEE_IT_IN_ACTION]
                 </Link>
               </div>
-              <div className="mt-10 flex flex-wrap gap-x-4 gap-y-2 text-sm text-on-surface-variant">
-                {["GTM planning", "Marketing execution", "Company memory"].map((item) => (
+              
+              {/* Copyable Quickstart Command */}
+              <div className="mt-8 font-mono text-xs text-on-surface-variant flex items-center gap-2 select-all border border-outline-variant/60 bg-surface-dim/40 px-3.5 py-2.5 max-w-xs">
+                <span className="text-primary font-bold">$</span>
+                <span>npx create-stoa-app@latest</span>
+              </div>
+
+              <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-xs text-on-surface-variant font-mono">
+                {["[✔] Strategy compiled", "[✔] Zero data leak", "[✔] Code-ready campaigns"].map((item) => (
                   <span key={item} className="inline-flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-primary" />
                     {item}
                   </span>
                 ))}
@@ -101,7 +109,7 @@ export default function LandingPage() {
             <SectionHeader
               eyebrow="Output"
               title="Plans, briefs, copy, scripts, and assets your team can use."
-              lead="Every campaign stays tied to the same GTM plan, brand voice, and company context—without switching tools."
+              lead="Every campaign stays tied to the same strategy blueprint, brand voice, and company context—without switching tools."
             />
           </RevealOnScroll>
           <RevealOnScroll delay={0.06}>
@@ -113,25 +121,30 @@ export default function LandingPage() {
       <section className="container-page py-12 md:py-16">
         <div className="grid gap-6 md:grid-cols-3">
           {metrics.map((s, i) => (
-            <RevealOnScroll key={s.k} delay={i * 0.08}>
-              <div className="rounded-3xl p-7 card-glass">
-                <p className="font-display text-5xl font-extrabold tracking-[-0.05em] gradient-text">{s.k}</p>
-                <p className="mt-3 font-display text-xl font-bold text-on-surface">{s.v}</p>
-                <p className="mt-2 text-sm leading-6 text-on-surface-variant">{s.d}</p>
+            <RevealOnScroll key={s.v} delay={i * 0.08}>
+              <div className="border border-outline-variant p-6 bg-surface-container-lowest flex flex-col justify-between h-full font-mono">
+                <div>
+                  <span className="text-[10px] text-secondary font-bold uppercase tracking-widest block mb-2">[{i + 1}] {s.v}</span>
+                  <p className="font-display text-4xl font-extrabold tracking-tight text-primary mt-1">
+                    <AnimatedCounter value={s.k} suffix={s.s} />
+                  </p>
+                </div>
+                <p className="mt-4 text-xs leading-relaxed text-on-surface-variant">{s.d}</p>
               </div>
             </RevealOnScroll>
           ))}
         </div>
       </section>
 
-      <section className="container-page mt-12">
-        <div className="relative overflow-hidden rounded-[2rem] bg-slate-deep px-6 py-14 text-white shadow-card md:px-10 md:py-16">
-          <div className="absolute right-0 top-0 h-80 w-80 translate-x-1/3 -translate-y-1/3 rounded-full bg-violet-pulse/30 blur-3xl" />
+      <section className="container-page mt-12 pb-16">
+        <div className="relative overflow-hidden border border-outline-variant bg-surface-container-lowest px-6 py-14 text-on-surface md:px-10 md:py-16">
+          <ParticleField />
+          <div className="absolute right-0 top-0 h-80 w-80 translate-x-1/3 -translate-y-1/3 rounded-full bg-primary/10 blur-3xl" />
           <div className="relative flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
-            <div className="max-w-2xl">
-              <p className="eyebrow text-inverse-primary">Ready</p>
-              <h2 className="mt-4 font-display text-4xl font-bold tracking-[-0.04em] md:text-5xl">Build your first company workspace.</h2>
-              <p className="mt-4 text-sm leading-7 text-white/68">{BRAND_SUBHEAD}</p>
+            <div className="max-w-2xl font-mono">
+              <span className="text-[10px] text-primary font-bold uppercase tracking-wider">[LOAD_DEPLOYMENT]</span>
+              <h2 className="mt-4 font-display text-3xl font-bold tracking-tight text-on-surface uppercase">Build your first company workspace.</h2>
+              <p className="mt-4 text-xs leading-relaxed text-on-surface-variant">{BRAND_SUBHEAD}</p>
             </div>
             <EmailCta />
           </div>
