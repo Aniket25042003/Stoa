@@ -13,7 +13,10 @@ Be concise and actionable. Do not invent facts."""
 
 def answer_question(question: str, context: list[dict[str, Any]]) -> str:
     if not context:
-        return "I don't have enough ingested customer data yet. Upload transcripts, reviews, or CRM exports first."
+        return (
+            "I don't have enough ingested customer data yet. "
+            "Upload transcripts, reviews, or CRM exports first."
+        )
     lines = []
     for item in context[:30]:
         ref = item.get("ref", "unknown")

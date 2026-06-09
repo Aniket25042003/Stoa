@@ -129,4 +129,10 @@ def chunk_text_strings(
     overlap_tokens: int = 80,
 ) -> list[str]:
     """Backward-compatible string-only chunk API."""
-    return [c.content for c in chunk_text(text, target_tokens=target_tokens, max_tokens=max_tokens, overlap_tokens=overlap_tokens)]
+    chunks = chunk_text(
+        text,
+        target_tokens=target_tokens,
+        max_tokens=max_tokens,
+        overlap_tokens=overlap_tokens,
+    )
+    return [c.content for c in chunks]

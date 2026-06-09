@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { FaqItem } from "@/components/marketing/FaqItem";
 import { RevealOnScroll } from "@/components/marketing/RevealOnScroll";
 import { SectionHeader } from "@/components/marketing/SectionHeader";
+import { getAuthEntryPath } from "@/lib/auth-entry";
 import { BRAND_NAME, BRAND_SUBHEAD, BRAND_TAGLINE } from "@/lib/brand";
 import { cn } from "@/lib/cn";
 

@@ -31,7 +31,9 @@ def test_rerank_cascade_falls_to_bm25(mock_cohere, mock_vertex):
 
 @patch("stoa_core.rag.rerank._cohere_rerank")
 def test_rerank_uses_cohere_when_available(mock_cohere):
-    mock_cohere.return_value = [{"content": "best", "rerank_score": 0.99, "rerank_method": "cohere"}]
+    mock_cohere.return_value = [
+        {"content": "best", "rerank_score": 0.99, "rerank_method": "cohere"},
+    ]
     out = rerank_candidates("query", [{"content": "best"}], top_k=1)
     assert out[0]["rerank_method"] == "cohere"
     mock_cohere.assert_called_once()

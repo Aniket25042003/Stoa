@@ -37,10 +37,23 @@ def detect_changes(old_text: str, new_text: str, competitor_name: str) -> dict[s
         return None
     if content_hash(old_text) == content_hash(new_text):
         return {"changed": False, "summary": "No changes detected"}
+    schema = (
+        '{"changed": true, "summary": "...", '
+        '"categories": ["pricing|product|messaging|hiring"], '
+        '"severity": "low|medium|high"}'
+    )
     parsed, _ = invoke_json(
-        "Summarize what changed between two competitor page snapshots. Return JSON: "
-        '{"changed": true, "summary": "...", "categories": ["pricing|product|messaging|hiring"], "severity": "low|medium|high"}',
-        {"competitor": competitor_name, "old_excerpt": old_text[:4000], "new_excerpt": new_text[:4000]},
+        "Summarize what changed between two competitor page snapshots. Return JSON: " + schema,
+        {
+            "competitor": competitor_name,
+            "old_excerpt": old_text[:4000],
+            "new_excerpt": new_text[:4000],
+        },
         task_name="summarize",
     )
-    return parsed or {"changed": True, "summary": "Content changed (details unavailable)", "severity": "medium"}
+    fallback = {
+        "changed": True,
+        "summary": "Content changed (details unavailable)",
+        "severity": "medium",
+    }
+    return parsed or fallback

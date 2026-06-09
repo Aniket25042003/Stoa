@@ -6,10 +6,11 @@ import { useState } from "react";
 import { PricingCard } from "@/components/marketing/PricingCard";
 import { RevealOnScroll } from "@/components/marketing/RevealOnScroll";
 import { SectionHeader } from "@/components/marketing/SectionHeader";
+import { getAuthEntryPath } from "@/lib/auth-entry";
 import { BRAND_SUBHEAD } from "@/lib/brand";
 import { cn } from "@/lib/cn";
 
-const tiers = (yearly: boolean) => [
+const tiers = (yearly: boolean, authEntry: string) => [
   {
     name: "Starter",
     price: "$0",
@@ -17,7 +18,7 @@ const tiers = (yearly: boolean) => [
     description: "For founders mapping their first product narrative.",
     features: ["1 brand workspace", "Strategy blueprint", "Campaign ideation", "Community access"],
     cta: "Start free",
-    href: "/login",
+    href: authEntry,
     highlighted: false,
   },
   {
@@ -27,7 +28,7 @@ const tiers = (yearly: boolean) => [
     description: "For growing companies launching dynamic weekly campaigns.",
     features: ["5 brand workspaces", "Full strategy development", "Campaign-ready deliverables", "Creative direction tools", "Priority support"],
     cta: "Get Pro",
-    href: "/login",
+    href: authEntry,
     highlighted: true,
   },
   {
@@ -79,7 +80,7 @@ function CompareCell({ value }: { value: string }) {
 
 export default function PricingPage() {
   const [yearly, setYearly] = useState(true);
-  const list = tiers(yearly);
+  const list = tiers(yearly, getAuthEntryPath());
 
   return (
     <div className="container-page py-16 md:py-24">

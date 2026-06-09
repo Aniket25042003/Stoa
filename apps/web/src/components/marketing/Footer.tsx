@@ -1,5 +1,8 @@
 import Link from "next/link";
+import { getAuthEntryPath } from "@/lib/auth-entry";
 import { BRAND_NAME, BRAND_SUBHEAD, BRAND_TAGLINE } from "@/lib/brand";
+
+const authEntry = getAuthEntryPath();
 
 const cols = [
   {
@@ -13,7 +16,7 @@ const cols = [
   {
     title: "App",
     links: [
-      { href: "/login", label: "Sign in" },
+      { href: authEntry, label: "Sign in" },
       { href: "/dashboard", label: "Dashboard" },
       { href: "/gtm", label: "Strategy" },
       { href: "/marketing", label: "Campaigns" },

@@ -27,7 +27,8 @@ def test_profile_to_knowledge_text():
 def test_ingest_knowledge_idempotent_skip(mock_sb, mock_embed, mock_bump):
     sb = MagicMock()
     mock_sb.return_value = sb
-    sb.table.return_value.select.return_value.eq.return_value.eq.return_value.limit.return_value.execute.return_value = MagicMock(
+    limit_chain = sb.table.return_value.select.return_value.eq.return_value.eq.return_value.limit
+    limit_chain.return_value.execute.return_value = MagicMock(
         data=[{"id": "item-1", "content_hash": content_hash("same text"), "version": 1}]
     )
 
