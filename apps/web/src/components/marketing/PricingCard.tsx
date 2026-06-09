@@ -35,7 +35,7 @@ export function PricingCard({
       transition={{ type: "spring", stiffness: 260, damping: 24 }}
     >
       {highlighted ? (
-        <span className="absolute -top-3 left-6 rounded-full bg-gradient-to-r from-primary to-violet-pulse px-3 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-white shadow-glow">
+        <span className="absolute -top-3 left-6 rounded-full bg-gradient-to-r from-primary to-secondary px-3 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-white shadow-glow">
           Popular
         </span>
       ) : null}

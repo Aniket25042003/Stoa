@@ -13,7 +13,7 @@ export function ThemeToggle() {
     <button
       type="button"
       onClick={() => setTheme(next)}
-      className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-outline-variant/70 bg-surface-container-low/75 text-on-surface transition hover:bg-surface-container hover:border-primary/50 hover:shadow-[0_0_12px_rgb(255_107_53_/_0.2)] focus:outline-none"
+      className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-outline-variant/70 bg-surface-container-low/75 text-on-surface transition hover:bg-surface-container hover:border-primary/50 hover:shadow-[0_0_12px_rgb(255_107_53_/_0.2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
       title={isDark ? "Light mode" : "Dark mode"}
     >

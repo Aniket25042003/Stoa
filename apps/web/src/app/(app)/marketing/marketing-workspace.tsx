@@ -65,10 +65,10 @@ export function MarketingWorkspace({ accessToken, companies }: { accessToken: st
       const createRes = await apiFetch(`/v1/companies/${companyId}/chats`, {
         method: "POST",
         accessToken,
-        body: JSON.stringify({ title: "Marketing workspace" }),
+        body: JSON.stringify({ title: "Campaign studio" }),
       });
       const createBody = await createRes.json();
-      if (!createRes.ok) throw new Error(createBody.detail || "Could not create marketing chat");
+      if (!createRes.ok) throw new Error(createBody.detail || "Could not create campaign workspace");
       if (requestId !== loadRequestRef.current) return createBody.id;
       setChatId(createBody.id);
       return createBody.id;
@@ -92,7 +92,7 @@ export function MarketingWorkspace({ accessToken, companies }: { accessToken: st
         }
       } catch (error) {
         if (requestId !== loadRequestRef.current) return;
-        setMessage(error instanceof Error ? error.message : "Could not load marketing workspace");
+        setMessage(error instanceof Error ? error.message : "Could not load campaign studio");
       } finally {
         if (requestId !== loadRequestRef.current) return;
         setLoading(false);
@@ -124,10 +124,10 @@ export function MarketingWorkspace({ accessToken, companies }: { accessToken: st
         }),
       });
       const body = await res.json();
-      if (!res.ok) throw new Error(body.detail || "Could not save marketing foundation");
+      if (!res.ok) throw new Error(body.detail || "Could not save campaign direction");
       await load(activeId);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Could not save marketing foundation");
+      setMessage(error instanceof Error ? error.message : "Could not save campaign direction");
     } finally {
       setBusy(false);
     }
@@ -136,57 +136,57 @@ export function MarketingWorkspace({ accessToken, companies }: { accessToken: st
   return (
     <div className="space-y-8">
       <section className="rounded-[2rem] bg-slate-deep p-7 text-white shadow-card md:p-10">
-        <p className="eyebrow text-inverse-primary">Marketing</p>
+        <p className="eyebrow text-primary">Campaigns</p>
         <h1 className="mt-4 font-display text-4xl font-extrabold tracking-[-0.045em] md:text-5xl">
-          {activeCompany?.name ?? "Company"} marketing workspace
+          {activeCompany?.name ?? "Brand"} campaign studio
         </h1>
         <p className="mt-4 max-w-2xl text-sm leading-7 text-white/68">
-          Capture brand and campaign direction, then use chat to brainstorm, draft, refine, and create marketing assets for the selected company.
+          Capture brand guidelines and creative goals, then brainstorm, draft, and publish campaign assets for the selected brand.
         </p>
       </section>
 
       {message ? <div className="rounded-2xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm text-on-surface">{message}</div> : null}
 
       {loading ? (
-        <div className="rounded-3xl p-8 text-center card-glass">Loading marketing workspace...</div>
+        <div className="rounded-3xl p-8 text-center card-glass">Loading campaign studio...</div>
       ) : !hasBaseline ? (
         <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="rounded-3xl p-7 card-glass">
-            <p className="eyebrow">Marketing foundation</p>
-            <h2 className="mt-3 font-display text-3xl font-bold tracking-[-0.03em] text-on-surface">Set your baseline once.</h2>
+            <p className="eyebrow">Your creative brief</p>
+            <h2 className="mt-3 font-display text-3xl font-bold tracking-[-0.03em] text-on-surface">Set the direction.</h2>
             <p className="mt-3 text-sm leading-7 text-on-surface-variant">
-              Add the brand, design, channel, and campaign details you already know. You can keep it light and improve it as you work.
+              Tell us how you want to present your brand to the world. Start simple — you can always refine this later.
             </p>
           </div>
 
           <form onSubmit={(event) => void saveBaseline(event)} className="rounded-3xl p-7 card-glass">
             <div className="grid gap-5">
               <label className="grid gap-2 text-sm font-semibold text-on-surface">
-                Brand voice notes
-                <textarea name="brand_voice_notes" rows={4} className="rounded-2xl border border-outline-variant/70 bg-surface-container-low px-4 py-3 font-normal outline-none focus:border-primary" placeholder="Confident, concise, founder-friendly. Avoid hype." />
+                How does your brand sound?
+                <textarea name="brand_voice_notes" rows={4} className="rounded-2xl border border-outline-variant/70 bg-surface-container-low px-4 py-3 font-normal outline-none focus:border-primary" placeholder="E.g., Confident, bold, and energetic. We value clarity over buzzwords." />
               </label>
               <label className="grid gap-2 text-sm font-semibold text-on-surface">
-                Design and asset notes
-                <textarea name="design_notes" rows={4} className="rounded-2xl border border-outline-variant/70 bg-surface-container-low px-4 py-3 font-normal outline-none focus:border-primary" placeholder="Colors, visual style, examples, formats, or guardrails." />
+                Visual guidelines
+                <textarea name="design_notes" rows={4} className="rounded-2xl border border-outline-variant/70 bg-surface-container-low px-4 py-3 font-normal outline-none focus:border-primary" placeholder="E.g., Clean layouts, bold typography, warm orange accents." />
               </label>
               <label className="grid gap-2 text-sm font-semibold text-on-surface">
-                Campaign goals
-                <textarea name="campaign_goals" rows={3} className="rounded-2xl border border-outline-variant/70 bg-surface-container-low px-4 py-3 font-normal outline-none focus:border-primary" placeholder="Book demos, announce launch, test ad angles..." />
+                What are we building?
+                <textarea name="campaign_goals" rows={3} className="rounded-2xl border border-outline-variant/70 bg-surface-container-low px-4 py-3 font-normal outline-none focus:border-primary" placeholder="E.g., Drive sign-ups, announce our new release, spark curiosity." />
               </label>
               <label className="grid gap-2 text-sm font-semibold text-on-surface">
-                Preferred channels
-                <input name="channels" className="rounded-2xl border border-outline-variant/70 bg-surface-container-low px-4 py-3 font-normal outline-none focus:border-primary" placeholder="LinkedIn, email, paid social" />
+                Where does your audience hang out?
+                <input name="channels" className="rounded-2xl border border-outline-variant/70 bg-surface-container-low px-4 py-3 font-normal outline-none focus:border-primary" placeholder="E.g., LinkedIn, newsletters, organic community hubs" />
               </label>
             </div>
             <button type="submit" disabled={busy} className="btn-primary mt-6 px-5 py-3 text-sm disabled:opacity-60">
-              {busy ? "Saving..." : "Save marketing foundation"}
+              {busy ? "Saving..." : "Save direction"}
             </button>
           </form>
         </section>
       ) : chatId ? (
         <MarketingChat chatId={chatId} companyId={activeId ?? ""} accessToken={accessToken} />
       ) : (
-        <div className="rounded-3xl p-8 text-center card-glass">Preparing marketing chat...</div>
+        <div className="rounded-3xl p-8 text-center card-glass">Preparing campaign workspace...</div>
       )}
     </div>
   );

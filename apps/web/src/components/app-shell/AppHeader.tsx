@@ -9,8 +9,8 @@ import { createClient } from "@/lib/supabase/client";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard" },
-  { href: "/gtm", label: "GTM" },
-  { href: "/marketing", label: "Marketing" },
+  { href: "/gtm", label: "Strategy" },
+  { href: "/marketing", label: "Campaigns" },
 ];
 
 export function AppHeader({ email, accessToken }: { email: string; accessToken: string }) {
@@ -28,7 +28,7 @@ export function AppHeader({ email, accessToken }: { email: string; accessToken: 
     <header className="sticky top-0 z-40 border-b border-outline-variant/70 bg-surface-container-low/80 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 md:px-6">
         <Link href="/dashboard" className="inline-flex items-center gap-3">
-          <span className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-violet-pulse shadow-glow" />
+          <span className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-secondary shadow-glow" />
           <span className="font-display text-lg font-extrabold tracking-[-0.03em] text-on-surface">{BRAND_NAME}</span>
         </Link>
         <nav className="order-3 flex w-full items-center gap-2 overflow-x-auto md:order-none md:w-auto" aria-label="App sections">
