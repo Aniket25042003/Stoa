@@ -10,7 +10,8 @@ import { CollapsibleDevLog } from "@/components/motion/CollapsibleDevLog";
 import { PipelinePhaseVisualizer } from "@/components/motion/PipelinePhaseVisualizer";
 import { StaggerInView } from "@/components/motion/StaggerInView";
 import { formatDevLogLine, resolveActivityPhase, type EventRow } from "@/lib/pipeline-phases";
-import { consumeSse } from "./stream";
+import { safeExternalHref } from "@/lib/safe-url";
+import { consumeRunSse } from "./stream";
 
 type RunRow = { status?: string; master_plan?: Record<string, unknown> };
 type SourceRow = {
@@ -27,7 +28,7 @@ const btn = "btn-secondary px-4 py-2 text-sm disabled:opacity-50";
 const btnPrimary = "btn-primary px-4 py-2 text-sm disabled:opacity-50";
 const codePanel = "rounded-2xl border border-outline-variant/55 bg-slate-deep p-4 font-mono text-xs leading-6 text-white/78";
 
-export function RunDetail({ runId, accessToken }: { runId: string; accessToken: string }) {
+export function RunDetail({ runId }: { runId: string }) {
   const [status, setStatus] = useState<string>("...");
   const [events, setEvents] = useState<EventRow[]>([]);
   const [markdown, setMarkdown] = useState<string | null>(null);
@@ -50,11 +51,11 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
     async (includeArtifacts = true) => {
       const requests = includeArtifacts
         ? Promise.all([
-            apiFetch(`/v1/runs/${runId}`, { accessToken }),
-            apiFetch(`/v1/runs/${runId}/report`, { accessToken }),
-            apiFetch(`/v1/runs/${runId}/sources`, { accessToken }),
+            apiFetch(`/v1/runs/${runId}`),
+            apiFetch(`/v1/runs/${runId}/report`),
+            apiFetch(`/v1/runs/${runId}/sources`),
           ])
-        : Promise.all([apiFetch(`/v1/runs/${runId}`, { accessToken })]);
+        : Promise.all([apiFetch(`/v1/runs/${runId}`)]);
 
       const [runRes, reportRes, sourcesRes] = await requests;
 
@@ -75,7 +76,7 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
         setSources(body.sources ?? []);
       }
     },
-    [runId, accessToken]
+    [runId]
   );
 
   useEffect(() => {
@@ -105,16 +106,12 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
   }, [refreshSnapshot]);
 
   useEffect(() => {
-    const base = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
     if (status === "..." || status === "awaiting_plan_approval") return;
-    if (!base) return;
     const ac = new AbortController();
-    const url = `${base}/v1/runs/${runId}/events`;
     void (async () => {
       try {
-        await consumeSse(
-          url,
-          accessToken,
+        await consumeRunSse(
+          `/v1/runs/${runId}/events`,
           (data) => {
             setEvents((prev) => [...prev, data as EventRow]);
             if (data.message === "Master plan ready for approval") {
@@ -136,7 +133,7 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
       }
     })();
     return () => ac.abort();
-  }, [runId, accessToken, status, refreshSnapshot]);
+  }, [runId, status, refreshSnapshot]);
 
   useEffect(() => {
     if (status === "...") return;
@@ -173,7 +170,7 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
   }, [status, refreshSnapshot]);
 
   async function downloadPdf() {
-    const res = await apiFetch(`/v1/runs/${runId}/report.pdf`, { accessToken });
+    const res = await apiFetch(`/v1/runs/${runId}/report.pdf`, { });
     if (!res.ok) return;
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
@@ -190,7 +187,6 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
     try {
       const res = await apiFetch(`/v1/runs/${runId}/plan/revise`, {
         method: "POST",
-        accessToken,
         body: JSON.stringify({ feedback: planFeedback }),
       });
       if (res.ok) {
@@ -209,7 +205,6 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
     try {
       const res = await apiFetch(`/v1/runs/${runId}/plan/approve`, {
         method: "POST",
-        accessToken,
       });
       if (res.ok) {
         const body = await res.json();
@@ -325,8 +320,13 @@ export function RunDetail({ runId, accessToken }: { runId: string; accessToken: 
               <StaggerInView key={s.id} delay={i * 0.06}>
                 <div className="rounded-2xl border border-outline-variant/55 bg-surface-container-low/75 p-5 backdrop-blur-md">
                   <strong className="font-mono text-xs uppercase tracking-[0.12em] text-primary">{s.source_type}</strong>{" "}
-                  {s.source_url ? (
-                    <a href={s.source_url} target="_blank" rel="noreferrer" className="font-semibold text-on-surface underline-offset-4 hover:text-primary hover:underline">
+                  {safeExternalHref(s.source_url ?? "") ? (
+                    <a
+                      href={safeExternalHref(s.source_url ?? "")}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-semibold text-on-surface underline-offset-4 hover:text-primary hover:underline"
+                    >
                       {s.title || s.source_url}
                     </a>
                   ) : (

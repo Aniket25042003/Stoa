@@ -8,9 +8,9 @@ export default async function CompanyMarketingPage({ params }: { params: Promise
   const { companyId } = await params;
   const supabase = await createClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  if (!session) redirect("/login");
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
 
   let company: { name: string } | null = null;
   let chats: { id: string; title: string; created_at: string }[] = [];
@@ -58,7 +58,7 @@ export default async function CompanyMarketingPage({ params }: { params: Promise
           <Link href={`/runs/new?company_id=${companyId}`} className="btn-primary px-4 py-2 text-sm">
             New GTM run (linked)
           </Link>
-          <NewMarketingChatButton accessToken={session.access_token} companyId={companyId} />
+          <NewMarketingChatButton companyId={companyId} />
         </div>
       </div>
 

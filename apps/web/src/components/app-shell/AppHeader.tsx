@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { CompanySwitcher } from "@/components/app-shell/CompanySwitcher";
+import { getAuthEntryPath } from "@/lib/auth-entry";
 import { BRAND_NAME } from "@/lib/brand";
 import { createClient } from "@/lib/supabase/client";
 
@@ -13,14 +13,14 @@ const navItems = [
   { href: "/marketing", label: "Campaigns" },
 ];
 
-export function AppHeader({ email, accessToken }: { email: string; accessToken: string }) {
+export function AppHeader({ email }: { email: string }) {
   const router = useRouter();
   const pathname = usePathname();
 
   async function signOut() {
     const supabase = createClient();
     await supabase.auth.signOut();
-    router.push("/login");
+    router.push(getAuthEntryPath());
     router.refresh();
   }
 
@@ -46,7 +46,6 @@ export function AppHeader({ email, accessToken }: { email: string; accessToken: 
           })}
         </nav>
         <div className="flex flex-wrap items-center gap-3 md:gap-4">
-          <CompanySwitcher accessToken={accessToken} />
           <span className="hidden max-w-[200px] truncate rounded-full border border-outline-variant/60 bg-surface-container-low/80 px-3 py-2 text-sm text-on-surface-variant sm:inline md:max-w-xs" title={email}>
             {email}
           </span>

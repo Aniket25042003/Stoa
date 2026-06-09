@@ -11,7 +11,7 @@ type Company = {
   description?: string | null;
 };
 
-export function CompanySwitcher({ accessToken }: { accessToken: string }) {
+export function CompanySwitcher() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -21,7 +21,7 @@ export function CompanySwitcher({ accessToken }: { accessToken: string }) {
     async function load() {
       setLoading(true);
       try {
-        const res = await apiFetch("/v1/companies", { accessToken });
+        const res = await apiFetch("/v1/companies", { });
         const body = res.ok ? await res.json() : { companies: [] };
         if (cancelled) return;
         const list = (body.companies ?? []) as Company[];
@@ -45,7 +45,7 @@ export function CompanySwitcher({ accessToken }: { accessToken: string }) {
     return () => {
       cancelled = true;
     };
-  }, [accessToken]);
+  }, []);
 
   useEffect(() => {
     const onActiveCompany = (event: Event) => {

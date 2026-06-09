@@ -25,11 +25,9 @@ type GtmMessage = {
 };
 
 export function GtmWorkspace({
-  accessToken,
   companies,
   initialCompanyId,
 }: {
-  accessToken: string;
   companies: Company[];
   initialCompanyId?: string;
 }) {
@@ -66,7 +64,7 @@ export function GtmWorkspace({
     setLoading(true);
     setNotice(null);
     try {
-      const res = await apiFetch(`/v1/companies/${companyId}/gtm-plan`, { accessToken });
+      const res = await apiFetch(`/v1/companies/${companyId}/gtm-plan`, { });
       const body = res.ok ? await res.json() : { plan: null, messages: [] };
       if (requestId !== loadRequestRef.current) return;
       setPlan(body.plan ?? null);
@@ -80,7 +78,7 @@ export function GtmWorkspace({
       if (requestId !== loadRequestRef.current) return;
       setLoading(false);
     }
-  }, [accessToken]);
+  }, []);
 
   useEffect(() => {
     if (!activeId) return;
@@ -94,7 +92,6 @@ export function GtmWorkspace({
     try {
       const res = await apiFetch(`/v1/companies/${activeId}/gtm-plan/generate`, {
         method: "POST",
-        accessToken,
       });
       const body = await res.json();
       if (!res.ok) throw new Error(body.detail || "Could not start strategy blueprint");
@@ -125,7 +122,6 @@ export function GtmWorkspace({
     try {
       const res = await apiFetch(`/v1/companies/${activeId}/gtm-plan/upload`, {
         method: "POST",
-        accessToken,
         body: JSON.stringify({ title, content_markdown: content }),
       });
       const body = await res.json();
@@ -152,7 +148,6 @@ export function GtmWorkspace({
     try {
       const res = await apiFetch(`/v1/companies/${activeId}/gtm-plan/messages`, {
         method: "POST",
-        accessToken,
         body: JSON.stringify({ content }),
       });
       const body = await res.json();

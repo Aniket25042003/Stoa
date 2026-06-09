@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { apiFetch } from "@/lib/api";
-import { consumeSse } from "@/app/(app)/runs/[id]/stream";
+import { consumeRunSse } from "@/app/(app)/runs/[id]/stream";
+import { safeExternalHref } from "@/lib/safe-url";
 import { ActivitySurface } from "@/components/motion/ActivitySurface";
 import { CollapsibleDevLog } from "@/components/motion/CollapsibleDevLog";
 import { MarketingPhaseVisualizer } from "@/components/motion/MarketingPhaseVisualizer";
@@ -20,11 +21,9 @@ type Artifact = { id: string; kind: string; title: string; storage_path?: string
 export function MarketingChat({
   chatId,
   companyId: _companyId,
-  accessToken,
 }: {
   chatId: string;
   companyId: string;
-  accessToken: string;
 }) {
   void _companyId;
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -49,12 +48,12 @@ export function MarketingChat({
   }, [activityStep]);
 
   const refresh = useCallback(async () => {
-    const res = await apiFetch(`/v1/chats/${chatId}`, { accessToken });
+    const res = await apiFetch(`/v1/chats/${chatId}`);
     if (!res.ok) return;
     const body = await res.json();
     setMessages(body.messages ?? []);
     setArtifacts(body.artifacts ?? []);
-  }, [chatId, accessToken]);
+  }, [chatId]);
 
   useEffect(() => {
     void refresh();
@@ -75,19 +74,14 @@ export function MarketingChat({
     try {
       const res = await apiFetch(`/v1/chats/${chatId}/messages`, {
         method: "POST",
-        accessToken,
         body: JSON.stringify({ content: text }),
       });
       if (!res.ok) throw new Error(await res.text());
       await refresh();
-      const base = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
-      if (!base) return;
       acRef.current?.abort();
       acRef.current = new AbortController();
-      const url = `${base}/v1/chats/${chatId}/events`;
-      await consumeSse(
-        url,
-        accessToken,
+      await consumeRunSse(
+        `/v1/chats/${chatId}/events`,
         (data) => {
           const payload = data as MarketingEventPayload;
           setRawEvents((prev) => [...prev.slice(-40), payload]);
@@ -173,10 +167,11 @@ export function MarketingChat({
                     onClick={(e) => {
                       e.preventDefault();
                       void (async () => {
-                        const r = await apiFetch(`/v1/artifacts/${a.id}/signed-url`, { accessToken });
+                        const r = await apiFetch(`/v1/artifacts/${a.id}/signed-url`);
                         if (r.ok) {
                           const b = await r.json();
-                          if (b.url) window.open(b.url, "_blank", "noopener,noreferrer");
+                          const href = safeExternalHref(String(b.url ?? ""));
+                          if (href) window.open(href, "_blank", "noopener,noreferrer");
                         }
                       })();
                     }}

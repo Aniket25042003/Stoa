@@ -6,7 +6,7 @@ import { apiFetch } from "@/lib/api";
 const field = "mt-2 block input-field px-3 py-3 text-sm";
 const label = "eyebrow text-[11px]";
 
-export function NewCompanyForm({ accessToken }: { accessToken: string }) {
+export function NewCompanyForm() {
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [err, setErr] = useState<string | null>(null);
@@ -19,7 +19,6 @@ export function NewCompanyForm({ accessToken }: { accessToken: string }) {
     try {
       const res = await apiFetch("/v1/companies", {
         method: "POST",
-        accessToken,
         body: JSON.stringify({ name, description: desc || undefined }),
       });
       if (!res.ok) throw new Error(await res.text());

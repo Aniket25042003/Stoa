@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { apiFetch } from "@/lib/api";
 
-export function NewMarketingChatButton({ accessToken, companyId }: { accessToken: string; companyId: string }) {
+export function NewMarketingChatButton({ companyId }: { companyId: string }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
 
@@ -13,7 +13,6 @@ export function NewMarketingChatButton({ accessToken, companyId }: { accessToken
     try {
       const res = await apiFetch(`/v1/companies/${companyId}/chats`, {
         method: "POST",
-        accessToken,
         body: JSON.stringify({}),
       });
       if (!res.ok) throw new Error(await res.text());

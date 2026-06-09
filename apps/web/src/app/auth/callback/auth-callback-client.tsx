@@ -3,7 +3,27 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { EmailOtpType } from "@supabase/supabase-js";
+import { getAuthEntryPath } from "@/lib/auth-entry";
 import { createClient } from "@/lib/supabase/client";
+
+function safeNextPath(raw: string | null): string {
+  if (!raw) return "/dashboard";
+  if (!raw.startsWith("/") || raw.startsWith("//") || raw.includes("\\")) {
+    return "/dashboard";
+  }
+  try {
+    const decoded = decodeURIComponent(raw);
+    if (decoded.startsWith("//") || decoded.includes("://")) {
+      return "/dashboard";
+    }
+  } catch {
+    return "/dashboard";
+  }
+  if (!/^\/[A-Za-z0-9/_-]*$/.test(raw)) {
+    return "/dashboard";
+  }
+  return raw;
+}
 
 export function AuthCallbackClient() {
   const router = useRouter();
@@ -11,8 +31,8 @@ export function AuthCallbackClient() {
   const [message, setMessage] = useState("Signing you in...");
 
   useEffect(() => {
-    const rawNext = searchParams.get("next") ?? "/dashboard";
-    const next = rawNext.startsWith("/") ? rawNext : "/dashboard";
+    const next = safeNextPath(searchParams.get("next"));
+    const authEntry = getAuthEntryPath();
 
     void (async () => {
       const supabase = createClient();
@@ -26,22 +46,21 @@ export function AuthCallbackClient() {
           token_hash,
         });
         if (error) {
-          router.replace(`/login?error=${encodeURIComponent(error.message)}`);
+          router.replace(`${authEntry}?error=${encodeURIComponent(error.message)}`);
           return;
         }
       } else if (code) {
-        // Ignore exchange errors (e.g. code already consumed in React Strict Mode); final getSession decides.
         await supabase.auth.exchangeCodeForSession(code);
       }
 
       const {
-        data: { session },
-        error: sessionError,
-      } = await supabase.auth.getSession();
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
 
-      if (sessionError || !session) {
+      if (userError || !user) {
         setMessage("Could not establish a session. Try signing in again.");
-        router.replace("/login?error=session");
+        router.replace(`${authEntry}?error=session`);
         return;
       }
 

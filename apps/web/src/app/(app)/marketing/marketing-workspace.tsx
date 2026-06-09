@@ -24,7 +24,7 @@ function splitList(value: FormDataEntryValue | null) {
     .filter(Boolean);
 }
 
-export function MarketingWorkspace({ accessToken, companies }: { accessToken: string; companies: Company[] }) {
+export function MarketingWorkspace({ companies }: { companies: Company[] }) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [chatId, setChatId] = useState<string | null>(null);
@@ -54,7 +54,7 @@ export function MarketingWorkspace({ accessToken, companies }: { accessToken: st
 
   const ensureChat = useCallback(
     async (companyId: string, requestId: number) => {
-      const chatsRes = await apiFetch(`/v1/companies/${companyId}/chats`, { accessToken });
+      const chatsRes = await apiFetch(`/v1/companies/${companyId}/chats`, { });
       const chatsBody = chatsRes.ok ? await chatsRes.json() : { chats: [] };
       const existing = chatsBody.chats?.[0]?.id;
       if (existing) {
@@ -72,8 +72,7 @@ export function MarketingWorkspace({ accessToken, companies }: { accessToken: st
       if (requestId !== loadRequestRef.current) return createBody.id;
       setChatId(createBody.id);
       return createBody.id;
-    },
-    [accessToken],
+    }, [],
   );
 
   const load = useCallback(
@@ -83,7 +82,7 @@ export function MarketingWorkspace({ accessToken, companies }: { accessToken: st
       setMessage(null);
       setChatId(null);
       try {
-        const summaryRes = await apiFetch(`/v1/companies/${companyId}/summary`, { accessToken });
+        const summaryRes = await apiFetch(`/v1/companies/${companyId}/summary`, { });
         const summaryBody = summaryRes.ok ? await summaryRes.json() : null;
         if (requestId !== loadRequestRef.current) return;
         setSummary(summaryBody);
@@ -98,7 +97,7 @@ export function MarketingWorkspace({ accessToken, companies }: { accessToken: st
         setLoading(false);
       }
     },
-    [accessToken, ensureChat],
+    [ensureChat],
   );
 
   useEffect(() => {
@@ -115,7 +114,6 @@ export function MarketingWorkspace({ accessToken, companies }: { accessToken: st
     try {
       const res = await apiFetch(`/v1/companies/${activeId}/marketing-baseline`, {
         method: "POST",
-        accessToken,
         body: JSON.stringify({
           brand_voice_notes: String(form.get("brand_voice_notes") ?? "").trim(),
           design_notes: String(form.get("design_notes") ?? "").trim(),
@@ -184,7 +182,7 @@ export function MarketingWorkspace({ accessToken, companies }: { accessToken: st
           </form>
         </section>
       ) : chatId ? (
-        <MarketingChat chatId={chatId} companyId={activeId ?? ""} accessToken={accessToken} />
+        <MarketingChat chatId={chatId} companyId={activeId ?? ""} />
       ) : (
         <div className="rounded-3xl p-8 text-center card-glass">Preparing campaign workspace...</div>
       )}
