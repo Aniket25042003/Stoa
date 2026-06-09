@@ -5,6 +5,8 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
+import { apiFetch } from "@/lib/api";
+import { routeForSessionState, safeNextPath, type SessionState } from "@/lib/auth-workflow";
 import { ActivityTickerTeaser } from "@/components/marketing/ActivityTickerTeaser";
 import { BRAND_NAME, BRAND_SUBHEAD, BRAND_TAGLINE } from "@/lib/brand";
 
@@ -23,22 +25,31 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const [msg, setMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const next = safeNextPath(searchParams.get("next"));
 
   useEffect(() => {
     const err = searchParams.get("error");
     if (err) setMsg(err);
   }, [searchParams]);
 
-  async function signInWithGoogle() {
+  async function postAuthRoute() {
+    const res = await apiFetch("/v1/auth/session-state");
+    if (!res.ok) return next;
+    const state = (await res.json()) as SessionState;
+    return routeForSessionState(state, next);
+  }
+
+  async function signInWithProvider(provider: "google" | "azure") {
     setMsg(null);
     setLoading(true);
     const supabase = createClient();
     const origin = typeof window !== "undefined" ? window.location.origin : "";
-    const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent("/dashboard")}`;
+    const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(next)}`;
 
     const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo },
+      provider,
+      options: provider === "azure" ? { redirectTo, scopes: "email" } : { redirectTo },
     });
 
     if (error) {
@@ -53,7 +64,45 @@ function LoginForm() {
     }
 
     setLoading(false);
-    setMsg("Could not start Google sign-in. Try again.");
+    setMsg(`Could not start ${provider === "azure" ? "Microsoft" : "Google"} sign-in. Try again.`);
+  }
+
+  async function submitEmail(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setMsg(null);
+    setLoading(true);
+    const form = new FormData(event.currentTarget);
+    const email = String(form.get("email") ?? "").trim().toLowerCase();
+    const password = String(form.get("password") ?? "");
+    const supabase = createClient();
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const emailRedirectTo = `${origin}/auth/callback?next=${encodeURIComponent(next)}`;
+
+    try {
+      if (mode === "signup") {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo },
+        });
+        if (error) throw error;
+        window.location.assign(`/verify-email?email=${encodeURIComponent(email)}&next=${encodeURIComponent(next)}`);
+        return;
+      }
+
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        if (error.message.toLowerCase().includes("confirm")) {
+          window.location.assign(`/verify-email?email=${encodeURIComponent(email)}&next=${encodeURIComponent(next)}`);
+          return;
+        }
+        throw error;
+      }
+      window.location.assign(await postAuthRoute());
+    } catch (err) {
+      setMsg(err instanceof Error ? err.message : "Could not sign in. Try again.");
+      setLoading(false);
+    }
   }
 
   return (
@@ -72,7 +121,7 @@ function LoginForm() {
               {BRAND_TAGLINE}
             </h1>
             <p className="mt-5 text-base leading-8 text-on-surface-variant">{BRAND_SUBHEAD}</p>
-            <p className="mt-4 text-sm leading-7 text-on-surface-variant">Sign in with Google to open your marketing intelligence workspace.</p>
+            <p className="mt-4 text-sm leading-7 text-on-surface-variant">Sign in with Google, Microsoft, or your work email to open your marketing intelligence workspace.</p>
           </div>
           <div className="hidden lg:block">
             <ActivityTickerTeaser />
@@ -89,11 +138,11 @@ function LoginForm() {
             <div className="mb-8 rounded-2xl bg-slate-deep p-5 text-white shadow-card">
               <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-inverse-primary">Authentication</p>
               <h2 className="mt-2 font-display text-2xl font-bold tracking-[-0.03em]">Continue to dashboard</h2>
-              <p className="mt-2 text-sm leading-6 text-white/62">Use your Google account to access your workspace.</p>
+              <p className="mt-2 text-sm leading-6 text-white/62">Use SSO or email/password. Email accounts verify through Supabase Auth emails delivered by Brevo SMTP.</p>
             </div>
             <motion.button
               type="button"
-              onClick={() => void signInWithGoogle()}
+              onClick={() => void signInWithProvider("google")}
               disabled={loading}
               className="btn-secondary flex w-full gap-3 px-5 py-3 text-sm disabled:opacity-50"
               whileTap={{ scale: 0.98 }}
@@ -101,6 +150,42 @@ function LoginForm() {
               <GoogleIcon className="h-5 w-5 shrink-0" />
               {loading ? "Redirecting..." : "Continue with Google"}
             </motion.button>
+            <motion.button
+              type="button"
+              onClick={() => void signInWithProvider("azure")}
+              disabled={loading}
+              className="btn-secondary mt-3 flex w-full gap-3 px-5 py-3 text-sm disabled:opacity-50"
+              whileTap={{ scale: 0.98 }}
+            >
+              <span className="grid h-5 w-5 shrink-0 grid-cols-2 gap-0.5" aria-hidden>
+                <span className="bg-[#f25022]" />
+                <span className="bg-[#7fba00]" />
+                <span className="bg-[#00a4ef]" />
+                <span className="bg-[#ffb900]" />
+              </span>
+              {loading ? "Redirecting..." : "Continue with Microsoft"}
+            </motion.button>
+            <div className="my-6 flex items-center gap-3 text-xs uppercase tracking-[0.16em] text-on-surface-variant">
+              <span className="h-px flex-1 bg-outline-variant/60" />
+              Work email
+              <span className="h-px flex-1 bg-outline-variant/60" />
+            </div>
+            <form onSubmit={(event) => void submitEmail(event)} className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Email</label>
+                <input name="email" type="email" required className="mt-1 w-full rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-sm" placeholder="you@company.com" />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Password</label>
+                <input name="password" type="password" required minLength={8} className="mt-1 w-full rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-sm" placeholder="At least 8 characters" />
+              </div>
+              <button type="submit" disabled={loading} className="btn-primary w-full px-5 py-3 text-sm disabled:opacity-50">
+                {loading ? "Working..." : mode === "signin" ? "Sign in with email" : "Create account"}
+              </button>
+            </form>
+            <button type="button" onClick={() => setMode(mode === "signin" ? "signup" : "signin")} className="mt-4 w-full text-center text-sm font-semibold text-primary underline-offset-4 hover:underline">
+              {mode === "signin" ? "Need an account? Sign up" : "Already have an account? Sign in"}
+            </button>
             {msg ? (
               <motion.p initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="mt-4 text-sm text-error">
                 {msg}

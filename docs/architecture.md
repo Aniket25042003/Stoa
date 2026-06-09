@@ -4,7 +4,7 @@
 
 Stoa is a **marketing intelligence platform** built Supabase-first:
 
-- **Frontend:** Next.js 15 App Router, Tailwind v4, Supabase Google OAuth
+- **Frontend:** Next.js 15 App Router, Tailwind v4, Supabase Auth (Google, Azure, email/password)
 - **API:** FastAPI thin layer — auth, REST, SSE, job enqueue
 - **Worker:** Celery + Redis — ingestion, ICP build, competitive scans, campaigns
 - **Core:** `stoa_core` — shared business logic (no HTTP)
@@ -12,6 +12,8 @@ Stoa is a **marketing intelligence platform** built Supabase-first:
 ## Data flow
 
 ```
+Auth: Google/Azure/email-password → Supabase Auth → session-state → onboarding/team gates
+
 Any input (docs, profile, ICP, competitive, campaigns, future MCP)
   → ingest_knowledge → knowledge_items + knowledge_chunks (halfvec 3072)
 

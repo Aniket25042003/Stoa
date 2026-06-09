@@ -54,7 +54,9 @@ Marketing teams connect customer data (uploads first; integrations later). The p
 
 | Area | Prefix |
 |------|--------|
+| Auth workflow | `/v1/auth` |
 | Orgs | `/v1/orgs` |
+| Team | `/v1/team` |
 | Dashboard | `/v1/dashboard` |
 | Data hub (UI) | `/data` |
 | Ingestion | `/v1/ingestion` |

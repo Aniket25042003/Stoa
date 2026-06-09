@@ -166,6 +166,8 @@ def profile_to_knowledge_text(org: dict[str, Any]) -> str:
         "goals",
         "brand_voice",
         "known_competitors_notes",
+        "company_size",
+        "market",
     ):
         val = profile.get(key)
         if val:

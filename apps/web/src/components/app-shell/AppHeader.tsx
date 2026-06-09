@@ -13,6 +13,7 @@ const navItems = [
   { href: "/intelligence", label: "Intelligence" },
   { href: "/competitive", label: "Competitive" },
   { href: "/campaigns", label: "Campaigns" },
+  { href: "/settings/team", label: "Team" },
 ];
 
 export function AppHeader({ email }: { email: string }) {

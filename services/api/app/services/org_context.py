@@ -13,7 +13,10 @@ def get_user_membership(user_id: str) -> dict:
     sb = get_supabase_admin()
     res = (
         sb.table("memberships")
-        .select("id, org_id, role, organizations(id, name, slug)")
+        .select(
+            "id, org_id, role, created_at, "
+            "organizations(id, name, slug, website_url, industry, profile, onboarding_completed_at)"
+        )
         .eq("user_id", user_id)
         .limit(1)
         .execute()

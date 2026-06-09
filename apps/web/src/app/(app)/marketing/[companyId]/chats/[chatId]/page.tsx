@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getAuthEntryPath } from "@/lib/auth-entry";
 import { createClient } from "@/lib/supabase/server";
 import { MarketingChat } from "./marketing-chat";
 
@@ -13,7 +14,7 @@ export default async function MarketingChatPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user) redirect(getAuthEntryPath());
 
   return (
     <div className="space-y-6">

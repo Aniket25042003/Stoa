@@ -2,7 +2,8 @@
 
 ## Authentication
 
-- Google OAuth via Supabase Auth (`@supabase/ssr` cookies)
+- Google OAuth, Microsoft Azure OAuth, and email/password via Supabase Auth (`@supabase/ssr` cookies)
+- Email/password confirmation emails are sent by Supabase Auth through Brevo custom SMTP
 - FastAPI verifies JWT (JWKS for RS*/ES*, HS256 fallback) with strict `aud` + `iss`
 - `sub` claim = `user_id` for authorization
 - Next.js middleware gates `(app)` routes with `getUser()`
@@ -23,6 +24,8 @@
 | `NEXT_PUBLIC_SUPABASE_*` | Browser only |
 | `SUPABASE_SERVICE_ROLE_KEY` | API/worker + server-only Next routes (waitlist) |
 | `SUPABASE_JWT_SECRET` | API only |
+| `INVITE_TOKEN_PEPPER` | API only |
+| Brevo SMTP credentials | Supabase Auth dashboard only |
 | LLM API keys | Worker/core only |
 
 ## Input hardening
@@ -59,6 +62,17 @@ Requires `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPA
 ## Audit
 
 Sensitive writes log to `audit_log` (org_id, user_id, action, resource).
+
+## Invites
+
+- Invite tokens are generated once, hashed with `INVITE_TOKEN_PEPPER`, and stored only as hashes.
+- Active invites expire and can be revoked.
+- Invite acceptance requires a Supabase-authenticated user whose email matches the invite email.
+- The one-company-per-user invariant is preserved; only empty auto-provisioned placeholder orgs may be replaced during invite acceptance.
+
+## Deferred Guardrails
+
+LLM prompt/output guardrails are tracked as a later security task after the core workflows stabilize.
 
 ## RLS testing
 

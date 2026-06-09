@@ -1,4 +1,5 @@
 import { AppHeader } from "@/components/app-shell/AppHeader";
+import { AppReadinessGate } from "@/components/app-shell/AppReadinessGate";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -11,7 +12,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="min-h-screen bg-surface text-on-surface">
       <div className="pointer-events-none fixed inset-0 -z-10 grid-bg dark:starfield" />
       {user?.email ? <AppHeader email={user.email} /> : null}
-      <div className="mx-auto max-w-7xl px-4 py-8 md:px-6 md:py-10">{children}</div>
+      <div className="mx-auto max-w-7xl px-4 py-8 md:px-6 md:py-10">
+        <AppReadinessGate>{children}</AppReadinessGate>
+      </div>
     </div>
   );
 }
