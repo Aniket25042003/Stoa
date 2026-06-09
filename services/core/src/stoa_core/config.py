@@ -78,6 +78,8 @@ class Settings(BaseSettings):
     max_upload_bytes: int = 10 * 1024 * 1024
     max_documents_per_org: int = 500
     rate_limit_per_minute: int = 60
+    app_base_url: str = "http://localhost:3000"
+    invite_token_pepper: str = ""
 
     # Observability
     langsmith_tracing: bool = False

@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { getAuthEntryPath } from "@/lib/auth-entry";
 import { BRAND_LOGO_LETTER, BRAND_NAME } from "@/lib/brand";
 
 const nav = [

@@ -28,7 +28,7 @@ def _jwks_client(jwks_url: str) -> PyJWKClient:
     return client
 
 
-def user_id_from_jwt(token: str) -> str:
+def payload_from_jwt(token: str) -> dict:
     settings = get_settings()
     try:
         header = jwt.get_unverified_header(token)
@@ -72,6 +72,14 @@ def user_id_from_jwt(token: str) -> str:
     sub = payload.get("sub")
     if not sub:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid token")
+    return dict(payload)
+
+
+def user_id_from_jwt(token: str) -> str:
+    payload = payload_from_jwt(token)
+    sub = payload.get("sub")
+    if not sub:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid token")
     return str(sub)
 
 
@@ -81,3 +89,11 @@ def verify_supabase_jwt(
     if creds is None or creds.scheme.lower() != "bearer":
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Missing bearer token")
     return user_id_from_jwt(creds.credentials)
+
+
+def verify_supabase_jwt_payload(
+    creds: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+) -> dict:
+    if creds is None or creds.scheme.lower() != "bearer":
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Missing bearer token")
+    return payload_from_jwt(creds.credentials)

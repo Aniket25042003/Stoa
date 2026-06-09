@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getAuthEntryPath } from "@/lib/auth-entry";
 import { createClient } from "@/lib/supabase/server";
 import { apiFetch } from "@/lib/api";
 import { NewMarketingChatButton } from "./new-chat-button";
@@ -10,7 +11,11 @@ export default async function CompanyMarketingPage({ params }: { params: Promise
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user) redirect(getAuthEntryPath());
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) redirect(getAuthEntryPath());
 
   let company: { name: string } | null = null;
   let chats: { id: string; title: string; created_at: string }[] = [];

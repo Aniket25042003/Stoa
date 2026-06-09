@@ -3,27 +3,10 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { EmailOtpType } from "@supabase/supabase-js";
+import { apiFetch } from "@/lib/api";
 import { getAuthEntryPath } from "@/lib/auth-entry";
+import { routeForSessionState, safeNextPath, type SessionState } from "@/lib/auth-workflow";
 import { createClient } from "@/lib/supabase/client";
-
-function safeNextPath(raw: string | null): string {
-  if (!raw) return "/dashboard";
-  if (!raw.startsWith("/") || raw.startsWith("//") || raw.includes("\\")) {
-    return "/dashboard";
-  }
-  try {
-    const decoded = decodeURIComponent(raw);
-    if (decoded.startsWith("//") || decoded.includes("://")) {
-      return "/dashboard";
-    }
-  } catch {
-    return "/dashboard";
-  }
-  if (!/^\/[A-Za-z0-9/_-]*$/.test(raw)) {
-    return "/dashboard";
-  }
-  return raw;
-}
 
 export function AuthCallbackClient() {
   const router = useRouter();
@@ -50,7 +33,11 @@ export function AuthCallbackClient() {
           return;
         }
       } else if (code) {
-        await supabase.auth.exchangeCodeForSession(code);
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        if (error) {
+          router.replace(`${authEntry}?error=${encodeURIComponent(error.message)}`);
+          return;
+        }
       }
 
       const {
@@ -61,6 +48,13 @@ export function AuthCallbackClient() {
       if (userError || !user) {
         setMessage("Could not establish a session. Try signing in again.");
         router.replace(`${authEntry}?error=session`);
+        return;
+      }
+
+      const res = await apiFetch("/v1/auth/session-state");
+      if (res.ok) {
+        const state = (await res.json()) as SessionState;
+        router.replace(routeForSessionState(state, next));
         return;
       }
 

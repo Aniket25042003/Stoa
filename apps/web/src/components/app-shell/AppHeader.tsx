@@ -9,8 +9,11 @@ import { createClient } from "@/lib/supabase/client";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard" },
-  { href: "/gtm", label: "Strategy" },
-  { href: "/marketing", label: "Campaigns" },
+  { href: "/data", label: "Data" },
+  { href: "/intelligence", label: "Intelligence" },
+  { href: "/competitive", label: "Competitive" },
+  { href: "/campaigns", label: "Campaigns" },
+  { href: "/settings/team", label: "Team" },
 ];
 
 export function AppHeader({ email }: { email: string }) {
