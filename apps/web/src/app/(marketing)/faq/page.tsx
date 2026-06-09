@@ -144,7 +144,7 @@ export default function FaqPage() {
         <div className="mt-16 rounded-3xl p-8 text-center card-glass">
           <p className="font-display text-xl font-bold text-on-surface">Still curious?</p>
           <p className="mt-2 text-sm text-on-surface-variant">Create a brand workspace and explore Strategy and campaigns side by side.</p>
-          <Link href={getAuthEntryPath()} className="btn-primary mt-6 px-6 py-3 text-sm">
+          <Link href="/login" className="btn-primary mt-6 px-6 py-3 text-sm">
             Sign up free
           </Link>
         </div>

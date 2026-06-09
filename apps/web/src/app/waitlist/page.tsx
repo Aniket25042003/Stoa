@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { createClient } from "@/lib/supabase/client";
 import { BRAND_NAME, BRAND_SUBHEAD, BRAND_TAGLINE } from "@/lib/brand";
 import { cn } from "@/lib/cn";
 
@@ -24,27 +25,27 @@ export default function WaitlistPage() {
       "INGEST: Checking email uniqueness..."
     ]);
 
-    const res = await fetch("/api/waitlist", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email }),
-    });
+    const supabase = createClient();
+    const { error } = await supabase.from("waitlist").insert([{ name, email }]);
 
     setTimeout(() => {
-      if (!res.ok && res.status !== 200) {
-        setLogs((prev) => [
-          ...prev,
-          "ERROR: Registration failed.",
-          "SYS: Please verify network status and try again.",
-        ]);
-      } else if (res.status === 200) {
-        setLogs((prev) => [
-          ...prev,
-          "WARN: Email already registered in waitlist queue.",
-          "STATUS: In queue.",
-          "INFO: Re-compiling target workspace keys is not necessary.",
-        ]);
-        setRegistered(true);
+      if (error) {
+        if (error.code === "23505") {
+          // Unique constraint violation (already registered)
+          setLogs((prev) => [
+            ...prev,
+            "WARN: Email already registered in waitlist queue.",
+            "STATUS: In queue.",
+            "INFO: Re-compiling target workspace keys is not necessary."
+          ]);
+          setRegistered(true);
+        } else {
+          setLogs((prev) => [
+            ...prev,
+            `ERROR: Compilation failed: ${error.message}`,
+            "SYS: Please verify network status and try again."
+          ]);
+        }
       } else {
         const queuePos = Math.floor(Math.random() * 80) + 420;
         setLogs((prev) => [
@@ -52,14 +53,14 @@ export default function WaitlistPage() {
           "SUCCESS: Registered in waitlist queue.",
           `QUEUE_POSITION: #${queuePos}`,
           "STATUS: Active.",
-          "INFO: We will notify you when system keys are compiled.",
+          "INFO: We will notify you when system keys are compiled."
         ]);
         setRegistered(true);
         setName("");
         setEmail("");
       }
       setLoading(false);
-    }, 1500);
+    }, 1500); // Add a small delay for a realistic compiler feel
   };
 
   return (

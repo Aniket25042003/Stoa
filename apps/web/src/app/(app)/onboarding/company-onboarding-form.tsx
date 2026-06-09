@@ -23,7 +23,7 @@ export function CompanyOnboardingForm() {
 
     if (!payload.name) {
       setSubmitting(false);
-      setMessage("Company name is required.");
+      setMessage("Brand name, description, and target customers are required.");
       return;
     }
 
@@ -36,32 +36,69 @@ export function CompanyOnboardingForm() {
         body: JSON.stringify(payload),
       });
       const body = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(body?.detail || "Could not create workspace");
-      router.push("/data");
+      if (!res.ok) throw new Error(body?.detail || "Could not create brand");
+      setStoredActiveCompanyId(body.id);
+      router.push("/dashboard");
       router.refresh();
-    } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Something went wrong");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not create brand");
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-5">
-      <div>
-        <label className="text-sm font-medium">Company name</label>
-        <input name="name" required className="mt-1 w-full rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-sm" />
+    <form onSubmit={(event) => void onSubmit(event)} className="grid gap-5">
+      <div className="grid gap-5 md:grid-cols-2">
+        <label className="grid gap-2 text-sm font-semibold text-on-surface">
+          Brand name
+          <input name="name" required className="rounded-2xl border border-outline-variant/70 bg-surface-container-low px-4 py-3 font-normal outline-none focus:border-primary" placeholder="Acme" />
+        </label>
+        <label className="grid gap-2 text-sm font-semibold text-on-surface">
+          Website
+          <input name="website_url" className="rounded-2xl border border-outline-variant/70 bg-surface-container-low px-4 py-3 font-normal outline-none focus:border-primary" placeholder="https://example.com" />
+        </label>
+        <label className="grid gap-2 text-sm font-semibold text-on-surface">
+          Industry
+          <input name="industry" className="rounded-2xl border border-outline-variant/70 bg-surface-container-low px-4 py-3 font-normal outline-none focus:border-primary" placeholder="B2B SaaS" />
+        </label>
+        <label className="grid gap-2 text-sm font-semibold text-on-surface">
+          Stage
+          <input name="stage" className="rounded-2xl border border-outline-variant/70 bg-surface-container-low px-4 py-3 font-normal outline-none focus:border-primary" placeholder="Pre-seed, seed, growth..." />
+        </label>
       </div>
-      <div>
-        <label className="text-sm font-medium">Website</label>
-        <input name="website_url" type="url" className="mt-1 w-full rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-sm" placeholder="https://..." />
+
+      <label className="grid gap-2 text-sm font-semibold text-on-surface">
+        What&apos;s the big idea?
+        <textarea name="description" required rows={4} className="rounded-2xl border border-outline-variant/70 bg-surface-container-low px-4 py-3 font-normal outline-none focus:border-primary" placeholder="Describe the product, the problem it solves, and why it matters." />
+      </label>
+
+      <div className="grid gap-5 md:grid-cols-2">
+        <label className="grid gap-2 text-sm font-semibold text-on-surface">
+          Target customers
+          <textarea name="target_customers" required rows={3} className="rounded-2xl border border-outline-variant/70 bg-surface-container-low px-4 py-3 font-normal outline-none focus:border-primary" placeholder="Who buys or uses it?" />
+        </label>
+        <label className="grid gap-2 text-sm font-semibold text-on-surface">
+          Geography
+          <textarea name="geography" rows={3} className="rounded-2xl border border-outline-variant/70 bg-surface-container-low px-4 py-3 font-normal outline-none focus:border-primary" placeholder="Regions, markets, or segments to prioritize." />
+        </label>
+        <label className="grid gap-2 text-sm font-semibold text-on-surface">
+          Business model
+          <textarea name="business_model" rows={3} className="rounded-2xl border border-outline-variant/70 bg-surface-container-low px-4 py-3 font-normal outline-none focus:border-primary" placeholder="Pricing, sales motion, contract size, or revenue model." />
+        </label>
+        <label className="grid gap-2 text-sm font-semibold text-on-surface">
+          Brand voice notes
+          <textarea name="brand_voice" rows={3} className="rounded-2xl border border-outline-variant/70 bg-surface-container-low px-4 py-3 font-normal outline-none focus:border-primary" placeholder="Tone, words to use, words to avoid, design notes." />
+        </label>
       </div>
       <div>
         <label className="text-sm font-medium">Industry</label>
         <input name="industry" className="mt-1 w-full rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-sm" />
       </div>
-      <button type="submit" disabled={submitting} className="btn-primary px-5 py-3 text-sm disabled:opacity-50">
-        {submitting ? "Creating..." : "Create workspace"}
+
+      {message ? <p className="text-sm text-error">{message}</p> : null}
+      <button type="submit" disabled={submitting} className="btn-primary justify-center px-6 py-3 text-sm disabled:opacity-60">
+        {submitting ? "Saving brand..." : "Let's go"}
       </button>
       {message ? <p className="text-sm text-error">{message}</p> : null}
     </form>
