@@ -1,71 +1,52 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
-import { ACTIVE_COMPANY_EVENT, getStoredActiveCompanyId, setStoredActiveCompanyId } from "@/lib/active-company";
-import { AnimatedStatCard } from "@/components/motion/AnimatedStatCard";
-import { ReadinessStepper } from "@/components/motion/ReadinessStepper";
-import { StaggerInView } from "@/components/motion/StaggerInView";
-
-type Company = {
-  id: string;
-  name: string;
-  description?: string | null;
-  industry?: string | null;
-  onboarding_completed_at?: string | null;
-};
 
 type Summary = {
-  company: Company;
-  stats: {
-    profile_completion: number;
-    gtm_runs: number;
-    marketing_chats: number;
-    knowledge_items: number;
-    marketing_artifacts: number;
+  org: { id: string; name: string; industry?: string | null };
+  counts: {
+    documents: number;
+    signals: number;
+    competitors: number;
+    alerts: number;
+    campaigns: number;
   };
-  readiness: {
-    has_company_profile: boolean;
-    has_gtm_plan: boolean;
-    has_marketing_baseline: boolean;
+  signals_by_kind: Record<string, number>;
+  icp_version: number | null;
+  completeness: {
+    percent: number;
+    missing: string[];
+    ready_for_intelligence: boolean;
+    ready_for_competitive: boolean;
+    ready_for_campaigns: boolean;
   };
-  recent: {
-    runs: { id: string; status: string; created_at: string }[];
-    chats: { id: string; title: string; created_at: string }[];
-    knowledge: { id: string; kind: string; title: string; created_at: string }[];
-    artifacts: { id: string; kind: string; title: string; created_at: string }[];
-  };
+  executive_summary?: { content?: { summary?: string }; citations?: string[] };
+  insight_highlights?: Array<{ title: string; content?: { answer?: string } }>;
 };
 
-function recencyWidth(createdAt: string): string {
-  const age = Date.now() - new Date(createdAt).getTime();
-  const day = 24 * 60 * 60 * 1000;
-  const pct = Math.max(12, Math.min(100, 100 - (age / (14 * day)) * 88));
-  return `${pct}%`;
-}
+type Props = {
+  email: string;
+  org?: { id: string; name: string; industry?: string | null };
+  role: string;
+};
 
-export function DashboardWorkspace({ accessToken, companies, email }: { accessToken: string; companies: Company[]; email: string }) {
-  const [activeId, setActiveId] = useState<string | null>(null);
+const quickLinks = [
+  { href: "/data", label: "Data hub", desc: "Add profile, documents, competitors" },
+  { href: "/intelligence", label: "Intelligence", desc: "Prepared answers & ICP" },
+  { href: "/competitive", label: "Competitive", desc: "Alerts & monitoring" },
+  { href: "/campaigns", label: "Campaigns", desc: "Generate campaign assets" },
+];
+
+export function DashboardWorkspace({ email, org, role }: Props) {
   const [summary, setSummary] = useState<Summary | null>(null);
-  const [loading, setLoading] = useState(true);
-  const reduce = useReducedMotion();
 
   useEffect(() => {
-    const stored = getStoredActiveCompanyId();
-    const next = companies.find((company) => company.id === stored)?.id ?? companies[0]?.id ?? null;
-    setActiveId(next);
-    if (next !== stored) setStoredActiveCompanyId(next);
-  }, [companies]);
-
-  useEffect(() => {
-    const onActiveCompany = (event: Event) => {
-      const detail = (event as CustomEvent<{ companyId: string | null }>).detail;
-      setActiveId(detail?.companyId ?? null);
-    };
-    window.addEventListener(ACTIVE_COMPANY_EVENT, onActiveCompany);
-    return () => window.removeEventListener(ACTIVE_COMPANY_EVENT, onActiveCompany);
+    void (async () => {
+      const res = await apiFetch("/v1/dashboard/summary");
+      if (res.ok) setSummary(await res.json());
+    })();
   }, []);
 
   useEffect(() => {
@@ -127,21 +108,17 @@ export function DashboardWorkspace({ accessToken, companies, email }: { accessTo
               Open Campaigns
             </Link>
           </div>
-        </div>
-      </motion.section>
+        ) : null}
+      </div>
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        {statCards.map((item, i) => (
-          <StaggerInView key={item.label} delay={i * 0.08}>
-            <AnimatedStatCard
-              label={item.label}
-              loading={loading}
-              variant={item.variant}
-              value={item.value}
-            />
-          </StaggerInView>
-        ))}
-      </section>
+      {summary?.executive_summary?.content?.summary ? (
+        <div className="rounded-3xl p-6 card-glass">
+          <h2 className="font-display text-xl font-bold">Executive summary</h2>
+          <p className="mt-3 text-sm leading-7 text-on-surface-variant">
+            {summary.executive_summary.content.summary}
+          </p>
+        </div>
+      ) : null}
 
       <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="rounded-3xl p-6 card-glass md:p-7">
@@ -152,10 +129,8 @@ export function DashboardWorkspace({ accessToken, companies, email }: { accessTo
             </div>
             {loading ? <span className="text-sm text-on-surface-variant">Loading...</span> : null}
           </div>
-          <div className="mt-6">
-            <ReadinessStepper readiness={readiness} />
-          </div>
-        </div>
+        ))}
+      </div>
 
         <div className="rounded-3xl p-6 card-glass md:p-7">
           <p className="eyebrow">All brands</p>
@@ -180,7 +155,7 @@ export function DashboardWorkspace({ accessToken, companies, email }: { accessTo
             </Link>
           </div>
         </div>
-      </section>
+      ) : null}
 
       <section className="rounded-3xl p-6 card-glass md:p-7">
         <p className="eyebrow">Recent activity</p>

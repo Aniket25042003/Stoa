@@ -2,14 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { setStoredActiveCompanyId } from "@/lib/active-company";
-
-function lines(value: FormDataEntryValue | null) {
-  return String(value ?? "")
-    .split(/\r?\n|,/)
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
+import { createClient } from "@/lib/supabase/client";
+import { apiFetch } from "@/lib/api";
 
 export function CompanyOnboardingForm() {
   const router = useRouter();
@@ -25,32 +19,20 @@ export function CompanyOnboardingForm() {
       name: String(form.get("name") ?? "").trim(),
       website_url: String(form.get("website_url") ?? "").trim() || null,
       industry: String(form.get("industry") ?? "").trim() || null,
-      description: String(form.get("description") ?? "").trim(),
-      target_customers: String(form.get("target_customers") ?? "").trim(),
-      geography: String(form.get("geography") ?? "").trim() || null,
-      business_model: String(form.get("business_model") ?? "").trim() || null,
-      stage: String(form.get("stage") ?? "").trim() || null,
-      goals: lines(form.get("goals")),
-      known_competitors: lines(form.get("known_competitors")),
-      constraints: lines(form.get("constraints")),
-      brand_voice: {
-        notes: String(form.get("brand_voice") ?? "").trim(),
-      },
-      onboarding_completed: true,
     };
 
-    if (!payload.name || !payload.description || !payload.target_customers) {
+    if (!payload.name) {
       setSubmitting(false);
       setMessage("Brand name, description, and target customers are required.");
       return;
     }
 
     try {
-      const res = await fetch("/api/companies", {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not signed in");
+      const res = await apiFetch("/v1/orgs/onboarding", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify(payload),
       });
       const body = await res.json().catch(() => null);
@@ -109,26 +91,16 @@ export function CompanyOnboardingForm() {
           <textarea name="brand_voice" rows={3} className="rounded-2xl border border-outline-variant/70 bg-surface-container-low px-4 py-3 font-normal outline-none focus:border-primary" placeholder="Tone, words to use, words to avoid, design notes." />
         </label>
       </div>
-
-      <div className="grid gap-5 md:grid-cols-3">
-        <label className="grid gap-2 text-sm font-semibold text-on-surface">
-          Goals
-          <textarea name="goals" rows={4} className="rounded-2xl border border-outline-variant/70 bg-surface-container-low px-4 py-3 font-normal outline-none focus:border-primary" placeholder={"Launch beta\nBook demos\nTest ads"} />
-        </label>
-        <label className="grid gap-2 text-sm font-semibold text-on-surface">
-          Known competitors
-          <textarea name="known_competitors" rows={4} className="rounded-2xl border border-outline-variant/70 bg-surface-container-low px-4 py-3 font-normal outline-none focus:border-primary" placeholder={"Competitor A\nCompetitor B"} />
-        </label>
-        <label className="grid gap-2 text-sm font-semibold text-on-surface">
-          Constraints
-          <textarea name="constraints" rows={4} className="rounded-2xl border border-outline-variant/70 bg-surface-container-low px-4 py-3 font-normal outline-none focus:border-primary" placeholder={"Small budget\nFounder-led sales\nNo paid social yet"} />
-        </label>
+      <div>
+        <label className="text-sm font-medium">Industry</label>
+        <input name="industry" className="mt-1 w-full rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-sm" />
       </div>
 
       {message ? <p className="text-sm text-error">{message}</p> : null}
       <button type="submit" disabled={submitting} className="btn-primary justify-center px-6 py-3 text-sm disabled:opacity-60">
         {submitting ? "Saving brand..." : "Let's go"}
       </button>
+      {message ? <p className="text-sm text-error">{message}</p> : null}
     </form>
   );
 }

@@ -1,33 +1,48 @@
 import { redirect } from "next/navigation";
+import { getAuthEntryPath } from "@/lib/auth-entry";
 import { createClient } from "@/lib/supabase/server";
 import { apiFetch } from "@/lib/api";
-import { CompaniesLoadError } from "../companies-load-error";
 import { DashboardWorkspace } from "./dashboard-workspace";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
   const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect(getAuthEntryPath());
+  const {
     data: { session },
   } = await supabase.auth.getSession();
-  if (!session) redirect("/login");
+  if (!session) redirect(getAuthEntryPath());
 
-  let companies: { id: string; name: string; description?: string | null; industry?: string | null; onboarding_completed_at?: string | null }[] = [];
-  let companiesRequestFailed = false;
+  let orgData: { org?: { id: string; name: string; industry?: string | null }; membership?: { role: string } } | null = null;
+  let loadError = false;
   try {
-    const res = await apiFetch("/v1/companies", { accessToken: session.access_token });
+    const res = await apiFetch("/v1/orgs/me", { accessToken: session.access_token });
     if (res.ok) {
-      const body = await res.json();
-      companies = body.companies ?? [];
+      orgData = await res.json();
+    } else if (res.status === 404) {
+      redirect("/onboarding");
     } else {
-      companiesRequestFailed = true;
+      loadError = true;
     }
   } catch {
-    companiesRequestFailed = true;
+    loadError = true;
   }
 
-  if (companiesRequestFailed) return <CompaniesLoadError retryHref="/dashboard" />;
+  if (loadError) {
+    return (
+      <div className="rounded-3xl p-8 card-glass text-center">
+        <p className="text-on-surface-variant">Could not load workspace. Check API connection and try again.</p>
+      </div>
+    );
+  }
 
-  if (companies.length === 0) redirect("/onboarding");
-
-  return <DashboardWorkspace accessToken={session.access_token} companies={companies} email={session.user.email ?? "your account"} />;
+  return (
+    <DashboardWorkspace
+      email={session.user.email ?? "your account"}
+      org={orgData?.org}
+      role={orgData?.membership?.role ?? "viewer"}
+    />
+  );
 }
