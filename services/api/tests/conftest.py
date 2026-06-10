@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import os
+
+os.environ.setdefault("STOA_ENV", "development")
 import uuid
 
 import jwt

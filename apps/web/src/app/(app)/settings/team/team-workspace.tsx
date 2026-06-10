@@ -58,8 +58,12 @@ export function TeamWorkspace() {
       setMessage(body?.detail || "Could not send invite.");
       return;
     }
-    setInviteUrl(body.invite_url);
-    setMessage("Invite created. Supabase will send email through your configured SMTP sender when available.");
+    if (body.invite_url) setInviteUrl(body.invite_url);
+    setMessage(
+      body.invite_url
+        ? "Invite created. Share the link below if email delivery is delayed."
+        : "Invite created. Supabase will email the teammate when SMTP is configured.",
+    );
     await load();
     event.currentTarget.reset();
   }

@@ -12,6 +12,8 @@ _lock = Lock()
 _buckets: dict[str, list[float]] = defaultdict(list)
 _redis_available: bool | None = None
 
+SENSITIVE_SCOPES = frozenset({"auth_signup", "auth_resend", "waitlist"})
+
 
 def _memory_check(key: str, limit_per_minute: int) -> None:
     now = time.time()
@@ -51,8 +53,13 @@ def _use_redis() -> bool:
     return _redis_available
 
 
+def _fail_closed_for_scope(scope: str) -> bool:
+    return scope in SENSITIVE_SCOPES or scope.endswith(":email")
+
+
 def check_rate_limit(user_id: str, limit_per_minute: int = 60, *, scope: str = "default") -> None:
     key = f"{scope}:{user_id}"
+    fail_closed = _fail_closed_for_scope(scope)
     if _use_redis():
         try:
             _redis_check(key, limit_per_minute)
@@ -60,5 +67,28 @@ def check_rate_limit(user_id: str, limit_per_minute: int = 60, *, scope: str = "
         except HTTPException:
             raise
         except Exception:
-            pass
+            if fail_closed:
+                raise HTTPException(
+                    status.HTTP_503_SERVICE_UNAVAILABLE,
+                    "Rate limiting temporarily unavailable",
+                ) from None
+    elif fail_closed:
+        raise HTTPException(
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+            "Rate limiting temporarily unavailable",
+        )
     _memory_check(key, limit_per_minute)
+
+
+def check_public_rate_limit(
+    client_ip: str,
+    *,
+    email: str | None = None,
+    ip_limit_per_minute: int = 5,
+    email_limit_per_minute: int = 3,
+    scope: str,
+) -> None:
+    """Rate limit public endpoints by trusted IP and optional email."""
+    check_rate_limit(client_ip or "unknown", ip_limit_per_minute, scope=scope)
+    if email:
+        check_rate_limit(email.strip().lower(), email_limit_per_minute, scope=f"{scope}:email")

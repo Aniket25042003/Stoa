@@ -39,20 +39,20 @@ def validate_redis_security(settings: Settings | None = None) -> None:
     if not info.scheme.startswith("redis"):
         raise RedisSecurityError(f"Unsupported Redis scheme: {info.scheme}")
 
-    if settings.is_production:
+    if not settings.is_development:
         if not info.has_password:
             raise RedisSecurityError(
-                "Production requires REDIS_URL (or CELERY_BROKER_URL) to include a password"
+                "Redis URL must include a password (set STOA_ENV=development for local-only override)"
             )
         if settings.redis_require_tls_effective and not info.uses_tls:
             raise RedisSecurityError(
-                "Production requires TLS — use rediss:// in REDIS_URL "
+                "TLS required — use rediss:// in REDIS_URL "
                 "(set REDIS_REQUIRE_TLS=false to override)"
             )
 
     backend = inspect_redis_url(settings.result_backend)
-    if settings.is_production and not backend.has_password:
-        raise RedisSecurityError("Production requires CELERY_RESULT_BACKEND to include a password")
+    if not settings.is_development and not backend.has_password:
+        raise RedisSecurityError("CELERY_RESULT_BACKEND must include a password")
 
 
 def redis_ssl_kwargs(settings: Settings | None = None) -> dict | None:

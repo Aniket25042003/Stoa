@@ -93,8 +93,7 @@ async def upload_document(
     try:
         sb.storage.from_(settings.storage_bucket).upload(storage_path, content)
     except Exception as exc:
-        if settings.is_production:
-            raise HTTPException(status.HTTP_502_BAD_GATEWAY, "Storage upload failed") from exc
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, "Storage upload failed") from exc
 
     doc_res = (
         sb.table("documents")

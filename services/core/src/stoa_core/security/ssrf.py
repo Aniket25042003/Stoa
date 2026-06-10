@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ipaddress
 import socket
+from dataclasses import dataclass
 from urllib.parse import urlparse
 
 _BLOCKED_NETWORKS = (
@@ -33,6 +34,46 @@ def _resolve_host_ips(hostname: str) -> list[ipaddress.IPv4Address | ipaddress.I
     for info in socket.getaddrinfo(hostname, None, type=socket.SOCK_STREAM):
         ips.append(ipaddress.ip_address(info[4][0]))
     return ips
+
+
+@dataclass(frozen=True)
+class SafeHttpsTarget:
+    hostname: str
+    ip: str
+    path_with_query: str
+
+
+def _path_with_query(parsed) -> str:
+    path = parsed.path or "/"
+    if parsed.query:
+        path = f"{path}?{parsed.query}"
+    return path
+
+
+def resolve_safe_https_target(url: str) -> SafeHttpsTarget:
+    """Validate URL and pin to a resolved public IP to prevent DNS rebinding."""
+    safe_url = assert_safe_fetch_url(url)
+    parsed = urlparse(safe_url)
+    hostname = parsed.hostname
+    if not hostname:
+        raise ValueError("URL must include a hostname")
+
+    try:
+        literal = ipaddress.ip_address(hostname)
+    except ValueError:
+        literal = None
+    if literal is not None:
+        if _ip_blocked(literal):
+            raise ValueError("Blocked IP address")
+        return SafeHttpsTarget(hostname=hostname, ip=str(literal), path_with_query=_path_with_query(parsed))
+
+    ips = _resolve_host_ips(hostname)
+    if not ips:
+        raise ValueError("Hostname could not be resolved")
+    for ip in ips:
+        if _ip_blocked(ip):
+            raise ValueError("Hostname resolves to blocked IP address") from None
+    return SafeHttpsTarget(hostname=hostname, ip=str(ips[0]), path_with_query=_path_with_query(parsed))
 
 
 def assert_safe_fetch_url(url: str) -> str:

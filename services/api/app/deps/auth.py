@@ -7,6 +7,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jwt import PyJWKClient
 
 from app.config import get_settings
+from app.services.auth_state import user_is_email_verified
 
 bearer_scheme = HTTPBearer(auto_error=False)
 _ASYMMETRIC_ALGS = frozenset({"RS256", "RS384", "RS512", "ES256", "ES384", "ES512"})
@@ -83,12 +84,20 @@ def user_id_from_jwt(token: str) -> str:
     return str(sub)
 
 
+def _require_verified_email(payload: dict) -> None:
+    user_id = str(payload["sub"])
+    if not user_is_email_verified(user_id, payload):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Email verification required")
+
+
 def verify_supabase_jwt(
     creds: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
 ) -> str:
     if creds is None or creds.scheme.lower() != "bearer":
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Missing bearer token")
-    return user_id_from_jwt(creds.credentials)
+    payload = payload_from_jwt(creds.credentials)
+    _require_verified_email(payload)
+    return str(payload["sub"])
 
 
 def verify_supabase_jwt_payload(
@@ -97,3 +106,13 @@ def verify_supabase_jwt_payload(
     if creds is None or creds.scheme.lower() != "bearer":
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Missing bearer token")
     return payload_from_jwt(creds.credentials)
+
+
+def verify_supabase_jwt_payload_verified(
+    creds: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+) -> dict:
+    if creds is None or creds.scheme.lower() != "bearer":
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Missing bearer token")
+    payload = payload_from_jwt(creds.credentials)
+    _require_verified_email(payload)
+    return payload

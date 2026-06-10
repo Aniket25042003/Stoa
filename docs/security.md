@@ -22,7 +22,7 @@
 | Variable | Where |
 |----------|-------|
 | `NEXT_PUBLIC_SUPABASE_*` | Browser only |
-| `SUPABASE_SERVICE_ROLE_KEY` | API/worker + server-only Next routes (waitlist) |
+| `SUPABASE_SERVICE_ROLE_KEY` | API/worker only (never in the web app) |
 | `SUPABASE_JWT_SECRET` | API only |
 | `INVITE_TOKEN_PEPPER` | API only |
 | Brevo SMTP credentials | Supabase Auth dashboard only |
@@ -39,6 +39,8 @@
 ## Rate limiting
 
 - Redis-backed per-user limits when available (upload, paste, ask, scans, campaigns, ICP/insights)
+- Public auth/waitlist endpoints rate limit by trusted client IP plus email (Redis required; fail closed)
+- Next.js BFF sets `X-Stoa-Client-IP` + `X-Stoa-Proxy-Secret` when `INTERNAL_PROXY_SECRET` is configured
 
 ## Redis / Celery broker
 
@@ -70,9 +72,23 @@ Sensitive writes log to `audit_log` (org_id, user_id, action, resource).
 - Invite acceptance requires a Supabase-authenticated user whose email matches the invite email.
 - The one-company-per-user invariant is preserved; only empty auto-provisioned placeholder orgs may be replaced during invite acceptance.
 
-## Deferred Guardrails
+## Email verification
 
-LLM prompt/output guardrails are tracked as a later security task after the core workflows stabilize.
+- Product API routes require a verified email for password signups (`403` until confirmed)
+- OAuth users are treated as verified by provider
+- `/v1/auth/session-state` remains available for the verify-email polling flow
+
+## Secret rotation (pre-launch)
+
+1. Rotate `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`, and `SUPABASE_ANON_KEY` in Supabase dashboard
+2. Update Render/Vercel env vars and redeploy API + web
+3. Set a unique `INVITE_TOKEN_PEPPER` and `INTERNAL_PROXY_SECRET` (never commit)
+4. Revoke old keys after deploy health checks pass
+
+## Prompt injection / PII
+
+- Ingestion and Q&A use best-effort regex sanitization and `redact_pii()` — not a substitute for model-level guardrails
+- Deferred: dedicated LLM input/output policy layer after core workflows stabilize
 
 ## RLS testing
 

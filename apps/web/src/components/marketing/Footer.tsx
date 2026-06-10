@@ -18,8 +18,8 @@ const cols = [
     links: [
       { href: authEntry, label: "Sign in" },
       { href: "/dashboard", label: "Dashboard" },
-      { href: "/gtm", label: "Strategy" },
-      { href: "/marketing", label: "Campaigns" },
+      { href: "/intelligence", label: "Intelligence" },
+      { href: "/campaigns", label: "Campaigns" },
     ],
   },
 ];

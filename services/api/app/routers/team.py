@@ -8,7 +8,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
-from app.deps.auth import verify_supabase_jwt_payload
+from app.deps.auth import verify_supabase_jwt_payload, verify_supabase_jwt_payload_verified
 from app.services.audit import write_audit
 from app.services.auth_state import email_from_claims, get_or_create_user_profile
 from app.services.org_context import get_user_membership, require_role
@@ -27,17 +27,25 @@ class InviteAccept(BaseModel):
     token: str = Field(min_length=16)
 
 
-def _hash_token(token: str) -> str:
+def _invite_pepper() -> str:
     settings = get_settings()
-    pepper = settings.invite_token_pepper or settings.supabase_jwt_secret or settings.supabase_service_role_key
-    return hashlib.sha256(f"{token}.{pepper}".encode("utf-8")).hexdigest()
+    pepper = settings.invite_token_pepper.strip()
+    if pepper:
+        return pepper
+    if settings.is_production:
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Invite configuration error")
+    return "dev-only-insecure-pepper"
+
+
+def _hash_token(token: str) -> str:
+    return hashlib.sha256(f"{token}.{_invite_pepper()}".encode("utf-8")).hexdigest()
 
 
 def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
-def current_user_id(claims: dict[str, Any] = Depends(verify_supabase_jwt_payload)) -> str:
+def current_user_id(claims: dict[str, Any] = Depends(verify_supabase_jwt_payload_verified)) -> str:
     return str(claims["sub"])
 
 
@@ -107,7 +115,7 @@ def list_invites(user_id: str = Depends(current_user_id)) -> dict[str, Any]:
 
 
 @router.post("/invites")
-def create_invite(body: InviteCreate, claims: dict[str, Any] = Depends(verify_supabase_jwt_payload)) -> dict[str, Any]:
+def create_invite(body: InviteCreate, claims: dict[str, Any] = Depends(verify_supabase_jwt_payload_verified)) -> dict[str, Any]:
     user_id = str(claims["sub"])
     membership = get_user_membership(user_id)
     require_role(membership, "admin")
@@ -136,10 +144,14 @@ def create_invite(body: InviteCreate, claims: dict[str, Any] = Depends(verify_su
     if not invite:
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Failed to create invite")
 
-    invite_url = f"{get_settings().app_base_url.rstrip('/')}/invite/{token}"
+    settings = get_settings()
+    invite_url = f"{settings.app_base_url.rstrip('/')}/invite/{token}"
     _send_supabase_invite(email, invite_url)
     write_audit(membership["org_id"], user_id, "member.invited", "org_invite", invite["id"], {"email": email, "role": body.role})
-    return {"invite": {k: v for k, v in invite.items() if k != "token_hash"}, "invite_url": invite_url}
+    response: dict[str, Any] = {"invite": {k: v for k, v in invite.items() if k != "token_hash"}}
+    if not settings.is_production:
+        response["invite_url"] = invite_url
+    return response
 
 
 @router.post("/invites/{invite_id}/revoke")

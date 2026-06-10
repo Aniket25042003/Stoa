@@ -9,7 +9,7 @@ from typing import Any
 import httpx
 
 from stoa_core.llm.router import invoke_json
-from stoa_core.security.ssrf import assert_safe_fetch_url
+from stoa_core.security.ssrf import resolve_safe_https_target
 
 logger = logging.getLogger(__name__)
 
@@ -18,9 +18,13 @@ USER_AGENT = "Stoa-Intel-Bot/0.1 (+https://stoa.ai)"
 
 def fetch_page_text(url: str, timeout: float = 15.0) -> str:
     try:
-        assert_safe_fetch_url(url)
+        target = resolve_safe_https_target(url)
+        pinned_url = f"https://{target.ip}{target.path_with_query}"
         with httpx.Client(timeout=timeout, follow_redirects=False) as client:
-            resp = client.get(url, headers={"User-Agent": USER_AGENT})
+            resp = client.get(
+                pinned_url,
+                headers={"Host": target.hostname, "User-Agent": USER_AGENT},
+            )
             resp.raise_for_status()
             return resp.text[:50000]
     except Exception as exc:

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { trustedProxyHeaders } from "@/lib/proxy-headers";
 import { NextRequest, NextResponse } from "next/server";
 
 const apiBase = () => {
@@ -26,6 +27,9 @@ async function proxy(request: NextRequest, pathSegments: string[]) {
   const target = `${apiBase()}/${path}${request.nextUrl.search}`;
   const headers = new Headers();
   headers.set("Authorization", `Bearer ${session.access_token}`);
+  for (const [key, value] of Object.entries(trustedProxyHeaders(request))) {
+    headers.set(key, value);
+  }
   const accept = request.headers.get("accept");
   if (accept) headers.set("Accept", accept);
   const contentType = request.headers.get("content-type");
