@@ -3,35 +3,38 @@
 import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { apiFetch } from "@/lib/api";
 import { routeForSessionState, safeNextPath, type SessionState } from "@/lib/auth-workflow";
 import { BRAND_NAME } from "@/lib/brand";
-import { createClient } from "@/lib/supabase/client";
 
 function VerifyEmailClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState(searchParams.get("email") ?? "");
   const [message, setMessage] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
   const next = safeNextPath(searchParams.get("next"));
 
   useEffect(() => {
-    void (async () => {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user?.email) setEmail(user.email);
-      if (!user) return;
-      const res = await apiFetch("/v1/auth/session-state");
-      if (res.ok) {
-        const state = (await res.json()) as SessionState;
-        if (!state.needs_email_verification) {
-          router.replace(routeForSessionState(state, next));
-        }
+    let cancelled = false;
+
+    async function checkSession() {
+      const res = await fetch("/api/auth/session");
+      if (!res.ok || cancelled) return;
+      const state = (await res.json()) as SessionState & { authenticated?: boolean; email?: string | null };
+      if (state.email) setEmail(state.email);
+      if (!state.authenticated) return;
+      if (!state.needs_email_verification) {
+        router.replace(routeForSessionState(state, next));
+        router.refresh();
       }
-    })();
+    }
+
+    void checkSession();
+    const interval = window.setInterval(() => void checkSession(), 4000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
   }, [next, router]);
 
   async function resend() {
@@ -40,17 +43,19 @@ function VerifyEmailClient() {
       setMessage("Enter your email first.");
       return;
     }
-    setLoading(true);
-    const supabase = createClient();
-    const origin = typeof window !== "undefined" ? window.location.origin : "";
-    const emailRedirectTo = `${origin}/auth/callback?next=${encodeURIComponent(next)}`;
-    const { error } = await supabase.auth.resend({
-      type: "signup",
-      email,
-      options: { emailRedirectTo },
+    setResending(true);
+    const res = await fetch("/api/auth/resend-verification", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, next }),
     });
-    setLoading(false);
-    setMessage(error ? error.message : "Verification email sent. Check your inbox.");
+    const body = (await res.json().catch(() => null)) as { detail?: string } | null;
+    setResending(false);
+    if (res.ok) {
+      setMessage("Verification link sent. Open the email and click the link to continue.");
+    } else {
+      setMessage(body?.detail || "Could not send verification email. Check Supabase Auth logs and Brevo SMTP settings.");
+    }
   }
 
   return (
@@ -66,17 +71,35 @@ function VerifyEmailClient() {
             <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-inverse-primary">Verify email</p>
             <h1 className="mt-2 font-display text-2xl font-bold tracking-[-0.03em]">Check your inbox</h1>
             <p className="mt-2 text-sm leading-6 text-white/68">
-              Supabase sent your verification email through the configured Brevo SMTP sender. Open the link to continue setup.
+              We sent a confirmation link to your email. Click it to verify your account — you will be signed in and taken into the app automatically.
             </p>
           </div>
           <div className="mt-6 space-y-4">
-            <label className="text-sm font-medium">Email</label>
-            <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" className="w-full rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-sm" placeholder="you@company.com" />
-            <button type="button" onClick={() => void resend()} disabled={loading} className="btn-primary w-full px-5 py-3 text-sm disabled:opacity-50">
-              {loading ? "Sending..." : "Resend verification email"}
+            <div>
+              <label className="text-sm font-medium">Email</label>
+              <input
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                type="email"
+                required
+                autoComplete="email"
+                className="mt-1 w-full rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-sm"
+                placeholder="you@company.com"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => void resend()}
+              disabled={resending}
+              className="btn-primary w-full px-5 py-3 text-sm disabled:opacity-50"
+            >
+              {resending ? "Sending..." : "Resend verification link"}
             </button>
-            {message ? <p className="text-sm text-on-surface-variant">{message}</p> : null}
+            <p className="text-xs leading-6 text-on-surface-variant">
+              Already clicked the link? This page will redirect you automatically once verification completes.
+            </p>
           </div>
+          {message ? <p className="mt-4 text-sm text-on-surface-variant">{message}</p> : null}
           <p className="mt-7 text-center text-sm">
             <Link href={`/login?next=${encodeURIComponent(next)}`} className="font-bold text-primary underline-offset-4 hover:underline">
               Back to sign in

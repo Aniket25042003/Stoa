@@ -20,8 +20,9 @@ function isProtectedPath(pathname: string): boolean {
 
 export async function middleware(request: NextRequest) {
   const nextUrl = request.nextUrl;
+  const hostname = nextUrl.hostname;
 
-  if (nextUrl.pathname === "/login" && !isLoginEnabled()) {
+  if (nextUrl.pathname === "/login" && !isLoginEnabled(hostname)) {
     return NextResponse.redirect(new URL("/waitlist", request.url));
   }
 
@@ -37,7 +38,7 @@ export async function middleware(request: NextRequest) {
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) {
     if (isProtectedPath(nextUrl.pathname)) {
-      return NextResponse.redirect(new URL(getAuthEntryPath(), request.url));
+      return NextResponse.redirect(new URL(getAuthEntryPath({ hostname }), request.url));
     }
     return response;
   }
@@ -60,7 +61,7 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (isProtectedPath(nextUrl.pathname) && !user) {
-    return NextResponse.redirect(new URL(getAuthEntryPath(), request.url));
+    return NextResponse.redirect(new URL(getAuthEntryPath({ hostname }), request.url));
   }
 
   response.headers.set("X-Frame-Options", "DENY");

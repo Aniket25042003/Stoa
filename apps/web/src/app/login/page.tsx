@@ -4,8 +4,6 @@ import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { createClient } from "@/lib/supabase/client";
-import { apiFetch } from "@/lib/api";
 import { routeForSessionState, safeNextPath, type SessionState } from "@/lib/auth-workflow";
 import { ActivityTickerTeaser } from "@/components/marketing/ActivityTickerTeaser";
 import { BRAND_NAME, BRAND_SUBHEAD, BRAND_TAGLINE } from "@/lib/brand";
@@ -34,37 +32,39 @@ function LoginForm() {
   }, [searchParams]);
 
   async function postAuthRoute() {
-    const res = await apiFetch("/v1/auth/session-state");
+    const res = await fetch("/api/auth/session");
     if (!res.ok) return next;
-    const state = (await res.json()) as SessionState;
+    const state = (await res.json()) as SessionState & { authenticated?: boolean };
+    if (!state.authenticated) return next;
     return routeForSessionState(state, next);
   }
 
   async function signInWithProvider(provider: "google" | "azure") {
     setMsg(null);
     setLoading(true);
-    const supabase = createClient();
-    const origin = typeof window !== "undefined" ? window.location.origin : "";
-    const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(next)}`;
 
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider,
-      options: provider === "azure" ? { redirectTo, scopes: "email" } : { redirectTo },
+    const res = await fetch("/api/auth/oauth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ provider, next }),
     });
+    const body = (await res.json().catch(() => null)) as { url?: string; detail?: string } | null;
 
-    if (error) {
+    if (!res.ok || !body?.url) {
       setLoading(false);
-      setMsg(error.message);
+      setMsg(body?.detail || `Could not start ${provider === "azure" ? "Microsoft" : "Google"} sign-in. Try again.`);
       return;
     }
 
-    if (data.url) {
-      window.location.assign(data.url);
-      return;
-    }
+    window.location.assign(body.url);
+  }
 
-    setLoading(false);
-    setMsg(`Could not start ${provider === "azure" ? "Microsoft" : "Google"} sign-in. Try again.`);
+  function authErrorMessage(err: unknown, fallback: string): string {
+    if (err instanceof Error) {
+      const message = err.message.trim();
+      if (message && message !== "{}") return message;
+    }
+    return fallback;
   }
 
   async function submitEmail(event: React.FormEvent<HTMLFormElement>) {
@@ -74,33 +74,50 @@ function LoginForm() {
     const form = new FormData(event.currentTarget);
     const email = String(form.get("email") ?? "").trim().toLowerCase();
     const password = String(form.get("password") ?? "");
-    const supabase = createClient();
-    const origin = typeof window !== "undefined" ? window.location.origin : "";
-    const emailRedirectTo = `${origin}/auth/callback?next=${encodeURIComponent(next)}`;
+    const fullName = String(form.get("full_name") ?? "").trim();
 
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { emailRedirectTo },
+        if (!fullName) {
+          setMsg("Full name is required.");
+          setLoading(false);
+          return;
+        }
+        const res = await fetch("/api/auth/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password, full_name: fullName, next }),
         });
-        if (error) throw error;
+        const body = (await res.json().catch(() => null)) as { detail?: string; status?: string } | null;
+        if (!res.ok) {
+          throw new Error(body?.detail || "Could not create account. Try again.");
+        }
+        if (body?.status === "created_email_pending" && body.detail) {
+          setMsg(body.detail);
+        }
         window.location.assign(`/verify-email?email=${encodeURIComponent(email)}&next=${encodeURIComponent(next)}`);
         return;
       }
 
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        if (error.message.toLowerCase().includes("confirm")) {
+      const signInRes = await fetch("/api/auth/signin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const signInBody = (await signInRes.json().catch(() => null)) as {
+        detail?: string;
+        needs_email_verification?: boolean;
+      } | null;
+      if (!signInRes.ok) {
+        if (signInBody?.needs_email_verification) {
           window.location.assign(`/verify-email?email=${encodeURIComponent(email)}&next=${encodeURIComponent(next)}`);
           return;
         }
-        throw error;
+        throw new Error(signInBody?.detail || "Could not sign in. Try again.");
       }
       window.location.assign(await postAuthRoute());
     } catch (err) {
-      setMsg(err instanceof Error ? err.message : "Could not sign in. Try again.");
+      setMsg(authErrorMessage(err, mode === "signup" ? "Could not create account. Try again." : "Could not sign in. Try again."));
       setLoading(false);
     }
   }
@@ -171,6 +188,12 @@ function LoginForm() {
               <span className="h-px flex-1 bg-outline-variant/60" />
             </div>
             <form onSubmit={(event) => void submitEmail(event)} className="space-y-4">
+              {mode === "signup" ? (
+                <div>
+                  <label className="text-sm font-medium">Full name</label>
+                  <input name="full_name" type="text" required autoComplete="name" className="mt-1 w-full rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-sm" placeholder="Aniket Patel" />
+                </div>
+              ) : null}
               <div>
                 <label className="text-sm font-medium">Email</label>
                 <input name="email" type="email" required className="mt-1 w-full rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-sm" placeholder="you@company.com" />

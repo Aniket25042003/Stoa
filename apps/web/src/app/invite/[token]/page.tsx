@@ -7,7 +7,6 @@ import { apiFetch } from "@/lib/api";
 import { routeForSessionState, type SessionState } from "@/lib/auth-workflow";
 import { getAuthEntryPath } from "@/lib/auth-entry";
 import { BRAND_NAME } from "@/lib/brand";
-import { createClient } from "@/lib/supabase/client";
 
 export default function InvitePage() {
   const params = useParams<{ token: string }>();
@@ -18,22 +17,19 @@ export default function InvitePage() {
   useEffect(() => {
     void (async () => {
       const token = params.token;
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
+      const stateRes = await fetch("/api/auth/session");
+      if (!stateRes.ok) {
         router.replace(`${getAuthEntryPath()}?next=${encodeURIComponent(`/invite/${token}`)}`);
         return;
       }
-
-      const stateRes = await apiFetch("/v1/auth/session-state");
-      if (stateRes.ok) {
-        const state = (await stateRes.json()) as SessionState;
-        if (state.needs_email_verification) {
-          router.replace(`/verify-email?next=${encodeURIComponent(`/invite/${token}`)}`);
-          return;
-        }
+      const state = (await stateRes.json()) as SessionState & { authenticated?: boolean };
+      if (!state.authenticated) {
+        router.replace(`${getAuthEntryPath()}?next=${encodeURIComponent(`/invite/${token}`)}`);
+        return;
+      }
+      if (state.needs_email_verification) {
+        router.replace(`/verify-email?next=${encodeURIComponent(`/invite/${token}`)}`);
+        return;
       }
 
       const res = await apiFetch("/v1/team/invites/accept", {

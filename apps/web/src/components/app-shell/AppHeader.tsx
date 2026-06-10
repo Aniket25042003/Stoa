@@ -5,7 +5,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { getAuthEntryPath } from "@/lib/auth-entry";
 import { BRAND_NAME } from "@/lib/brand";
-import { createClient } from "@/lib/supabase/client";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard" },
@@ -21,8 +20,7 @@ export function AppHeader({ email }: { email: string }) {
   const pathname = usePathname();
 
   async function signOut() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    await fetch("/api/auth/signout", { method: "POST" });
     router.push(getAuthEntryPath());
     router.refresh();
   }

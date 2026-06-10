@@ -4,8 +4,11 @@ import { useState } from "react";
 import Link from "next/link";
 import { RevealOnScroll } from "@/components/marketing/RevealOnScroll";
 import { SectionHeader } from "@/components/marketing/SectionHeader";
+import { getAuthEntryPath } from "@/lib/auth-entry";
 import { BRAND_SUBHEAD, BRAND_TAGLINE } from "@/lib/brand";
 import { cn } from "@/lib/cn";
+
+const authEntry = getAuthEntryPath();
 
 const steps = [
   {
@@ -205,7 +208,7 @@ export default function SeeItInActionPage() {
           <span className="text-[10px] text-primary font-bold uppercase tracking-wider">[READY_TO_DEPLOY]</span>
           <p className="mt-3 font-display text-2xl font-bold text-on-surface uppercase">Try it now</p>
           <p className="mt-2 text-xs text-on-surface-variant">{BRAND_SUBHEAD}</p>
-          <Link href="/waitlist" className="btn-primary mt-6 px-6 py-2.5 text-xs font-bold uppercase tracking-wider font-mono">
+          <Link href={authEntry} className="btn-primary mt-6 px-6 py-2.5 text-xs font-bold uppercase tracking-wider font-mono">
             GET_STARTED.SH
           </Link>
         </div>

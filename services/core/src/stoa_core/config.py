@@ -11,12 +11,14 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    # deployment
-    stoa_env: str = "development"
+    # deployment — set explicitly to development or production
+    stoa_env: str = ""
+    internal_proxy_secret: str = ""
 
     # Supabase
     supabase_url: str = ""
     supabase_service_role_key: str = ""
+    supabase_anon_key: str = ""
     supabase_jwt_secret: str = ""
     storage_bucket: str = "intelligence-documents"
 
@@ -97,6 +99,10 @@ class Settings(BaseSettings):
     @property
     def cors_origin_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+
+    @property
+    def is_development(self) -> bool:
+        return self.stoa_env.strip().lower() in {"development", "dev", "local"}
 
     @property
     def is_production(self) -> bool:

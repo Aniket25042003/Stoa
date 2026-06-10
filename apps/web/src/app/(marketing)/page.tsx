@@ -12,8 +12,11 @@ import { RevealOnScroll } from "@/components/marketing/RevealOnScroll";
 import { SectionHeader } from "@/components/marketing/SectionHeader";
 import { ParticleField } from "@/components/marketing/ParticleField";
 import { AnimatedCounter } from "@/components/marketing/AnimatedCounter";
+import { getAuthEntryPath } from "@/lib/auth-entry";
 import { BRAND_NAME, BRAND_SUBHEAD, BRAND_TAGLINE } from "@/lib/brand";
 import { ArrowRight } from "lucide-react";
+
+const authEntry = getAuthEntryPath();
 
 const marqueeItems = [
   "SYS_LATENCY: 180MS",
@@ -52,7 +55,7 @@ export default function LandingPage() {
                 {BRAND_SUBHEAD}
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                <Link href="/waitlist" className="btn-primary px-6 py-3 text-center text-sm font-mono tracking-wider uppercase">
+                <Link href={authEntry} className="btn-primary px-6 py-3 text-center text-sm font-mono tracking-wider uppercase">
                   RUN_GET_STARTED.SH <ArrowRight className="ml-2 inline h-4 w-4" />
                 </Link>
                 <Link href="/see-it-in-action" className="btn-secondary px-6 py-3 text-center text-sm font-mono uppercase">
