@@ -4,24 +4,24 @@ from typing import Any
 
 from fastapi import APIRouter, Depends
 
-from app.deps.auth import verify_supabase_jwt
+from app.deps.org_scope import require_onboarded_scope
+from app.services.org_context import OrgScope, require_permission
 from app.services.org_summary import (
     build_completeness_for_org,
     fetch_org_counts,
     latest_icp_version,
     signals_by_kind,
 )
-from app.services.org_context import get_user_membership
 from stoa_core.db.supabase import get_supabase_admin
 
 router = APIRouter(prefix="/v1/dashboard", tags=["dashboard"])
 
 
 @router.get("/summary")
-def get_dashboard_summary(user_id: str = Depends(verify_supabase_jwt)) -> dict[str, Any]:
-    membership = get_user_membership(user_id)
-    org = membership.get("organizations") or {}
-    org_id = membership["org_id"]
+def get_dashboard_summary(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    require_permission(scope, "intelligence:read")
+    org = scope.org
+    org_id = scope.org_id
     counts = fetch_org_counts(org_id)
     completeness = build_completeness_for_org(org, counts=counts)
 
@@ -54,4 +54,6 @@ def get_dashboard_summary(user_id: str = Depends(verify_supabase_jwt)) -> dict[s
         "completeness": completeness,
         "executive_summary": executive,
         "insight_highlights": insights_res.data or [],
+        "permissions": sorted(scope.permissions),
+        "role_name": scope.role_name,
     }

@@ -5,13 +5,13 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
-from app.deps.auth import verify_supabase_jwt
+from app.deps.org_scope import require_onboarded_scope
 from app.deps.rate_limit import check_rate_limit
-from stoa_core.security.sanitize import sanitize_user_content
 from app.services.audit import write_audit
-from app.services.org_context import get_user_membership, require_role
+from app.services.org_context import OrgScope, require_permission
 from app.tasks.campaigns import generate_campaign
 from stoa_core.db.supabase import get_supabase_admin
+from stoa_core.security.sanitize import sanitize_user_content
 
 router = APIRouter(prefix="/v1/campaigns", tags=["campaigns"])
 
@@ -22,13 +22,13 @@ class CampaignCreate(BaseModel):
 
 
 @router.get("")
-def list_campaigns(user_id: str = Depends(verify_supabase_jwt)) -> dict[str, Any]:
-    membership = get_user_membership(user_id)
+def list_campaigns(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    require_permission(scope, "campaigns:read")
     sb = get_supabase_admin()
     res = (
         sb.table("campaigns")
         .select("id, org_id, brief, brand_voice, status, created_at, updated_at")
-        .eq("org_id", membership["org_id"])
+        .eq("org_id", scope.org_id)
         .order("created_at", desc=True)
         .execute()
     )
@@ -36,21 +36,20 @@ def list_campaigns(user_id: str = Depends(verify_supabase_jwt)) -> dict[str, Any
 
 
 @router.post("")
-def create_campaign(body: CampaignCreate, user_id: str = Depends(verify_supabase_jwt)) -> dict[str, Any]:
-    membership = get_user_membership(user_id)
-    require_role(membership, "analyst")
-    check_rate_limit(user_id, limit_per_minute=10, scope="campaign_create")
+def create_campaign(body: CampaignCreate, scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    require_permission(scope, "campaigns:create")
+    check_rate_limit(scope.user_id, limit_per_minute=10, scope="campaign_create")
     sb = get_supabase_admin()
     brief = sanitize_user_content(body.brief)
     res = (
         sb.table("campaigns")
         .insert(
             {
-                "org_id": membership["org_id"],
+                "org_id": scope.org_id,
                 "brief": brief,
                 "brand_voice": body.brand_voice,
                 "status": "queued",
-                "created_by": user_id,
+                "created_by": scope.user_id,
             }
         )
         .execute()
@@ -58,19 +57,19 @@ def create_campaign(body: CampaignCreate, user_id: str = Depends(verify_supabase
     campaign = (res.data or [None])[0]
     if campaign:
         generate_campaign.delay(campaign["id"])
-        write_audit(membership["org_id"], user_id, "campaign.created", "campaign", campaign["id"])
+        write_audit(scope.org_id, scope.user_id, "campaign.created", "campaign", campaign["id"])
     return {"campaign": campaign}
 
 
 @router.get("/{campaign_id}")
-def get_campaign(campaign_id: str, user_id: str = Depends(verify_supabase_jwt)) -> dict[str, Any]:
-    membership = get_user_membership(user_id)
+def get_campaign(campaign_id: str, scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    require_permission(scope, "campaigns:read")
     sb = get_supabase_admin()
     res = (
         sb.table("campaigns")
-        .select("id, org_id, brief, brand_voice, status, output, created_at, updated_at")
+        .select("id, org_id, brief, brand_voice, status, assets, error, created_at, updated_at")
         .eq("id", campaign_id)
-        .eq("org_id", membership["org_id"])
+        .eq("org_id", scope.org_id)
         .limit(1)
         .execute()
     )

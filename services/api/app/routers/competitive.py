@@ -5,13 +5,13 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field, HttpUrl
 
-from app.deps.auth import verify_supabase_jwt
+from app.deps.org_scope import require_onboarded_scope
 from app.deps.rate_limit import check_rate_limit
-from stoa_core.security.ssrf import assert_safe_fetch_url
 from app.services.audit import write_audit
-from app.services.org_context import get_user_membership, require_role
+from app.services.org_context import OrgScope, require_permission
 from app.tasks.competitive import monitor_competitor
 from stoa_core.db.supabase import get_supabase_admin
+from stoa_core.security.ssrf import assert_safe_fetch_url
 
 router = APIRouter(prefix="/v1/competitive", tags=["competitive"])
 
@@ -23,13 +23,13 @@ class CompetitorCreate(BaseModel):
 
 
 @router.get("/competitors")
-def list_competitors(user_id: str = Depends(verify_supabase_jwt)) -> dict[str, Any]:
-    membership = get_user_membership(user_id)
+def list_competitors(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    require_permission(scope, "competitive:read")
     sb = get_supabase_admin()
     res = (
         sb.table("competitors")
-        .select("id, org_id, name, website_url, pricing_url, created_at, updated_at")
-        .eq("org_id", membership["org_id"])
+        .select("id, org_id, name, website_url, pricing_url, last_scanned_at, created_at")
+        .eq("org_id", scope.org_id)
         .order("created_at", desc=True)
         .execute()
     )
@@ -37,10 +37,9 @@ def list_competitors(user_id: str = Depends(verify_supabase_jwt)) -> dict[str, A
 
 
 @router.post("/competitors")
-def add_competitor(body: CompetitorCreate, user_id: str = Depends(verify_supabase_jwt)) -> dict[str, Any]:
-    membership = get_user_membership(user_id)
-    require_role(membership, "analyst")
-    check_rate_limit(user_id, limit_per_minute=10, scope="competitor_add")
+def add_competitor(body: CompetitorCreate, scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    require_permission(scope, "competitive:manage")
+    check_rate_limit(scope.user_id, limit_per_minute=10, scope="competitor_add")
     website_url = str(body.website_url) if body.website_url else None
     pricing_url = str(body.pricing_url) if body.pricing_url else None
     for url in (website_url, pricing_url):
@@ -54,11 +53,11 @@ def add_competitor(body: CompetitorCreate, user_id: str = Depends(verify_supabas
         sb.table("competitors")
         .insert(
             {
-                "org_id": membership["org_id"],
+                "org_id": scope.org_id,
                 "name": body.name,
                 "website_url": website_url,
                 "pricing_url": pricing_url,
-                "created_by": user_id,
+                "created_by": scope.user_id,
             }
         )
         .execute()
@@ -66,18 +65,18 @@ def add_competitor(body: CompetitorCreate, user_id: str = Depends(verify_supabas
     comp = (res.data or [None])[0]
     if comp:
         monitor_competitor.delay(comp["id"])
-        write_audit(membership["org_id"], user_id, "competitor.added", "competitor", comp["id"])
+        write_audit(scope.org_id, scope.user_id, "competitor.added", "competitor", comp["id"])
     return {"competitor": comp}
 
 
 @router.get("/alerts")
-def list_alerts(user_id: str = Depends(verify_supabase_jwt)) -> dict[str, Any]:
-    membership = get_user_membership(user_id)
+def list_alerts(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    require_permission(scope, "competitive:read")
     sb = get_supabase_admin()
     res = (
         sb.table("competitive_alerts")
         .select("*, competitors(name)")
-        .eq("org_id", membership["org_id"])
+        .eq("org_id", scope.org_id)
         .order("created_at", desc=True)
         .limit(100)
         .execute()
@@ -86,16 +85,15 @@ def list_alerts(user_id: str = Depends(verify_supabase_jwt)) -> dict[str, Any]:
 
 
 @router.post("/competitors/{competitor_id}/scan")
-def trigger_scan(competitor_id: str, user_id: str = Depends(verify_supabase_jwt)) -> dict[str, str]:
-    membership = get_user_membership(user_id)
-    require_role(membership, "analyst")
-    check_rate_limit(user_id, limit_per_minute=10, scope="competitor_scan")
+def trigger_scan(competitor_id: str, scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, str]:
+    require_permission(scope, "competitive:scan")
+    check_rate_limit(scope.user_id, limit_per_minute=10, scope="competitor_scan")
     sb = get_supabase_admin()
     res = (
         sb.table("competitors")
         .select("id")
         .eq("id", competitor_id)
-        .eq("org_id", membership["org_id"])
+        .eq("org_id", scope.org_id)
         .limit(1)
         .execute()
     )

@@ -8,17 +8,16 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from app.deps.auth import verify_supabase_jwt
+from app.deps.org_scope import require_onboarded_scope
 from app.deps.rate_limit import check_rate_limit
 from app.services.audit import write_audit
-from stoa_core.security.pii import redact_pii
-from stoa_core.security.sanitize import sanitize_user_content
-
-from app.services.org_context import get_user_membership, require_role
+from app.services.org_context import OrgScope, require_permission
 from app.tasks.intelligence import answer_intelligence_question
 from stoa_core.config import get_settings
 from stoa_core.db.supabase import get_supabase_admin
 from stoa_core.redis.sse import read_events_since
+from stoa_core.security.pii import redact_pii
+from stoa_core.security.sanitize import sanitize_user_content
 
 router = APIRouter(prefix="/v1/conversations", tags=["conversations"])
 
@@ -28,13 +27,13 @@ class AskBody(BaseModel):
 
 
 @router.get("")
-def list_conversations(user_id: str = Depends(verify_supabase_jwt)) -> dict[str, Any]:
-    membership = get_user_membership(user_id)
+def list_conversations(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    require_permission(scope, "conversations:read")
     sb = get_supabase_admin()
     res = (
         sb.table("conversations")
         .select("id, org_id, title, created_by, created_at, updated_at")
-        .eq("org_id", membership["org_id"])
+        .eq("org_id", scope.org_id)
         .order("updated_at", desc=True)
         .limit(50)
         .execute()
@@ -43,36 +42,35 @@ def list_conversations(user_id: str = Depends(verify_supabase_jwt)) -> dict[str,
 
 
 @router.post("/ask")
-def ask_question(body: AskBody, user_id: str = Depends(verify_supabase_jwt)) -> dict[str, Any]:
-    membership = get_user_membership(user_id)
-    require_role(membership, "viewer")
-    check_rate_limit(user_id, get_settings().rate_limit_per_minute, scope="ask")
+def ask_question(body: AskBody, scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    require_permission(scope, "conversations:ask")
+    check_rate_limit(scope.user_id, get_settings().rate_limit_per_minute, scope="ask")
     question = redact_pii(sanitize_user_content(body.question))
     sb = get_supabase_admin()
     conv_id = str(uuid.uuid4())
     sb.table("conversations").insert(
-        {"id": conv_id, "org_id": membership["org_id"], "title": question[:120], "created_by": user_id}
+        {"id": conv_id, "org_id": scope.org_id, "title": question[:120], "created_by": scope.user_id}
     ).execute()
     msg_res = (
         sb.table("messages")
-        .insert({"conversation_id": conv_id, "role": "user", "content": question, "org_id": membership["org_id"]})
+        .insert({"conversation_id": conv_id, "role": "user", "content": question, "org_id": scope.org_id})
         .execute()
     )
     user_msg = (msg_res.data or [None])[0]
-    answer_intelligence_question.delay(conv_id, membership["org_id"], question)
-    write_audit(membership["org_id"], user_id, "conversation.asked", "conversation", conv_id)
+    answer_intelligence_question.delay(conv_id, scope.org_id, question)
+    write_audit(scope.org_id, scope.user_id, "conversation.asked", "conversation", conv_id)
     return {"conversation_id": conv_id, "message": user_msg, "status": "processing"}
 
 
 @router.get("/{conversation_id}")
-def get_conversation(conversation_id: str, user_id: str = Depends(verify_supabase_jwt)) -> dict[str, Any]:
-    membership = get_user_membership(user_id)
+def get_conversation(conversation_id: str, scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    require_permission(scope, "conversations:read")
     sb = get_supabase_admin()
     conv = (
         sb.table("conversations")
         .select("id, org_id, title, created_by, created_at, updated_at")
         .eq("id", conversation_id)
-        .eq("org_id", membership["org_id"])
+        .eq("org_id", scope.org_id)
         .limit(1)
         .execute()
     )
@@ -92,15 +90,15 @@ def get_conversation(conversation_id: str, user_id: str = Depends(verify_supabas
 async def conversation_events(
     conversation_id: str,
     last_id: str | None = None,
-    user_id: str = Depends(verify_supabase_jwt),
+    scope: OrgScope = Depends(require_onboarded_scope),
 ) -> StreamingResponse:
-    membership = get_user_membership(user_id)
+    require_permission(scope, "conversations:read")
     sb = get_supabase_admin()
     conv = (
         sb.table("conversations")
         .select("id")
         .eq("id", conversation_id)
-        .eq("org_id", membership["org_id"])
+        .eq("org_id", scope.org_id)
         .limit(1)
         .execute()
     )
