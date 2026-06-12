@@ -58,7 +58,14 @@ def generate_campaign(self, campaign_id: str) -> None:
             brand_voice=campaign.get("brand_voice"),
             knowledge_context=kb_text,
         )
-        sb.table("campaigns").update({"status": "completed", "assets": assets or {}}).eq("id", campaign_id).execute()
+        if not assets:
+            logger.error("Campaign %s generation returned no assets (LLM unavailable?)", campaign_id)
+            sb.table("campaigns").update(
+                {"status": "failed", "error": "generation returned no assets"}
+            ).eq("id", campaign_id).execute()
+            publish_event("campaign", campaign_id, {"status": "failed"})
+            return
+        sb.table("campaigns").update({"status": "completed", "assets": assets}).eq("id", campaign_id).execute()
 
         if assets:
             ingest_knowledge(
