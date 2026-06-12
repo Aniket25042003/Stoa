@@ -151,14 +151,27 @@ def _find_existing_item(
     return (res.data or [None])[0]
 
 
-def profile_to_knowledge_text(org: dict[str, Any]) -> str:
-    """Serialize org profile fields into searchable knowledge text."""
+def profile_to_knowledge_text(
+    org: dict[str, Any],
+    *,
+    user_profile: dict[str, Any] | None = None,
+) -> str:
+    """Serialize org + optional user onboarding fields into searchable knowledge text."""
     profile = org.get("profile") or {}
     parts = [
         f"Company: {org.get('name', '')}",
         f"Website: {org.get('website_url', '')}",
         f"Industry: {org.get('industry', '')}",
     ]
+    if user_profile:
+        for key, label in (
+            ("role_type", "Owner role type"),
+            ("job_title", "Owner job title"),
+            ("use_case", "Primary use case"),
+        ):
+            val = user_profile.get(key)
+            if val:
+                parts.append(f"{label}: {val}")
     for key in (
         "target_customers",
         "business_model",

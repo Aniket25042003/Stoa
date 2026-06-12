@@ -15,10 +15,12 @@ def test_profile_to_knowledge_text():
             "website_url": "https://acme.com",
             "industry": "SaaS",
             "profile": {"brand_voice": "Direct", "goals": "Expand ICP"},
-        }
+        },
+        user_profile={"role_type": "founder", "use_case": "ICP research"},
     )
     assert "Acme" in text
     assert "Brand Voice" in text
+    assert "Primary use case" in text
 
 
 @patch("stoa_core.rag.ingest.bump_kb_version")
