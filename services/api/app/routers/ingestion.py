@@ -1,16 +1,15 @@
 from __future__ import annotations
 
-import uuid
 from typing import Any
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from pydantic import BaseModel, Field
 
-from app.deps.auth import verify_supabase_jwt
+from app.deps.org_scope import require_onboarded_scope
 from app.deps.rate_limit import check_rate_limit
+from app.services.document_ingestion import document_quota_exceeded, queue_text_document, queue_uploaded_document
 from app.services.audit import write_audit
-from app.services.org_context import get_user_membership, require_role
-from app.tasks.ingestion import process_ingestion_job
+from app.services.org_context import OrgScope, require_permission
 from stoa_core.config import get_settings
 from stoa_core.db.supabase import get_supabase_admin
 from stoa_core.security.pii import redact_pii
@@ -20,7 +19,6 @@ from stoa_core.security.sanitize import (
     validate_doc_type,
     validate_upload,
 )
-from stoa_core.security.urls import safe_storage_filename
 
 router = APIRouter(prefix="/v1/ingestion", tags=["ingestion"])
 
@@ -32,20 +30,17 @@ class PasteBody(BaseModel):
 
 
 def _document_quota_exceeded(org_id: str) -> bool:
-    settings = get_settings()
-    sb = get_supabase_admin()
-    doc_count = sb.table("documents").select("id", count="exact").eq("org_id", org_id).execute()
-    return (doc_count.count or 0) >= settings.max_documents_per_org
+    return document_quota_exceeded(org_id)
 
 
 @router.get("/sources")
-def list_sources(user_id: str = Depends(verify_supabase_jwt)) -> dict[str, Any]:
-    membership = get_user_membership(user_id)
+def list_sources(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    require_permission(scope, "data_sources:read")
     sb = get_supabase_admin()
     res = (
         sb.table("data_sources")
-        .select("id, org_id, name, source_type, status, created_at, updated_at")
-        .eq("org_id", membership["org_id"])
+        .select("id, org_id, label, source_type, status, created_at")
+        .eq("org_id", scope.org_id)
         .order("created_at", desc=True)
         .execute()
     )
@@ -57,13 +52,11 @@ async def upload_document(
     title: str = Form(..., min_length=1, max_length=300),
     doc_type: str = Form("note"),
     file: UploadFile = File(...),
-    user_id: str = Depends(verify_supabase_jwt),
+    scope: OrgScope = Depends(require_onboarded_scope),
 ) -> dict[str, Any]:
-    membership = get_user_membership(user_id)
-    require_role(membership, "analyst")
-    check_rate_limit(user_id, get_settings().rate_limit_per_minute, scope="upload")
+    require_permission(scope, "documents:write")
+    check_rate_limit(scope.user_id, get_settings().rate_limit_per_minute, scope="upload")
     settings = get_settings()
-    sb = get_supabase_admin()
 
     try:
         validate_doc_type(doc_type)
@@ -84,93 +77,62 @@ async def upload_document(
 
     text = redact_pii(sanitize_user_content(content.decode("utf-8", errors="replace")))
 
-    if _document_quota_exceeded(membership["org_id"]):
+    if _document_quota_exceeded(scope.org_id):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Document quota exceeded")
 
-    doc_id = str(uuid.uuid4())
-    safe_name = safe_storage_filename(file.filename or "upload.txt")
-    storage_path = f"{membership['org_id']}/{doc_id}/{safe_name}"
     try:
-        sb.storage.from_(settings.storage_bucket).upload(storage_path, content)
+        doc, job = queue_uploaded_document(
+            org_id=scope.org_id,
+            user_id=scope.user_id,
+            title=title,
+            doc_type=doc_type,
+            filename=file.filename or "upload.txt",
+            raw_bytes=content,
+            text=text,
+        )
+    except ValueError as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status.HTTP_502_BAD_GATEWAY, "Storage upload failed") from exc
 
-    doc_res = (
-        sb.table("documents")
-        .insert(
-            {
-                "id": doc_id,
-                "org_id": membership["org_id"],
-                "title": title,
-                "doc_type": doc_type,
-                "content": text,
-                "storage_path": storage_path,
-                "created_by": user_id,
-            }
-        )
-        .execute()
-    )
-    job_res = (
-        sb.table("ingestion_jobs")
-        .insert({"org_id": membership["org_id"], "document_id": doc_id, "status": "queued", "created_by": user_id})
-        .execute()
-    )
-    job = (job_res.data or [None])[0]
-    if job:
-        process_ingestion_job.delay(job["id"])
-    write_audit(membership["org_id"], user_id, "document.uploaded", "document", doc_id)
-    return {"document": (doc_res.data or [None])[0], "job": job}
+    write_audit(scope.org_id, scope.user_id, "document.uploaded", "document", doc["id"] if doc else "")
+    return {"document": doc, "job": job}
 
 
 @router.post("/paste")
-def paste_document(body: PasteBody, user_id: str = Depends(verify_supabase_jwt)) -> dict[str, Any]:
-    membership = get_user_membership(user_id)
-    require_role(membership, "analyst")
-    check_rate_limit(user_id, get_settings().rate_limit_per_minute, scope="paste")
+def paste_document(body: PasteBody, scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    require_permission(scope, "documents:write")
+    check_rate_limit(scope.user_id, get_settings().rate_limit_per_minute, scope="paste")
     settings = get_settings()
     if len(body.content.encode("utf-8")) > settings.max_upload_bytes:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Content exceeds max size")
-    if _document_quota_exceeded(membership["org_id"]):
+    if _document_quota_exceeded(scope.org_id):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Document quota exceeded")
 
-    sb = get_supabase_admin()
-    text = redact_pii(sanitize_user_content(body.content))
-    doc_id = str(uuid.uuid4())
-    doc_res = (
-        sb.table("documents")
-        .insert(
-            {
-                "id": doc_id,
-                "org_id": membership["org_id"],
-                "title": body.title,
-                "doc_type": body.doc_type,
-                "content": text,
-                "created_by": user_id,
-            }
+    try:
+        doc, job = queue_text_document(
+            org_id=scope.org_id,
+            user_id=scope.user_id,
+            title=body.title,
+            content=body.content,
+            doc_type=body.doc_type,
         )
-        .execute()
-    )
-    job_res = (
-        sb.table("ingestion_jobs")
-        .insert({"org_id": membership["org_id"], "document_id": doc_id, "status": "queued", "created_by": user_id})
-        .execute()
-    )
-    job = (job_res.data or [None])[0]
-    if job:
-        process_ingestion_job.delay(job["id"])
-    write_audit(membership["org_id"], user_id, "document.pasted", "document", doc_id)
-    return {"document": (doc_res.data or [None])[0], "job": job}
+    except ValueError as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
+
+    write_audit(scope.org_id, scope.user_id, "document.pasted", "document", doc["id"] if doc else "")
+    return {"document": doc, "job": job}
 
 
 @router.get("/jobs/{job_id}")
-def get_job(job_id: str, user_id: str = Depends(verify_supabase_jwt)) -> dict[str, Any]:
-    membership = get_user_membership(user_id)
+def get_job(job_id: str, scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    require_permission(scope, "documents:read")
     sb = get_supabase_admin()
     res = (
         sb.table("ingestion_jobs")
-        .select("id, org_id, document_id, status, created_at, updated_at")
+        .select("id, org_id, document_id, status, created_at, finished_at")
         .eq("id", job_id)
-        .eq("org_id", membership["org_id"])
+        .eq("org_id", scope.org_id)
         .limit(1)
         .execute()
     )
