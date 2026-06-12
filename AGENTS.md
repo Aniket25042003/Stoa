@@ -46,16 +46,20 @@ Marketing teams connect customer data (uploads first; integrations later). The p
 
 ## Tenancy
 
-- **One organization per account** (`memberships.user_id` unique).
-- **RBAC roles:** `owner` > `admin` > `analyst` > `viewer`.
-- Auto-provision org on `auth.users` insert (trigger) + manual `/v1/orgs/onboarding` fallback.
+- **Multi-organization per user** — `memberships` is unique on `(org_id, user_id)` only; one user may belong to many orgs.
+- **Active org context** — API resolves scope from `X-Org-Id` header → `user_profiles.last_active_org_id` → sole membership; ambiguous multi-org requests return `409 org_selection_required`.
+- **RBAC** — four immutable **system roles** (`owner`, `admin`, `analyst`, `viewer`) plus **custom roles** with `resource:action` permissions from `stoa_core.security.permissions`.
+- **Org creation** — no auto-provision trigger on signup; owners create orgs via `POST /v1/onboarding/complete` (or create-mode from org switcher).
+- **Invite acceptance** — additive membership only; never deletes the invitee's other orgs.
 
 ## API surface (`/v1`)
 
 | Area | Prefix |
 |------|--------|
 | Auth workflow | `/v1/auth` |
+| Onboarding | `/v1/onboarding` |
 | Orgs | `/v1/orgs` |
+| Roles | `/v1/roles` |
 | Team | `/v1/team` |
 | Dashboard | `/v1/dashboard` |
 | Data hub (UI) | `/data` |

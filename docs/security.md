@@ -11,11 +11,13 @@
 
 ## Authorization
 
-- One org per user (`memberships.user_id` unique)
-- RBAC: owner > admin > analyst > viewer
-- API enforces `require_role` on writes and expensive job triggers
-- RLS uses role-aware policies (`has_min_role`) — viewers are read-only via direct PostgREST
-- Service role used only server-side with explicit `org_id` checks
+- **Multi-org tenancy** — users may belong to many organizations; active scope from `X-Org-Id` + membership validation
+- **IAM-style RBAC** — system roles (`owner`, `admin`, `analyst`, `viewer`) plus custom roles with `resource:action` permissions
+- **Permission boundary** — non-owner holders of `roles:manage` can only grant permissions ⊆ their own
+- **Owner-reserved** — `org:delete`, `org:transfer_ownership` never grantable; owner implicitly holds all permissions
+- API enforces `require_permission` on writes and expensive job triggers; `require_role` only for owner-reserved actions
+- RLS uses `is_org_member` / `has_permission_in_org` — coarse table access; fine-grained reads enforced in API via org scope
+- Service role used only server-side with explicit `(user_id, org_id)` membership checks
 
 ## Secrets
 
@@ -70,7 +72,9 @@ Sensitive writes log to `audit_log` (org_id, user_id, action, resource).
 - Invite tokens are generated once, hashed with `INVITE_TOKEN_PEPPER`, and stored only as hashes.
 - Active invites expire and can be revoked.
 - Invite acceptance requires a Supabase-authenticated user whose email matches the invite email.
-- The one-company-per-user invariant is preserved; only empty auto-provisioned placeholder orgs may be replaced during invite acceptance.
+- **Additive membership** — accepting an invite adds (or syncs) a membership row; other org memberships are never deleted.
+- Invites may specify `role_id` (system or custom) and `profile_hints` for shortened invitee onboarding.
+- Deleted custom roles referenced by pending invites degrade to viewer on acceptance.
 
 ## Email verification
 
