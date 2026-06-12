@@ -65,7 +65,9 @@ def resolve_safe_https_target(url: str) -> SafeHttpsTarget:
     if literal is not None:
         if _ip_blocked(literal):
             raise ValueError("Blocked IP address")
-        return SafeHttpsTarget(hostname=hostname, ip=str(literal), path_with_query=_path_with_query(parsed))
+        return SafeHttpsTarget(
+            hostname=hostname, ip=str(literal), path_with_query=_path_with_query(parsed)
+        )
 
     ips = _resolve_host_ips(hostname)
     if not ips:
@@ -73,7 +75,11 @@ def resolve_safe_https_target(url: str) -> SafeHttpsTarget:
     for ip in ips:
         if _ip_blocked(ip):
             raise ValueError("Hostname resolves to blocked IP address") from None
-    return SafeHttpsTarget(hostname=hostname, ip=str(ips[0]), path_with_query=_path_with_query(parsed))
+    # Prefer IPv4 for the pinned connection (broader compatibility).
+    pinned = next((ip for ip in ips if ip.version == 4), ips[0])
+    return SafeHttpsTarget(
+        hostname=hostname, ip=str(pinned), path_with_query=_path_with_query(parsed)
+    )
 
 
 def assert_safe_fetch_url(url: str) -> str:

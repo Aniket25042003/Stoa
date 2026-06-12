@@ -19,11 +19,16 @@ USER_AGENT = "Stoa-Intel-Bot/0.1 (+https://stoa.ai)"
 def fetch_page_text(url: str, timeout: float = 15.0) -> str:
     try:
         target = resolve_safe_https_target(url)
-        pinned_url = f"https://{target.ip}{target.path_with_query}"
+        # Bracket IPv6 literals so the URL parses; sni_hostname keeps TLS
+        # handshake + certificate verification bound to the real hostname
+        # while the TCP connection stays pinned to the validated IP.
+        pinned_host = f"[{target.ip}]" if ":" in target.ip else target.ip
+        pinned_url = f"https://{pinned_host}{target.path_with_query}"
         with httpx.Client(timeout=timeout, follow_redirects=False) as client:
             resp = client.get(
                 pinned_url,
                 headers={"Host": target.hostname, "User-Agent": USER_AGENT},
+                extensions={"sni_hostname": target.hostname},
             )
             resp.raise_for_status()
             return resp.text[:50000]
