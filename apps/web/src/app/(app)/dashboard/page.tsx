@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getAuthEntryPath } from "@/lib/auth-entry";
 import { createClient } from "@/lib/supabase/server";
-import { apiFetch } from "@/lib/api";
+import { apiFetchServer } from "@/lib/api-server";
 import { DashboardWorkspace } from "./dashboard-workspace";
 
 export default async function DashboardPage() {
@@ -18,7 +18,7 @@ export default async function DashboardPage() {
   let orgData: { org?: { id: string; name: string; industry?: string | null }; membership?: { role: string } } | null = null;
   let loadError = false;
   try {
-    const res = await apiFetch("/v1/orgs/me", { accessToken: session.access_token });
+    const res = await apiFetchServer("/v1/orgs/me", { accessToken: session.access_token });
     if (res.ok) {
       orgData = await res.json();
     } else if (res.status === 404) {
