@@ -42,7 +42,8 @@ def validate_redis_security(settings: Settings | None = None) -> None:
     if not settings.is_development:
         if not info.has_password:
             raise RedisSecurityError(
-                "Redis URL must include a password (set STOA_ENV=development for local-only override)"
+                "Redis URL must include a password "
+                "(set STOA_ENV=development for local-only override)"
             )
         if settings.redis_require_tls_effective and not info.uses_tls:
             raise RedisSecurityError(

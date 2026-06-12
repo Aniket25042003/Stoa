@@ -5,7 +5,11 @@ from stoa_core.security.sanitize import (
     validate_doc_type,
     validate_upload,
 )
-from stoa_core.security.ssrf import SafeHttpsTarget, assert_safe_fetch_url, resolve_safe_https_target
+from stoa_core.security.ssrf import (
+    SafeHttpsTarget,
+    assert_safe_fetch_url,
+    resolve_safe_https_target,
+)
 from stoa_core.security.urls import is_safe_external_href, safe_storage_filename
 
 __all__ = [
