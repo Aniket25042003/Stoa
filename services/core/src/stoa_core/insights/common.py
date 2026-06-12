@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
-from stoa_core.rag.answer import answer_question
+from stoa_core.rag.answer import try_answer_question
 from stoa_core.rag.retrieve import retrieve_context
+
+logger = logging.getLogger(__name__)
 
 COMMON_QUESTIONS: list[dict[str, str]] = [
     {
@@ -44,7 +47,12 @@ def precompute_answers(org_id: str) -> list[dict[str, Any]]:
         context = retrieve_context(org_id, item["question"], kinds=INTELLIGENCE_KINDS)
         if not context:
             continue
-        answer = answer_question(item["question"], context)
+        answer = try_answer_question(item["question"], context)
+        if answer is None:
+            logger.error(
+                "Skipping insight %s for org %s: LLM produced no answer", item["key"], org_id
+            )
+            continue
         results.append(
             {
                 "key": item["key"],
@@ -70,9 +78,14 @@ def build_executive_summary(org_id: str, org_name: str) -> dict[str, Any]:
             ),
             "citations": [],
         }
-    summary = answer_question(
+    summary = try_answer_question(
         f"Write a concise executive summary of marketing intelligence for {org_name}. "
         "Cover ICP signals, top pains, objections, and one recommended next action.",
         context,
     )
+    if summary is None:
+        logger.error(
+            "Executive summary generation failed for org %s: LLM produced no answer", org_id
+        )
+        return {"summary": None, "citations": []}
     return {"summary": summary, "citations": [c["ref"] for c in context[:8]]}

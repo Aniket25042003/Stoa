@@ -93,6 +93,10 @@ def precompute_insights(self, org_id: str, *, force: bool = False) -> None:
             )
 
         exec_summary = build_executive_summary(org_id, org_name)
+        if exec_summary.get("summary") is None:
+            logger.error("Skipping executive summary upsert for org %s: generation failed", org_id)
+            publish_event("insights", org_id, {"status": "partial", "document_count": doc_count})
+            return
         _upsert_insight(
             org_id,
             scope="dashboard",
