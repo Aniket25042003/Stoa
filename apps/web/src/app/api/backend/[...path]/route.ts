@@ -30,6 +30,8 @@ async function proxy(request: NextRequest, pathSegments: string[]) {
   for (const [key, value] of Object.entries(trustedProxyHeaders(request))) {
     headers.set(key, value);
   }
+  const orgId = request.cookies.get("stoa-active-org")?.value;
+  if (orgId) headers.set("X-Org-Id", orgId);
   const accept = request.headers.get("accept");
   if (accept) headers.set("Accept", accept);
   const contentType = request.headers.get("content-type");

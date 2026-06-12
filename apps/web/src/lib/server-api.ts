@@ -1,4 +1,11 @@
+import { ACTIVE_ORG_COOKIE } from "@/lib/active-org";
 import { trustedProxyHeaders } from "@/lib/proxy-headers";
+
+function activeOrgFromRequest(request: Request): string | null {
+  const cookie = request.headers.get("cookie") ?? "";
+  const match = cookie.match(new RegExp(`(?:^|;\\s*)${ACTIVE_ORG_COOKIE}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : null;
+}
 
 export function getServerApiBase(): string | null {
   const value = process.env.NEXT_PUBLIC_API_URL;
@@ -23,6 +30,8 @@ export async function proxyToApi(request: Request, path: string, init?: RequestI
         ? await request.text()
         : undefined;
 
+  const orgId = activeOrgFromRequest(request);
+
   try {
     return await fetch(`${base}${path}`, {
       ...init,
@@ -31,6 +40,7 @@ export async function proxyToApi(request: Request, path: string, init?: RequestI
         "Content-Type": "application/json",
         Origin: request.headers.get("origin") ?? "",
         ...trustedProxyHeaders(request),
+        ...(orgId ? { "X-Org-Id": orgId } : {}),
         ...(init?.headers ?? {}),
       },
       body,
