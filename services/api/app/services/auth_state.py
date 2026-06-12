@@ -6,6 +6,8 @@ from datetime import datetime, timezone
 from typing import Any
 
 from stoa_core.db.supabase import get_supabase_admin
+from stoa_core.org.roles import role_key_from_membership
+from stoa_core.security.permissions import SYSTEM_ROLE_OWNER
 
 
 def utc_now_iso() -> str:
@@ -75,23 +77,86 @@ def get_or_create_user_profile(user_id: str, claims: dict[str, Any]) -> dict[str
     return (res.data or [payload])[0]
 
 
-def get_membership_optional(user_id: str) -> dict[str, Any] | None:
+def list_memberships(user_id: str) -> list[dict[str, Any]]:
     sb = get_supabase_admin()
     res = (
         sb.table("memberships")
         .select(
-            "id, org_id, role, created_at, "
+            "id, org_id, role, role_id, created_at, "
+            "org_roles(id, name, role_key, permissions, is_system), "
             "organizations(id, name, slug, website_url, industry, profile, onboarding_completed_at)"
         )
         .eq("user_id", user_id)
-        .limit(1)
+        .order("created_at", desc=False)
         .execute()
     )
-    return (res.data or [None])[0]
+    return res.data or []
+
+
+def get_membership_optional(user_id: str, org_id: str | None = None) -> dict[str, Any] | None:
+    memberships = list_memberships(user_id)
+    if not memberships:
+        return None
+    if org_id:
+        for m in memberships:
+            if m.get("org_id") == org_id:
+                return m
+        return None
+    sb = get_supabase_admin()
+    profile = sb.table("user_profiles").select("last_active_org_id").eq("user_id", user_id).limit(1).execute()
+    active = (profile.data or [None])[0]
+    active_org = (active or {}).get("last_active_org_id")
+    if active_org:
+        for m in memberships:
+            if m.get("org_id") == active_org:
+                return m
+    return memberships[0]
 
 
 def onboarding_needed(profile: dict[str, Any], membership: dict[str, Any] | None) -> bool:
-    if not membership:
+    return onboarding_needed_for_user(profile.get("user_id", ""), profile=profile, membership=membership)
+
+
+def onboarding_needed_for_user(
+    user_id: str,
+    claims: dict[str, Any] | None = None,
+    *,
+    profile: dict[str, Any] | None = None,
+    membership: dict[str, Any] | None = None,
+) -> bool:
+    sb = get_supabase_admin()
+    if profile is None:
+        if claims:
+            profile = get_or_create_user_profile(user_id, claims)
+        else:
+            res = sb.table("user_profiles").select("*").eq("user_id", user_id).limit(1).execute()
+            profile = (res.data or [None])[0] or {}
+
+    memberships = list_memberships(user_id)
+    if not memberships:
         return True
-    org = membership.get("organizations") or {}
-    return not bool(profile.get("onboarding_completed_at") and org.get("onboarding_completed_at"))
+    if not profile.get("onboarding_completed_at"):
+        return True
+
+    if membership is None:
+        membership = get_membership_optional(user_id)
+
+    if membership:
+        org = membership.get("organizations") or {}
+        role_key = role_key_from_membership(membership)
+        if role_key == SYSTEM_ROLE_OWNER and not org.get("onboarding_completed_at"):
+            return True
+    else:
+        # User has memberships but no resolvable active org — not blocked from app shell
+        return False
+
+    return False
+
+
+def suggest_company_from_email(email: str) -> dict[str, str | None]:
+    domain = email.split("@")[-1].lower() if "@" in email else ""
+    generic = {"gmail.com", "yahoo.com", "hotmail.com", "outlook.com", "icloud.com", "proton.me", "protonmail.com"}
+    if not domain or domain in generic:
+        return {"name": None, "website_url": None}
+    company = domain.split(".")[0].replace("-", " ").title()
+    return {"name": company, "website_url": f"https://{domain}"}

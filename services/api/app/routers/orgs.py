@@ -3,14 +3,23 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from app.deps.auth import verify_supabase_jwt
+from app.deps.org_scope import require_onboarded_scope
 from app.services.audit import write_audit
+from app.services.org_context import (
+    OrgScope,
+    count_org_owners,
+    list_user_memberships,
+    require_owner,
+    require_permission,
+    set_last_active_org,
+)
 from app.services.org_summary import build_completeness_for_org
-from app.services.org_context import get_user_membership, require_role
 from stoa_core.db.supabase import get_supabase_admin
 from stoa_core.rag.ingest import ingest_knowledge, profile_to_knowledge_text
+from stoa_core.security.permissions import SYSTEM_ROLE_ADMIN, SYSTEM_ROLE_OWNER
 
 router = APIRouter(prefix="/v1/orgs", tags=["organizations"])
 
@@ -33,15 +42,16 @@ class OrgUpdate(BaseModel):
     profile: OrgProfileUpdate | None = None
 
 
-class OnboardingBody(BaseModel):
-    name: str = Field(min_length=1, max_length=200)
-    website_url: str | None = None
-    industry: str | None = None
-    role_type: str | None = None
-    job_title: str | None = None
-    use_case: str | None = None
-    profile: OrgProfileUpdate | None = None
-    complete: bool = False
+class OrgSwitchBody(BaseModel):
+    org_id: str
+
+
+class TransferOwnershipBody(BaseModel):
+    target_user_id: str
+
+
+class OrgDeleteBody(BaseModel):
+    confirm_name: str
 
 
 def _merge_profile(existing: dict[str, Any], update: OrgProfileUpdate | None) -> dict[str, Any]:
@@ -53,130 +63,140 @@ def _merge_profile(existing: dict[str, Any], update: OrgProfileUpdate | None) ->
     return merged
 
 
+@router.get("")
+def list_orgs(user_id: str = Depends(verify_supabase_jwt)) -> dict[str, Any]:
+    memberships = list_user_memberships(user_id)
+    return {
+        "organizations": [
+            {
+                "org_id": m["org_id"],
+                "role": m.get("role"),
+                "role_id": m.get("role_id"),
+                "role_name": (m.get("org_roles") or {}).get("name"),
+                "role_key": (m.get("org_roles") or {}).get("role_key"),
+                "org": m.get("organizations"),
+            }
+            for m in memberships
+        ]
+    }
+
+
+@router.post("/switch")
+def switch_org(body: OrgSwitchBody, user_id: str = Depends(verify_supabase_jwt)) -> dict[str, Any]:
+    from app.services.org_context import _load_membership
+
+    membership = _load_membership(user_id, body.org_id)
+    if not membership:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Organization access denied")
+    set_last_active_org(user_id, body.org_id)
+    return {
+        "active_org_id": body.org_id,
+        "membership": {
+            "id": membership["id"],
+            "org_id": membership["org_id"],
+            "role_name": (membership.get("org_roles") or {}).get("name"),
+        },
+    }
+
+
 @router.get("/me")
-def get_my_org(user_id: str = Depends(verify_supabase_jwt)) -> dict[str, Any]:
-    membership = get_user_membership(user_id)
-    org = membership.get("organizations") or {}
+def get_my_org(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    org = scope.org
     completeness = build_completeness_for_org(org)
     return {
         "org": org,
-        "membership": {"id": membership["id"], "role": membership["role"], "org_id": membership["org_id"]},
+        "membership": {
+            "id": scope.membership["id"],
+            "role": scope.membership.get("role"),
+            "role_id": scope.membership.get("role_id"),
+            "role_name": scope.role_name,
+            "role_key": scope.role_key,
+            "org_id": scope.org_id,
+            "permissions": sorted(scope.permissions),
+        },
         "completeness": completeness,
     }
 
 
-@router.post("/onboarding")
-def complete_onboarding(body: OnboardingBody, user_id: str = Depends(verify_supabase_jwt)) -> dict[str, Any]:
+@router.post("/leave")
+def leave_org(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, str]:
+    require_permission(scope, "org:leave")
+    if scope.is_owner and count_org_owners(scope.org_id) <= 1:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Transfer ownership before leaving as the last owner")
     sb = get_supabase_admin()
-    from app.services.auth_state import utc_now_iso
+    sb.table("memberships").delete().eq("id", scope.membership["id"]).execute()
+    write_audit(scope.org_id, scope.user_id, "member.left", "membership", scope.membership["id"])
+    profile = sb.table("user_profiles").select("last_active_org_id").eq("user_id", scope.user_id).limit(1).execute()
+    if (profile.data or [{}])[0].get("last_active_org_id") == scope.org_id:
+        remaining = list_user_memberships(scope.user_id)
+        next_org = remaining[0]["org_id"] if remaining else None
+        sb.table("user_profiles").update({"last_active_org_id": next_org}).eq("user_id", scope.user_id).execute()
+    return {"status": "left"}
 
-    completed_at = utc_now_iso() if body.complete else None
-    profile_payload = body.profile.model_dump(exclude_none=True) if body.profile else {}
-    user_profile_updates = {
-        k: v
-        for k, v in {
-            "role_type": body.role_type,
-            "job_title": body.job_title,
-            "use_case": body.use_case,
-            "onboarding_completed_at": completed_at,
-        }.items()
-        if v is not None
-    }
-    if user_profile_updates:
-        sb.table("user_profiles").update(user_profile_updates).eq("user_id", user_id).execute()
 
-    existing = (
+@router.post("/transfer-ownership")
+def transfer_ownership(body: TransferOwnershipBody, scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, str]:
+    require_owner(scope)
+    sb = get_supabase_admin()
+    target = (
         sb.table("memberships")
-        .select("id, org_id, role, organizations(id, name, slug, website_url, industry, profile, onboarding_completed_at)")
-        .eq("user_id", user_id)
+        .select("id, user_id, role_id, org_roles(role_key)")
+        .eq("org_id", scope.org_id)
+        .eq("user_id", body.target_user_id)
         .limit(1)
         .execute()
     )
-    if existing.data:
-        membership = existing.data[0]
-        org_id = membership["org_id"]
-        updates = {
-            "name": body.name,
-            "website_url": body.website_url,
-            "industry": body.industry,
-        }
-        current_profile = ((membership.get("organizations") or {}).get("profile") or {}) if membership else {}
-        if profile_payload:
-            updates["profile"] = {**current_profile, **profile_payload}
-        if completed_at:
-            updates["onboarding_completed_at"] = completed_at
-        res = sb.table("organizations").update(updates).eq("id", org_id).execute()
-        org = (res.data or [None])[0] or membership.get("organizations") or {}
-        write_audit(org_id, user_id, "org.onboarding_updated", "organization", org_id, updates)
-        if completed_at:
-            write_audit(org_id, user_id, "onboarding.completed", "organization", org_id)
-        ingest_knowledge(
-            org_id,
-            kind="company_profile",
-            title=f"{org.get('name', 'Company')} profile",
-            text=profile_to_knowledge_text(org),
-            feature_origin="onboarding",
-            uri=f"org_profile:{org_id}",
-        )
-        completeness = build_completeness_for_org(org)
-        return {"org": org, "completeness": completeness}
-
-    slug = body.name.lower().replace(" ", "-")[:80]
-    org_res = (
-        sb.table("organizations")
-        .insert(
-            {
-                "name": body.name,
-                "slug": slug,
-                "website_url": body.website_url,
-                "industry": body.industry,
-                "profile": profile_payload,
-                "onboarding_completed_at": completed_at,
-            }
-        )
-        .execute()
+    target_membership = (target.data or [None])[0]
+    if not target_membership:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Target user is not a member of this organization")
+    owner_role = (
+        sb.table("org_roles").select("id").eq("org_id", scope.org_id).eq("role_key", SYSTEM_ROLE_OWNER).limit(1).execute()
     )
-    org = (org_res.data or [None])[0]
-    if not org:
-        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Failed to create organization")
-
-    sb.table("memberships").insert({"org_id": org["id"], "user_id": user_id, "role": "owner"}).execute()
-    write_audit(org["id"], user_id, "org.created", "organization", org["id"], {"name": body.name})
-    if completed_at:
-        write_audit(org["id"], user_id, "onboarding.completed", "organization", org["id"])
-    ingest_knowledge(
-        org["id"],
-        kind="company_profile",
-        title=f"{org.get('name', 'Company')} profile",
-        text=profile_to_knowledge_text(org),
-        feature_origin="onboarding",
-        uri=f"org_profile:{org['id']}",
+    admin_role = (
+        sb.table("org_roles").select("id").eq("org_id", scope.org_id).eq("role_key", SYSTEM_ROLE_ADMIN).limit(1).execute()
     )
-    completeness = build_completeness_for_org(org)
-    return {"org": org, "completeness": completeness}
+    owner_role_id = (owner_role.data or [{}])[0].get("id")
+    admin_role_id = (admin_role.data or [{}])[0].get("id")
+    if not owner_role_id or not admin_role_id:
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "System roles missing")
+    sb.table("memberships").update({"role_id": owner_role_id, "role": SYSTEM_ROLE_OWNER}).eq("id", target_membership["id"]).execute()
+    sb.table("memberships").update({"role_id": admin_role_id, "role": SYSTEM_ROLE_ADMIN}).eq("id", scope.membership["id"]).execute()
+    write_audit(scope.org_id, scope.user_id, "org.ownership_transferred", "organization", scope.org_id, {"to": body.target_user_id})
+    return {"status": "transferred"}
+
+
+@router.delete("/me")
+def delete_org(body: OrgDeleteBody, scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, str]:
+    require_owner(scope)
+    org_name = scope.org.get("name") or ""
+    if body.confirm_name.strip() != org_name:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Organization name confirmation does not match")
+    sb = get_supabase_admin()
+    sb.table("organizations").delete().eq("id", scope.org_id).execute()
+    write_audit(scope.org_id, scope.user_id, "org.deleted", "organization", scope.org_id)
+    remaining = list_user_memberships(scope.user_id)
+    next_org = remaining[0]["org_id"] if remaining else None
+    sb.table("user_profiles").update({"last_active_org_id": next_org}).eq("user_id", scope.user_id).execute()
+    return {"status": "deleted"}
 
 
 @router.patch("/me")
-def update_my_org(body: OrgUpdate, user_id: str = Depends(verify_supabase_jwt)) -> dict[str, Any]:
-    membership = get_user_membership(user_id)
-    require_role(membership, "admin")
+def update_my_org(body: OrgUpdate, scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    require_permission(scope, "org:update")
     sb = get_supabase_admin()
-    org_id = membership["org_id"]
-    current = membership.get("organizations") or {}
-
+    org_id = scope.org_id
+    current = scope.org
     scalar_updates = body.model_dump(exclude_none=True, exclude={"profile"})
     profile_updates = body.profile
     updates: dict[str, Any] = dict(scalar_updates)
     if profile_updates is not None:
         updates["profile"] = _merge_profile(current.get("profile") or {}, profile_updates)
-
     if not updates:
         org = current
     else:
         res = sb.table("organizations").update(updates).eq("id", org_id).execute()
         org = (res.data or [None])[0]
-        write_audit(org_id, user_id, "org.updated", "organization", org_id, updates)
-
+        write_audit(org_id, scope.user_id, "org.updated", "organization", org_id, updates)
         updated_org = org or current
         ingest_knowledge(
             org_id,
@@ -186,6 +206,14 @@ def update_my_org(body: OrgUpdate, user_id: str = Depends(verify_supabase_jwt)) 
             feature_origin="data",
             uri=f"org_profile:{org_id}",
         )
-
     completeness = build_completeness_for_org(org or current)
     return {"org": org or current, "completeness": completeness}
+
+
+# Legacy alias — prefer POST /v1/onboarding/complete
+@router.post("/onboarding")
+def legacy_complete_onboarding() -> dict[str, str]:
+    raise HTTPException(
+        status.HTTP_410_GONE,
+        "Use POST /v1/onboarding/complete instead.",
+    )

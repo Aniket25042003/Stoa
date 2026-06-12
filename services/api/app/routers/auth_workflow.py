@@ -15,9 +15,11 @@ from app.services.auth_email import send_signup_confirmation_email
 from app.services.auth_state import (
     get_membership_optional,
     get_or_create_user_profile,
+    list_memberships,
     onboarding_needed,
     user_is_email_verified,
 )
+from stoa_core.org.roles import role_key_from_membership, resolve_permissions
 from stoa_core.db.supabase import get_supabase_admin
 
 router = APIRouter(prefix="/v1/auth", tags=["auth-workflow"])
@@ -131,9 +133,12 @@ def resend_verification(body: ResendVerificationBody, request: Request) -> dict[
 def get_session_state(claims: dict[str, Any] = Depends(verify_supabase_jwt_payload)) -> dict[str, Any]:
     user_id = str(claims["sub"])
     profile = get_or_create_user_profile(user_id, claims)
+    memberships = list_memberships(user_id)
     membership = get_membership_optional(user_id)
     org = (membership or {}).get("organizations")
     email_verified = user_is_email_verified(user_id, claims)
+    role_row = (membership or {}).get("org_roles") or {}
+    permissions = sorted(resolve_permissions(role_row if isinstance(role_row, dict) else None))
 
     return {
         "user": {
@@ -143,16 +148,30 @@ def get_session_state(claims: dict[str, Any] = Depends(verify_supabase_jwt_paylo
             "email_verified": email_verified,
         },
         "user_profile": profile,
+        "memberships": [
+            {
+                "id": m["id"],
+                "org_id": m["org_id"],
+                "role": m.get("role"),
+                "role_name": (m.get("org_roles") or {}).get("name"),
+                "role_key": role_key_from_membership(m),
+                "org": m.get("organizations"),
+            }
+            for m in memberships
+        ],
         "membership": (
             {
                 "id": membership["id"],
                 "org_id": membership["org_id"],
                 "role": membership["role"],
+                "role_name": role_row.get("name") if isinstance(role_row, dict) else None,
+                "role_key": role_key_from_membership(membership) if membership else None,
             }
             if membership
             else None
         ),
         "org": org,
+        "permissions": permissions,
         "needs_email_verification": not email_verified,
         "needs_onboarding": onboarding_needed(profile, membership),
     }
