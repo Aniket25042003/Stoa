@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.config import get_settings
-from app.routers import auth_workflow, campaigns, competitive, conversations, dashboard, health, ingestion, intelligence, orgs, team, waitlist
+from app.routers import auth_workflow, campaigns, competitive, conversations, dashboard, health, ingestion, intelligence, onboarding, orgs, roles, team, waitlist
 from stoa_core.logging import setup_logging
 from stoa_core.redis.security import validate_redis_security
 from stoa_core.security.sanitize import UploadValidationError
@@ -50,12 +50,14 @@ app.add_middleware(
     allow_origins=settings.cors_origin_list,
     allow_credentials=False,
     allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "Accept", "Origin", "X-Stoa-Client-IP", "X-Stoa-Proxy-Secret"],
+    allow_headers=["Authorization", "Content-Type", "Accept", "Origin", "X-Stoa-Client-IP", "X-Stoa-Proxy-Secret", "X-Org-Id"],
 )
 
 app.include_router(health.router)
 app.include_router(auth_workflow.router)
+app.include_router(onboarding.router)
 app.include_router(orgs.router)
+app.include_router(roles.router)
 app.include_router(dashboard.router)
 app.include_router(ingestion.router)
 app.include_router(intelligence.router)
