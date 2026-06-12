@@ -2,28 +2,45 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { OrgSwitcher } from "@/components/app-shell/OrgSwitcher";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { getAuthEntryPath } from "@/lib/auth-entry";
 import { BRAND_NAME } from "@/lib/brand";
+import { canRead } from "@/lib/auth-workflow";
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/data", label: "Data" },
-  { href: "/intelligence", label: "Intelligence" },
-  { href: "/competitive", label: "Competitive" },
-  { href: "/campaigns", label: "Campaigns" },
-  { href: "/settings/team", label: "Team" },
+  { href: "/dashboard", label: "Dashboard", perm: "intelligence:read" },
+  { href: "/data", label: "Data", perm: "data_sources:read" },
+  { href: "/intelligence", label: "Intelligence", perm: "intelligence:read" },
+  { href: "/competitive", label: "Competitive", perm: "competitive:read" },
+  { href: "/campaigns", label: "Campaigns", perm: "campaigns:read" },
+  { href: "/settings/team", label: "Team", perm: "team:read" },
+  { href: "/settings/roles", label: "Roles", perm: "roles:manage" },
 ];
 
 export function AppHeader({ email }: { email: string }) {
   const router = useRouter();
   const pathname = usePathname();
+  const [permissions, setPermissions] = useState<string[]>([]);
+
+  useEffect(() => {
+    void (async () => {
+      const res = await fetch("/api/auth/session");
+      if (res.ok) {
+        const state = await res.json();
+        setPermissions(state.permissions ?? []);
+      }
+    })();
+  }, []);
 
   async function signOut() {
     await fetch("/api/auth/signout", { method: "POST" });
     router.push(getAuthEntryPath());
     router.refresh();
   }
+
+  const visibleNav = navItems.filter((item) => canRead(permissions, item.perm));
 
   return (
     <header className="sticky top-0 z-40 border-b border-outline-variant/70 bg-surface-container-low/80 backdrop-blur-xl">
@@ -32,8 +49,9 @@ export function AppHeader({ email }: { email: string }) {
           <span className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-secondary shadow-glow" />
           <span className="font-display text-lg font-extrabold tracking-[-0.03em] text-on-surface">{BRAND_NAME}</span>
         </Link>
+        <OrgSwitcher />
         <nav className="order-3 flex w-full items-center gap-2 overflow-x-auto md:order-none md:w-auto" aria-label="App sections">
-          {navItems.map((item) => {
+          {visibleNav.map((item) => {
             const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
             return (
               <Link
