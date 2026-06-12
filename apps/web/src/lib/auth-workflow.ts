@@ -6,8 +6,23 @@ export type SessionState = {
     email_verified?: boolean;
   };
   user_profile?: Record<string, unknown> | null;
-  membership?: { id: string; org_id: string; role: string } | null;
+  membership?: {
+    id: string;
+    org_id: string;
+    role?: string;
+    role_name?: string | null;
+    role_key?: string | null;
+  } | null;
+  memberships?: Array<{
+    id: string;
+    org_id: string;
+    role?: string;
+    role_name?: string | null;
+    role_key?: string | null;
+    org?: Record<string, unknown> | null;
+  }>;
   org?: Record<string, unknown> | null;
+  permissions?: string[];
   needs_email_verification?: boolean;
   needs_onboarding?: boolean;
 };
@@ -25,7 +40,7 @@ export function safeNextPath(raw: string | null | undefined): string {
   } catch {
     return "/dashboard";
   }
-  if (!/^\/[A-Za-z0-9/_-]*$/.test(raw)) {
+  if (!/^\/[A-Za-z0-9/_.?=&-]*$/.test(raw)) {
     return "/dashboard";
   }
   return raw;
@@ -43,4 +58,9 @@ export function routeForSessionState(state: SessionState, next: string = "/dashb
     return "/onboarding";
   }
   return safeNext;
+}
+
+export function canRead(permissions: string[] | undefined, perm: string): boolean {
+  if (!permissions) return true;
+  return permissions.includes(perm);
 }
