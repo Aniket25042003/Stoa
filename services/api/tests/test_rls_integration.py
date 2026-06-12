@@ -91,3 +91,47 @@ def test_viewer_cannot_delete_documents(rls_test_context):
     assert still.data
 
     ctx["admin"].table("documents").delete().eq("id", doc_id).execute()
+
+
+def test_dual_membership_can_read_both_orgs(rls_test_context):
+    """User in org A and org B can read documents from both (RLS is membership-based)."""
+    ctx = rls_test_context
+    ctx["admin"].table("memberships").insert(
+        {
+            "org_id": ctx["org_b"]["id"],
+            "user_id": ctx["user_a"].id,
+            "role": "viewer",
+            "role_id": ctx["roles_b"]["viewer"],
+        }
+    ).execute()
+
+    doc_a = str(uuid.uuid4())
+    doc_b = str(uuid.uuid4())
+    ctx["admin"].table("documents").insert(
+        {
+            "id": doc_a,
+            "org_id": ctx["org_a"]["id"],
+            "title": "Org A doc",
+            "doc_type": "note",
+            "content": "a",
+            "status": "processed",
+        }
+    ).execute()
+    ctx["admin"].table("documents").insert(
+        {
+            "id": doc_b,
+            "org_id": ctx["org_b"]["id"],
+            "title": "Org B doc",
+            "doc_type": "note",
+            "content": "b",
+            "status": "processed",
+        }
+    ).execute()
+
+    res_a = ctx["client_a"].table("documents").select("id").eq("id", doc_a).execute()
+    res_b = ctx["client_a"].table("documents").select("id").eq("id", doc_b).execute()
+    assert res_a.data and res_b.data
+
+    ctx["admin"].table("memberships").delete().eq("user_id", ctx["user_a"].id).eq("org_id", ctx["org_b"]["id"]).execute()
+    ctx["admin"].table("documents").delete().eq("id", doc_a).execute()
+    ctx["admin"].table("documents").delete().eq("id", doc_b).execute()

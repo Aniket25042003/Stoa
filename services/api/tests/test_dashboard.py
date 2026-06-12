@@ -2,30 +2,40 @@ from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
 
-from app.deps.auth import verify_supabase_jwt
+from app.deps.org_scope import require_onboarded_scope
 from app.main import app
+from app.services.org_context import OrgScope
 
 client = TestClient(app)
 
 
-def _override_auth():
-    app.dependency_overrides[verify_supabase_jwt] = lambda: "user-1"
+def _mock_scope() -> OrgScope:
+    return OrgScope(
+        user_id="user-1",
+        org_id="org-1",
+        membership={
+            "id": "mem-1",
+            "org_id": "org-1",
+            "role": "owner",
+            "organizations": {
+                "id": "org-1",
+                "name": "Acme",
+                "industry": "SaaS",
+                "profile": {"brand_voice": "Direct"},
+            },
+            "org_roles": {"role_key": "owner", "name": "Owner", "permissions": []},
+        },
+        role_key="owner",
+        role_name="Owner",
+        permissions=frozenset({"intelligence:read", "documents:read"}),
+        is_owner=True,
+    )
 
 
 def test_dashboard_summary_shape():
-    _override_auth()
-    membership = {
-        "org_id": "org-1",
-        "organizations": {
-            "id": "org-1",
-            "name": "Acme",
-            "industry": "SaaS",
-            "profile": {"brand_voice": "Direct"},
-        },
-    }
+    app.dependency_overrides[require_onboarded_scope] = _mock_scope
     counts = {"documents": 2, "signals": 5, "competitors": 1, "alerts": 0, "campaigns": 0}
     with (
-        patch("app.routers.dashboard.get_user_membership", return_value=membership),
         patch("app.routers.dashboard.fetch_org_counts", return_value=counts),
         patch("app.routers.dashboard.build_completeness_for_org") as mock_completeness,
         patch("app.routers.dashboard.signals_by_kind", return_value={"pain_point": 3}),
@@ -33,7 +43,7 @@ def test_dashboard_summary_shape():
         patch("app.routers.dashboard.get_supabase_admin") as mock_sb,
     ):
         mock_completeness.return_value = {
-            "score": 60,
+            "percent": 60,
             "has_documents": True,
             "has_competitors": True,
             "has_brand_voice": True,

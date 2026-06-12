@@ -11,6 +11,8 @@ import jwt
 import pytest
 from supabase import Client, create_client
 
+from stoa_core.org.roles import seed_system_roles_for_org
+
 
 def _integration_enabled() -> bool:
     return os.getenv("RUN_INTEGRATION_TESTS", "").strip().lower() in {"1", "true", "yes"}
@@ -72,11 +74,14 @@ def rls_test_context(supabase_admin: Client, jwt_secret: str):
     org_a = supabase_admin.table("organizations").insert({"name": f"RLS A {suffix}", "slug": f"rls-a-{suffix}"}).execute().data[0]
     org_b = supabase_admin.table("organizations").insert({"name": f"RLS B {suffix}", "slug": f"rls-b-{suffix}"}).execute().data[0]
 
+    roles_a = seed_system_roles_for_org(supabase_admin, org_a["id"])
+    roles_b = seed_system_roles_for_org(supabase_admin, org_b["id"])
+
     supabase_admin.table("memberships").insert(
-        {"org_id": org_a["id"], "user_id": user_a.id, "role": "viewer"}
+        {"org_id": org_a["id"], "user_id": user_a.id, "role": "viewer", "role_id": roles_a["viewer"]}
     ).execute()
     supabase_admin.table("memberships").insert(
-        {"org_id": org_b["id"], "user_id": user_b.id, "role": "viewer"}
+        {"org_id": org_b["id"], "user_id": user_b.id, "role": "viewer", "role_id": roles_b["viewer"]}
     ).execute()
 
     url = os.environ["SUPABASE_URL"]
@@ -95,12 +100,16 @@ def rls_test_context(supabase_admin: Client, jwt_secret: str):
         "org_b": org_b,
         "user_a": user_a,
         "user_b": user_b,
+        "roles_a": roles_a,
+        "roles_b": roles_b,
     }
     yield ctx
 
     try:
         supabase_admin.table("memberships").delete().eq("user_id", user_a.id).execute()
         supabase_admin.table("memberships").delete().eq("user_id", user_b.id).execute()
+        supabase_admin.table("org_roles").delete().eq("org_id", org_a["id"]).execute()
+        supabase_admin.table("org_roles").delete().eq("org_id", org_b["id"]).execute()
         supabase_admin.table("organizations").delete().eq("id", org_a["id"]).execute()
         supabase_admin.table("organizations").delete().eq("id", org_b["id"]).execute()
         supabase_admin.auth.admin.delete_user(user_a.id)
