@@ -34,12 +34,21 @@ def _mock_scope() -> OrgScope:
 
 def test_dashboard_summary_shape():
     app.dependency_overrides[require_onboarded_scope] = _mock_scope
-    counts = {"documents": 2, "signals": 5, "competitors": 1, "alerts": 0, "campaigns": 0}
+    counts = {
+        "documents": 2,
+        "signals": 5,
+        "competitors": 1,
+        "alerts": 0,
+        "campaigns": 0,
+        "integrations": 0,
+        "canonical_deals": 0,
+    }
     with (
         patch("app.routers.dashboard.fetch_org_counts", return_value=counts),
         patch("app.routers.dashboard.build_completeness_for_org") as mock_completeness,
         patch("app.routers.dashboard.signals_by_kind", return_value={"pain_point": 3}),
         patch("app.routers.dashboard.latest_icp_version", return_value=1),
+        patch("app.routers.dashboard.aggregate_crm_stats", return_value={"total_deals": 0}),
         patch("app.routers.dashboard.get_supabase_admin") as mock_sb,
     ):
         mock_completeness.return_value = {
@@ -60,4 +69,5 @@ def test_dashboard_summary_shape():
         assert "counts" in body
         assert "completeness" in body
         assert body["counts"]["documents"] == 2
+        assert "crm_stats" in body
     app.dependency_overrides.clear()

@@ -19,6 +19,8 @@ def compute_completeness(
     *,
     document_count: int = 0,
     competitor_count: int = 0,
+    integration_count: int = 0,
+    canonical_deal_count: int = 0,
 ) -> dict[str, Any]:
     profile = org.get("profile") or {}
     if not isinstance(profile, dict):
@@ -34,6 +36,8 @@ def compute_completeness(
     has_brand_voice = profile_checks.get("brand_voice", False)
     has_documents = document_count > 0
     has_competitors = competitor_count > 0
+    has_integration = integration_count > 0
+    has_structured_data = canonical_deal_count > 0 or integration_count > 0
 
     checks = {
         "has_name": has_name,
@@ -46,6 +50,8 @@ def compute_completeness(
         "has_brand_voice": has_brand_voice,
         "has_documents": has_documents,
         "has_competitors": has_competitors,
+        "has_integration": has_integration,
+        "has_structured_data": has_structured_data,
     }
 
     total = len(checks)
@@ -53,8 +59,8 @@ def compute_completeness(
     percent = round((completed / total) * 100) if total else 0
 
     missing: list[str] = []
-    if not has_documents:
-        missing.append("documents")
+    if not has_documents and not has_structured_data:
+        missing.append("documents_or_integration")
     if not has_competitors:
         missing.append("competitors")
     if not has_brand_voice:
@@ -72,7 +78,7 @@ def compute_completeness(
         "total": total,
         "checks": checks,
         "missing": missing,
-        "ready_for_intelligence": has_documents,
+        "ready_for_intelligence": has_documents or has_structured_data,
         "ready_for_competitive": has_competitors,
         "ready_for_campaigns": has_documents and (has_brand_voice or bool(org.get("industry"))),
     }

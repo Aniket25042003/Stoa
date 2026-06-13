@@ -13,6 +13,7 @@ from app.services.org_summary import (
     signals_by_kind,
 )
 from stoa_core.db.supabase import get_supabase_admin
+from stoa_core.intelligence.structured import aggregate_crm_stats
 
 router = APIRouter(prefix="/v1/dashboard", tags=["dashboard"])
 
@@ -45,10 +46,12 @@ def get_dashboard_summary(scope: OrgScope = Depends(require_onboarded_scope)) ->
         .execute()
     )
     executive = (exec_res.data or [None])[0]
+    crm_stats = aggregate_crm_stats(org_id)
 
     return {
         "org": {"id": org_id, "name": org.get("name"), "industry": org.get("industry")},
         "counts": counts,
+        "crm_stats": crm_stats,
         "signals_by_kind": signals_by_kind(org_id),
         "icp_version": latest_icp_version(org_id),
         "completeness": completeness,

@@ -15,12 +15,22 @@ def fetch_org_counts(org_id: str) -> dict[str, int]:
     competitors = sb.table("competitors").select("id", count="exact").eq("org_id", org_id).execute()
     alerts = sb.table("competitive_alerts").select("id", count="exact").eq("org_id", org_id).execute()
     campaigns = sb.table("campaigns").select("id", count="exact").eq("org_id", org_id).execute()
+    integrations = (
+        sb.table("integration_connections")
+        .select("id", count="exact")
+        .eq("org_id", org_id)
+        .eq("status", "active")
+        .execute()
+    )
+    deals = sb.table("canonical_deals").select("id", count="exact").eq("org_id", org_id).execute()
     return {
         "documents": docs.count or 0,
         "signals": signals.count or 0,
         "competitors": competitors.count or 0,
         "alerts": alerts.count or 0,
         "campaigns": campaigns.count or 0,
+        "integrations": integrations.count or 0,
+        "canonical_deals": deals.count or 0,
     }
 
 
@@ -60,4 +70,6 @@ def build_completeness_for_org(
         org,
         document_count=resolved["documents"],
         competitor_count=resolved["competitors"],
+        integration_count=resolved.get("integrations", 0),
+        canonical_deal_count=resolved.get("canonical_deals", 0),
     )
