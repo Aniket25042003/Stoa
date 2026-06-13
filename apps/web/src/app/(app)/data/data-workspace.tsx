@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { ConnectionsPanel } from "./connections-panel";
+import { CsvImportPanel } from "./csv-import-panel";
 import { apiFetch } from "@/lib/api";
 
 type Org = {
@@ -43,6 +45,10 @@ export function DataWorkspace() {
   const [pasteTitle, setPasteTitle] = useState("");
   const [pasteContent, setPasteContent] = useState("");
   const [pasteType, setPasteType] = useState("note");
+
+  const [uploadTitle, setUploadTitle] = useState("");
+  const [uploadType, setUploadType] = useState("note");
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
 
   const [compName, setCompName] = useState("");
   const [compUrl, setCompUrl] = useState("");
@@ -122,6 +128,24 @@ export function DataWorkspace() {
     void refresh();
   }
 
+  async function handleUpload(e: React.FormEvent) {
+    e.preventDefault();
+    if (!uploadFile) return;
+    const form = new FormData();
+    form.append("title", uploadTitle || uploadFile.name);
+    form.append("doc_type", uploadType);
+    form.append("file", uploadFile);
+    const res = await apiFetch("/v1/ingestion/upload", { method: "POST", body: form });
+    if (!res.ok) {
+      setStatus("Failed to upload document");
+      return;
+    }
+    setUploadTitle("");
+    setUploadFile(null);
+    setStatus("File uploaded and queued for processing");
+    void refresh();
+  }
+
   async function handleAddCompetitor(e: React.FormEvent) {
     e.preventDefault();
     const res = await apiFetch("/v1/competitive/competitors", {
@@ -180,18 +204,35 @@ export function DataWorkspace() {
         </button>
       </form>
 
+      <ConnectionsPanel onConnected={() => void refresh()} />
+      <CsvImportPanel onImported={() => void refresh()} />
+
       <div className="grid gap-6 lg:grid-cols-2">
-        <form onSubmit={handlePaste} className="rounded-3xl p-6 card-glass space-y-4">
-          <h2 className="font-display text-xl font-bold">Customer documents</h2>
-          <input className="w-full rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-sm" placeholder="Title" value={pasteTitle} onChange={(e) => setPasteTitle(e.target.value)} required />
-          <select className="w-full rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-sm" value={pasteType} onChange={(e) => setPasteType(e.target.value)}>
-            <option value="note">Note</option>
-            <option value="call_transcript">Call transcript</option>
-            <option value="review">Review</option>
-            <option value="crm_export">CRM export</option>
-          </select>
-          <textarea className="min-h-[140px] w-full rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-sm" placeholder="Paste content..." value={pasteContent} onChange={(e) => setPasteContent(e.target.value)} required />
-          <button type="submit" className="btn-primary px-5 py-2 text-sm">Ingest document</button>
+        <div className="rounded-3xl p-6 card-glass space-y-4">
+          <form onSubmit={handlePaste} className="space-y-4">
+            <h2 className="font-display text-xl font-bold">Customer documents</h2>
+            <input className="w-full rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-sm" placeholder="Title" value={pasteTitle} onChange={(e) => setPasteTitle(e.target.value)} required />
+            <select className="w-full rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-sm" value={pasteType} onChange={(e) => setPasteType(e.target.value)}>
+              <option value="note">Note</option>
+              <option value="call_transcript">Call transcript</option>
+              <option value="review">Review</option>
+              <option value="crm_export">CRM export</option>
+            </select>
+            <textarea className="min-h-[140px] w-full rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-sm" placeholder="Paste content..." value={pasteContent} onChange={(e) => setPasteContent(e.target.value)} required />
+            <button type="submit" className="btn-primary px-5 py-2 text-sm">Ingest document</button>
+          </form>
+          <form onSubmit={handleUpload} className="space-y-3 border-t border-outline-variant/40 pt-4">
+            <p className="text-xs font-semibold text-on-surface-variant">Or upload a file</p>
+            <input className="w-full rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-sm" placeholder="Title (optional)" value={uploadTitle} onChange={(e) => setUploadTitle(e.target.value)} />
+            <select className="w-full rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-sm" value={uploadType} onChange={(e) => setUploadType(e.target.value)}>
+              <option value="note">Note</option>
+              <option value="call_transcript">Call transcript</option>
+              <option value="review">Review</option>
+              <option value="crm_export">CRM export</option>
+            </select>
+            <input type="file" accept=".txt,.csv,.md,.json" className="text-sm" onChange={(e) => setUploadFile(e.target.files?.[0] ?? null)} />
+            <button type="submit" disabled={!uploadFile} className="btn-secondary px-5 py-2 text-sm disabled:opacity-50">Upload file</button>
+          </form>
           <ul className="space-y-2 text-sm text-on-surface-variant">
             {documents.map((d) => (
               <li key={d.id} className="flex justify-between gap-2">
@@ -200,7 +241,7 @@ export function DataWorkspace() {
               </li>
             ))}
           </ul>
-        </form>
+        </div>
 
         <form onSubmit={handleAddCompetitor} className="rounded-3xl p-6 card-glass space-y-4">
           <h2 className="font-display text-xl font-bold">Competitors</h2>
