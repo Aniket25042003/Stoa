@@ -19,10 +19,14 @@ Return JSON:
 Be conservative. Only claim what the evidence supports."""
 
 
-def build_icp_profile(signals: list[dict[str, Any]]) -> dict[str, Any] | None:
-    if not signals:
+def build_icp_profile(
+    signals: list[dict[str, Any]],
+    *,
+    structured_stats: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
+    if not signals and not structured_stats:
         return None
-    payload = {
+    payload: dict[str, Any] = {
         "signals": [
             {
                 "id": s.get("id"),
@@ -31,7 +35,11 @@ def build_icp_profile(signals: list[dict[str, Any]]) -> dict[str, Any] | None:
                 "confidence": s.get("confidence"),
             }
             for s in signals[:200]
-        ]
+        ],
     }
+    if structured_stats:
+        payload["crm_aggregates"] = structured_stats
     parsed, _provider = invoke_json(ICP_SYSTEM, payload, task_name="icp_build")
+    if parsed and structured_stats:
+        parsed["structured_crm"] = structured_stats
     return parsed

@@ -38,7 +38,18 @@ COMMON_QUESTIONS: list[dict[str, str]] = [
     },
 ]
 
-INTELLIGENCE_KINDS = ["document", "company_profile", "icp_profile"]
+INTELLIGENCE_KINDS = [
+    "document",
+    "company_profile",
+    "icp_profile",
+    "crm_account",
+    "crm_contact",
+    "crm_deal",
+    "call_transcript",
+    "support_ticket",
+    "review",
+    "product_analytics_summary",
+]
 
 
 def precompute_answers(org_id: str) -> list[dict[str, Any]]:

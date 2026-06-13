@@ -8,6 +8,7 @@ from stoa_core.security.pii import redact_pii
 from stoa_core.db.supabase import get_supabase_admin
 from stoa_core.insights.common import build_executive_summary, precompute_answers
 from stoa_core.intelligence.icp import build_icp_profile
+from stoa_core.intelligence.structured import aggregate_crm_stats
 from stoa_core.rag.answer import answer_question
 from stoa_core.rag.ingest import ingest_knowledge, json_artifact_to_text
 from stoa_core.rag.retrieve import retrieve_context
@@ -15,7 +16,18 @@ from stoa_core.redis.client import publish_event
 
 logger = logging.getLogger(__name__)
 
-INTELLIGENCE_KINDS = ["document", "company_profile", "icp_profile"]
+INTELLIGENCE_KINDS = [
+    "document",
+    "company_profile",
+    "icp_profile",
+    "crm_account",
+    "crm_contact",
+    "crm_deal",
+    "call_transcript",
+    "support_ticket",
+    "review",
+    "product_analytics_summary",
+]
 
 
 def _doc_count(org_id: str) -> int:
@@ -121,7 +133,9 @@ def rebuild_icp_profile(self, org_id: str) -> None:
             sb.table("intelligence").select("*").eq("org_id", org_id).order("created_at", desc=True).limit(500).execute()
         )
         signals = signals_res.data or []
-        profile_data = build_icp_profile(signals)
+        structured = aggregate_crm_stats(org_id)
+        has_data = bool(signals) or structured.get("total_deals", 0) > 0 or structured.get("total_accounts", 0) > 0
+        profile_data = build_icp_profile(signals, structured_stats=structured if has_data else None)
         if not profile_data:
             return
         version_res = (
