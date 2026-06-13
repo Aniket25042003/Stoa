@@ -89,6 +89,7 @@ Marketing teams connect customer data (uploads first; integrations later). The p
 - [Phase 1 — Customer Intelligence](docs/agents/phase-1-customer-intelligence.md)
 - [Phase 1b — Data Hub + Proactive Insights](docs/agents/phase-1b-proactive-insights.md)
 - [Phase 1c — Unified Knowledge Base + Hybrid RAG](docs/agents/phase-1c-knowledge-base.md)
+- [Phase 1d — Customer Data Integrations](docs/agents/phase-1d-customer-data-integrations.md)
 - [Phase 2 — Competitive Intelligence](docs/agents/phase-2-competitive-intelligence.md)
 - [Phase 3 — Campaign Orchestration](docs/agents/phase-3-campaign-orchestration.md)
 

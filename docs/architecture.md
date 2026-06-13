@@ -26,6 +26,19 @@ Legacy parallel paths (kept for structured queries):
   Competitor URL → fetch → diff → competitive_alerts
 ```
 
+Integrations env: `INTEGRATION_CREDENTIALS_KEY`, `HUBSPOT_CLIENT_ID`, `API_BASE_URL`, `APIFY_API_TOKEN`.
+
+## Data flow (integrations)
+
+```
+OAuth/API connect → integration_connections (encrypted creds)
+  → Celery integrations.sync_source
+  → canonical_* tables + ingest_knowledge (KB)
+  → extract_signals (interactions) → intelligence
+  → rebuild_icp (structured CRM + signals) → precompute_insights
+```
+
+
 ## Memory layers
 
 | Layer | Store | Purpose |
