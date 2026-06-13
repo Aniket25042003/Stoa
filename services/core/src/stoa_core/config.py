@@ -83,6 +83,34 @@ class Settings(BaseSettings):
     app_base_url: str = "http://localhost:3000"
     invite_token_pepper: str = ""
 
+    # Integrations — credentials encryption (Fernet key, base64)
+    integration_credentials_key: str = ""
+    api_base_url: str = "http://localhost:8000"
+
+    # HubSpot OAuth
+    hubspot_client_id: str = ""
+    hubspot_client_secret: str = ""
+
+    # Gong OAuth
+    gong_client_id: str = ""
+    gong_client_secret: str = ""
+
+    # Salesforce OAuth
+    salesforce_client_id: str = ""
+    salesforce_client_secret: str = ""
+
+    # Zendesk OAuth
+    zendesk_client_id: str = ""
+    zendesk_client_secret: str = ""
+    zendesk_subdomain: str = ""
+
+    # Reviews (Apify)
+    apify_api_token: str = ""
+
+    # Reddit
+    reddit_access_token: str = ""
+    reddit_user_agent: str = "stoa-intelligence/1.0"
+
     # Observability
     langsmith_tracing: bool = False
     langsmith_api_key: str | None = None

@@ -19,6 +19,7 @@ dependencies = [
     "langchain-google-vertexai>=2.0.0",
     "langchain-anthropic>=0.3.0",
     "cohere>=5.0.0",
+    "cryptography>=43.0.0",
 ]
 
 [project.optional-dependencies]
