@@ -23,6 +23,7 @@ celery_app = Celery(
         "app.tasks.competitive",
         "app.tasks.campaigns",
         "app.tasks.knowledge",
+        "app.tasks.integrations",
     ],
 )
 

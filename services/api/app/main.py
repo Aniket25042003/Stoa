@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.config import get_settings
-from app.routers import auth_workflow, campaigns, competitive, conversations, dashboard, health, ingestion, intelligence, onboarding, orgs, roles, team, waitlist
+from app.routers import auth_workflow, campaigns, competitive, conversations, dashboard, health, ingestion, integrations, intelligence, onboarding, orgs, roles, team, waitlist
 from stoa_core.logging import setup_logging
 from stoa_core.redis.security import validate_redis_security
 from stoa_core.security.sanitize import UploadValidationError
@@ -60,6 +60,7 @@ app.include_router(orgs.router)
 app.include_router(roles.router)
 app.include_router(dashboard.router)
 app.include_router(ingestion.router)
+app.include_router(integrations.router)
 app.include_router(intelligence.router)
 app.include_router(conversations.router)
 app.include_router(competitive.router)

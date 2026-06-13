@@ -21,7 +21,7 @@ def test_celery_task_allowlist():
     from app.services.task_context import ALLOWED_CELERY_TASKS, assert_allowed_task
 
     assert_allowed_task("ingestion.process_job")
-    assert "ingestion.process_job" in ALLOWED_CELERY_TASKS
+    assert "integrations.sync_source" in ALLOWED_CELERY_TASKS
 
 
 def test_sanitize_script_tag():

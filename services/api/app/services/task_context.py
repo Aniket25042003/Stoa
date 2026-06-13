@@ -15,6 +15,7 @@ ALLOWED_CELERY_TASKS = frozenset(
         "competitive.monitor",
         "campaigns.generate",
         "knowledge.reembed_org",
+        "integrations.sync_source",
     }
 )
 
