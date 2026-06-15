@@ -27,13 +27,13 @@ export function ProductOrbCanvas({
 
   return (
     <div className={cn("relative h-full w-full select-none", className)} aria-hidden="true">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(79,70,229,0.05)_0%,transparent_68%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(79,70,229,0.08)_0%,rgba(242,240,235,0.35)_42%,transparent_72%)]" />
 
       {!showCanvas && (
         <img
           src={fallbackSrc}
           alt=""
-          className="absolute inset-0 m-auto h-[min(340px,72%)] w-auto max-w-[min(340px,72%)] rounded-2xl object-cover opacity-95 shadow-[0_24px_80px_rgba(79,70,229,0.18)]"
+          className="absolute inset-0 m-auto h-[min(340px,72%)] w-auto max-w-[min(340px,72%)] rounded-2xl object-cover opacity-100 shadow-[0_24px_80px_rgba(79,70,229,0.14)] brightness-[1.04] contrast-[0.98]"
         />
       )}
 
@@ -52,16 +52,19 @@ export function ProductOrbCanvas({
           className="h-full w-full"
         >
           <Suspense fallback={null}>
-            <ambientLight intensity={0.32} />
+            <ambientLight intensity={0.55} color="#f2f0eb" />
+            <hemisphereLight intensity={0.38} color="#ffffff" groundColor="#e8e4dc" />
             <directionalLight
               position={[4, 6, 5]}
-              intensity={1.05}
+              intensity={1.45}
               castShadow
               shadow-mapSize={[1024, 1024]}
-              color="#ffffff"
+              color="#fffef8"
             />
-            <directionalLight position={[-5, 2, -3]} intensity={0.28} color="#4F46E5" />
-            <pointLight position={[0, 3, 2]} intensity={0.15} color="#E85D4C" />
+            <directionalLight position={[-4, 3, -2]} intensity={0.42} color="#eef0ff" />
+            <directionalLight position={[0, -2, 4]} intensity={0.22} color="#f2f0eb" />
+            <pointLight position={[0, 2.5, 3]} intensity={0.35} color="#ffffff" />
+            <pointLight position={[-2, 0, 2]} intensity={0.18} color="#E85D4C" />
             <ProductOrbScene scrollProgress={scrollProgress} activeSection={activeSection} />
           </Suspense>
         </Canvas>

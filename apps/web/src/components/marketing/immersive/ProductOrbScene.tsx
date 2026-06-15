@@ -73,9 +73,9 @@ export function ProductOrbScene({ scrollProgress, activeSection }: ProductOrbSce
         (_, i) =>
           new THREE.MeshStandardMaterial({
             map: textures[i],
-            roughness: 0.28,
-            metalness: 0.02,
-            envMapIntensity: 0.35,
+            roughness: 0.2,
+            metalness: 0.04,
+            envMapIntensity: 0.72,
             side: THREE.FrontSide,
           })
       ),
@@ -87,14 +87,14 @@ export function ProductOrbScene({ scrollProgress, activeSection }: ProductOrbSce
   const capMaterial = useMemo(
     () =>
       new THREE.MeshPhysicalMaterial({
-        color: "#EEEBE4",
+        color: "#F7F5F0",
         transparent: true,
-        opacity: 0.38,
-        roughness: 0.18,
-        metalness: 0.04,
-        transmission: 0.22,
-        clearcoat: 0.45,
-        envMapIntensity: 0.45,
+        opacity: 0.52,
+        roughness: 0.12,
+        metalness: 0.02,
+        transmission: 0.18,
+        clearcoat: 0.65,
+        envMapIntensity: 0.75,
       }),
     []
   );
@@ -114,9 +114,9 @@ export function ProductOrbScene({ scrollProgress, activeSection }: ProductOrbSce
   useLayoutEffect(() => {
     materials.forEach((mat, i) => {
       const isActive = i === activeSection;
-      mat.emissive.set(isActive ? "#4F46E5" : "#000000");
-      mat.emissiveIntensity = isActive ? 0.03 : 0;
-      mat.color.set(isActive ? "#f2f0eb" : "#ccc9c3");
+      mat.emissive.set(isActive ? "#6D66F0" : "#f2f0eb");
+      mat.emissiveIntensity = isActive ? 0.08 : 0.025;
+      mat.color.set(isActive ? "#ffffff" : "#f6f4ef");
       mat.transparent = false;
       mat.opacity = 1;
     });
@@ -139,7 +139,7 @@ export function ProductOrbScene({ scrollProgress, activeSection }: ProductOrbSce
 
   return (
     <>
-      <Environment files={ORB_ENVIRONMENT_HDR} environmentIntensity={0.28} />
+      <Environment files={ORB_ENVIRONMENT_HDR} environmentIntensity={0.58} />
 
       <Float speed={1.1} rotationIntensity={0.02} floatIntensity={0.15}>
         <group ref={groupRef}>
@@ -172,13 +172,13 @@ export function ProductOrbScene({ scrollProgress, activeSection }: ProductOrbSce
           {/* Equator ring */}
           <mesh geometry={rimGeometry} rotation={[Math.PI / 2, 0, 0]}>
             <meshStandardMaterial
-              color="#4F46E5"
+              color="#6D66F0"
               emissive="#4F46E5"
-              emissiveIntensity={0.14}
+              emissiveIntensity={0.22}
               transparent
-              opacity={0.32}
-              metalness={0.55}
-              roughness={0.25}
+              opacity={0.38}
+              metalness={0.45}
+              roughness={0.18}
             />
           </mesh>
 
@@ -198,11 +198,11 @@ export function ProductOrbScene({ scrollProgress, activeSection }: ProductOrbSce
 
       <ContactShadows
         position={[0, -0.85, 0]}
-        opacity={0.26}
+        opacity={0.14}
         scale={5}
-        blur={2.8}
+        blur={3.2}
         far={3}
-        color="#4F46E5"
+        color="#9a94e8"
       />
     </>
   );
