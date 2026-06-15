@@ -13,7 +13,7 @@ def test_inspect_redis_url_detects_password_and_tls():
 def test_production_requires_password():
     settings = Settings(
         stoa_env="production",
-        redis_url="redis://localhost:6379/0",
+        redis_url="redis://public.example.com:6379/0",
         celery_broker_url="",
         celery_result_backend="",
     )
@@ -24,7 +24,7 @@ def test_production_requires_password():
 def test_production_requires_tls_by_default():
     settings = Settings(
         stoa_env="production",
-        redis_url="redis://:secret@localhost:6379/0",
+        redis_url="redis://:secret@redis.example.com:6379/0",
         celery_broker_url="",
         celery_result_backend="",
     )
@@ -35,11 +35,33 @@ def test_production_requires_tls_by_default():
 def test_production_accepts_rediss_with_password():
     settings = Settings(
         stoa_env="production",
-        redis_url="rediss://:secret@localhost:6379/0",
+        redis_url="rediss://:secret@redis.example.com:6379/0",
         celery_broker_url="",
         celery_result_backend="",
     )
     validate_redis_security(settings)
+
+
+def test_production_accepts_render_internal_keyvalue():
+    settings = Settings(
+        stoa_env="production",
+        redis_url="redis://red-abc123xyz:6379",
+        celery_broker_url="redis://red-abc123xyz:6379",
+        celery_result_backend="redis://red-abc123xyz:6379",
+        redis_require_tls=True,
+    )
+    validate_redis_security(settings)
+
+
+def test_production_rejects_unconfigured_localhost_default():
+    settings = Settings(
+        stoa_env="production",
+        redis_url="redis://localhost:6379/0",
+        celery_broker_url="",
+        celery_result_backend="",
+    )
+    with pytest.raises(RedisSecurityError, match="not configured"):
+        validate_redis_security(settings)
 
 
 def test_development_allows_unauthenticated_local():

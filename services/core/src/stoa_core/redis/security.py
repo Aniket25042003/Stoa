@@ -32,6 +32,19 @@ def inspect_redis_url(url: str) -> RedisConnectionInfo:
     )
 
 
+def is_render_internal_keyvalue(url: str) -> bool:
+    """Render private-network Key Value URLs use redis://red-<id>:6379 without auth."""
+    parsed = urlparse(url)
+    host = (parsed.hostname or "").lower()
+    return parsed.scheme == "redis" and host.startswith("red-")
+
+
+def _localhost_default(url: str) -> bool:
+    parsed = urlparse(url)
+    host = (parsed.hostname or "").lower()
+    return host in {"localhost", "127.0.0.1", "::1"}
+
+
 def validate_redis_security(settings: Settings | None = None) -> None:
     """Fail fast when production Redis is reachable without authentication."""
     settings = settings or get_settings()
@@ -40,20 +53,30 @@ def validate_redis_security(settings: Settings | None = None) -> None:
         raise RedisSecurityError(f"Unsupported Redis scheme: {info.scheme}")
 
     if not settings.is_development:
-        if not info.has_password:
+        render_internal = is_render_internal_keyvalue(settings.broker_url)
+        if _localhost_default(settings.broker_url):
+            raise RedisSecurityError(
+                "REDIS_URL is not configured for production — link the stoa-redis "
+                "Key Value instance on Render (or set REDIS_URL to a rediss:// URL "
+                "with a password)"
+            )
+        if not info.has_password and not render_internal:
             raise RedisSecurityError(
                 "Redis URL must include a password "
                 "(set STOA_ENV=development for local-only override)"
             )
-        if settings.redis_require_tls_effective and not info.uses_tls:
+        if settings.redis_require_tls_effective and not info.uses_tls and not render_internal:
             raise RedisSecurityError(
                 "TLS required — use rediss:// in REDIS_URL "
                 "(set REDIS_REQUIRE_TLS=false to override)"
             )
 
     backend = inspect_redis_url(settings.result_backend)
-    if not settings.is_development and not backend.has_password:
-        raise RedisSecurityError("CELERY_RESULT_BACKEND must include a password")
+    if not settings.is_development:
+        if _localhost_default(settings.result_backend):
+            raise RedisSecurityError("CELERY_RESULT_BACKEND is not configured for production")
+        if not backend.has_password and not is_render_internal_keyvalue(settings.result_backend):
+            raise RedisSecurityError("CELERY_RESULT_BACKEND must include a password")
 
 
 def redis_ssl_kwargs(settings: Settings | None = None) -> dict | None:

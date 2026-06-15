@@ -1,4 +1,11 @@
 services:
+  - type: keyvalue
+    name: stoa-redis
+    plan: starter
+    region: oregon
+    ipAllowList: []
+    maxmemoryPolicy: noeviction
+
   - type: web
     name: stoa-intelligence-api
     runtime: python
