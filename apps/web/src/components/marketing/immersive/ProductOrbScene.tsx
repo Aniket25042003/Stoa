@@ -196,11 +196,11 @@ export function ProductOrbScene({ scrollProgress, activeSection }: ProductOrbSce
 
       <ContactShadows
         position={[0, -0.85, 0]}
-        opacity={0.08}
-        scale={5}
-        blur={3.6}
+        opacity={0.24}
+        scale={5.2}
+        blur={2.6}
         far={3}
-        color="#c8c4bc"
+        color="#6D66F0"
       />
     </>
   );

@@ -97,7 +97,7 @@ export function WaitlistForm() {
             </div>
             <h3 className="font-syne mb-3 text-xl font-bold text-mkt-ink">You&apos;re already on the waitlist.</h3>
             <p className="font-dm-sans text-sm leading-relaxed text-mkt-muted">
-              We&apos;ve got your email. We&apos;ll notify you as soon as early access opens — no need to sign up again.
+              We&apos;ve got your email. We&apos;ll notify you as soon as early access opens - no need to sign up again.
             </p>
           </motion.div>
         ) : (

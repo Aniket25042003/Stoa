@@ -27,6 +27,7 @@ export function ProductOrbCanvas({
 
   return (
     <div className={cn("relative h-full w-full select-none", className)} aria-hidden="true">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_45%_at_50%_72%,rgba(79,70,229,0.18)_0%,rgba(79,70,229,0.06)_38%,transparent_68%)]" />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(79,70,229,0.1)_0%,rgba(250,248,244,0.55)_40%,transparent_75%)]" />
 
       {!showCanvas && (
