@@ -2,9 +2,9 @@
 
 import { useMemo, useRef, useLayoutEffect } from "react";
 import { useFrame } from "@react-three/fiber";
-import { ContactShadows, Float, useTexture } from "@react-three/drei";
+import { ContactShadows, Environment, Float, useTexture } from "@react-three/drei";
 import * as THREE from "three";
-import { ORB_FACE_IMAGES } from "@/lib/landingFeatures";
+import { ORB_ENVIRONMENT_HDR, ORB_FACE_IMAGES } from "@/lib/landingFeatures";
 
 const FACE_COUNT = 6;
 const FACE_ANGLE = (Math.PI * 2) / FACE_COUNT;
@@ -75,7 +75,7 @@ export function ProductOrbScene({ scrollProgress, activeSection }: ProductOrbSce
             map: textures[i],
             roughness: 0.28,
             metalness: 0.02,
-            envMapIntensity: 0,
+            envMapIntensity: 0.35,
             side: THREE.FrontSide,
           })
       ),
@@ -94,7 +94,7 @@ export function ProductOrbScene({ scrollProgress, activeSection }: ProductOrbSce
         metalness: 0.04,
         transmission: 0.22,
         clearcoat: 0.45,
-        envMapIntensity: 0,
+        envMapIntensity: 0.45,
       }),
     []
   );
@@ -139,7 +139,7 @@ export function ProductOrbScene({ scrollProgress, activeSection }: ProductOrbSce
 
   return (
     <>
-      <hemisphereLight intensity={0.42} color="#f2f0eb" groundColor="#4F46E5" />
+      <Environment files={ORB_ENVIRONMENT_HDR} environmentIntensity={0.28} />
 
       <Float speed={1.1} rotationIntensity={0.02} floatIntensity={0.15}>
         <group ref={groupRef}>
