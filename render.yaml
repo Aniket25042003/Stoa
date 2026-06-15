@@ -34,8 +34,16 @@ services:
         sync: false
       - key: SUPABASE_JWT_SECRET
         sync: false
+      - key: INVITE_TOKEN_PEPPER
+        sync: false
+      - key: INTERNAL_PROXY_SECRET
+        sync: false
+      - key: INTEGRATION_CREDENTIALS_KEY
+        sync: false
+      - key: APP_BASE_URL
+        value: https://stoaai.app
       - key: CORS_ORIGINS
-        value: https://stoaai.vercel.app
+        value: https://stoaai.app
       - key: STOA_ENV
         value: production
       - key: REDIS_REQUIRE_TLS
