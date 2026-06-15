@@ -27,6 +27,8 @@
 | `SUPABASE_SERVICE_ROLE_KEY` | API/worker only (never in the web app) |
 | `SUPABASE_JWT_SECRET` | API only |
 | `INVITE_TOKEN_PEPPER` | API only |
+| `INTERNAL_PROXY_SECRET` | API + web (BFF trusted client IP) |
+| `INTEGRATION_CREDENTIALS_KEY` | API/worker (Fernet key for OAuth tokens at rest) |
 | Brevo SMTP credentials | Supabase Auth dashboard only |
 | LLM API keys | Worker/core only |
 
@@ -42,7 +44,9 @@
 
 - Redis-backed per-user limits when available (upload, paste, ask, scans, campaigns, ICP/insights)
 - Public auth/waitlist endpoints rate limit by trusted client IP plus email (Redis required; fail closed)
+- Sign-in (`/api/auth/signin`) calls `POST /v1/auth/rate-limit-gate` before Supabase password auth
 - Next.js BFF sets `X-Stoa-Client-IP` + `X-Stoa-Proxy-Secret` when `INTERNAL_PROXY_SECRET` is configured
+- Production API startup requires `INTERNAL_PROXY_SECRET`, `INVITE_TOKEN_PEPPER`, and `INTEGRATION_CREDENTIALS_KEY`
 
 ## Redis / Celery broker
 
@@ -71,7 +75,7 @@ Sensitive writes log to `audit_log` (org_id, user_id, action, resource).
 
 - Invite tokens are generated once, hashed with `INVITE_TOKEN_PEPPER`, and stored only as hashes.
 - Active invites expire and can be revoked.
-- Invite acceptance requires a Supabase-authenticated user whose email matches the invite email.
+- Invite acceptance requires a verified Supabase-authenticated user whose email matches the invite email.
 - **Additive membership** — accepting an invite adds (or syncs) a membership row; other org memberships are never deleted.
 - Invites may specify `role_id` (system or custom) and `profile_hints` for shortened invitee onboarding.
 - Deleted custom roles referenced by pending invites degrade to viewer on acceptance.
@@ -88,6 +92,26 @@ Sensitive writes log to `audit_log` (org_id, user_id, action, resource).
 2. Update Render/Vercel env vars and redeploy API + web
 3. Set a unique `INVITE_TOKEN_PEPPER` and `INTERNAL_PROXY_SECRET` (never commit)
 4. Revoke old keys after deploy health checks pass
+
+## Browser hardening
+
+- Next.js middleware sets `Content-Security-Policy`, `X-Frame-Options`, HSTS (production), and related headers
+- Active organization cookie (`stoa-active-org`) is `HttpOnly`; org scope is resolved server-side in the BFF
+- Onboarding wizard persists only the step index in `sessionStorage` (no company/PII draft cache)
+
+## Pre-launch public site (Vercel production)
+
+Until launch, production exposes only `/`, `/see-it-in-action`, `/pricing`, `/faq`, `/waitlist`, and `POST /api/waitlist`. All other pages and API routes return 404 or redirect to `/waitlist`, including for authenticated users.
+
+- Default: gated on Vercel **production** (`VERCEL_ENV=production`)
+- Open the full app: set `NEXT_PUBLIC_APP_ENABLED=true` on Vercel and redeploy
+- Force gate on preview: `NEXT_PUBLIC_PRELAUNCH_MODE=true`
+
+## Direct API access
+
+- `NEXT_PUBLIC_API_URL` exposes the API hostname to the browser; CORS restricts cross-origin calls
+- All product routes require a valid Supabase JWT; prefer the BFF proxy so tokens never reach client bundles
+- Optional hardening: restrict Render ingress to Vercel egress IPs and/or add edge WAF rules
 
 ## Prompt injection / PII
 
