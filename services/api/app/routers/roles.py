@@ -44,7 +44,10 @@ def _validate_permissions(perms: list[str]) -> list[str]:
 
 
 @router.get("/catalog")
-def get_permission_catalog() -> dict[str, Any]:
+def get_permission_catalog(
+    scope: OrgScope = Depends(org_scope_dep),
+) -> dict[str, Any]:
+    require_permission(scope, "team:read")
     return {"groups": catalog_for_ui(), "grantable": grantable_permissions()}
 
 

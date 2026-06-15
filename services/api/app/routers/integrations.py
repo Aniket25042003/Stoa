@@ -33,7 +33,7 @@ class ConnectCredentialsBody(BaseModel):
 
 class CsvImportBody(BaseModel):
     title: str = Field(default="CSV import", max_length=300)
-    content: str = Field(min_length=1)
+    content: str = Field(min_length=1, max_length=10 * 1024 * 1024)
     column_mapping: dict[str, str | None] | None = None
 
 

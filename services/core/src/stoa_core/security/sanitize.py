@@ -19,11 +19,23 @@ DOC_TYPE_PATTERN = re.compile(r"^(call_transcript|review|crm_export|note)$")
 INJECTION_PATTERNS = [
     re.compile(r"ignore\s+(all\s+)?previous\s+instructions", re.I),
     re.compile(r"disregard\s+(all\s+)?prior\s+instructions", re.I),
+    re.compile(r"forget\s+(all\s+)?(previous|prior)\s+instructions", re.I),
     re.compile(r"you\s+are\s+now\s+", re.I),
+    re.compile(r"act\s+as\s+(a\s+)?(system|admin|root)\b", re.I),
     re.compile(r"system\s*:\s*", re.I),
+    re.compile(r"assistant\s*:\s*", re.I),
     re.compile(r"<\s*script", re.I),
     re.compile(r"\[INST\]", re.I),
+    re.compile(r"<\|im_start\|>", re.I),
+    re.compile(r"<\|system\|>", re.I),
+    re.compile(r"```\s*system", re.I),
+    re.compile(r"jailbreak", re.I),
+    re.compile(r"do\s+anything\s+now", re.I),
 ]
+
+# Collapse oversized delimiter-heavy blocks that often wrap injected instructions.
+_DELIMITER_RUN = re.compile(r"(?:<\|[^|]+\|>|\[/?INST\]){3,}", re.I)
+_MAX_SANITIZED_CHARS = 512_000
 
 
 class UploadValidationError(ValueError):
@@ -47,8 +59,11 @@ def validate_upload(filename: str, content_type: str | None, size: int, max_byte
 
 def sanitize_user_content(text: str) -> str:
     cleaned = text.replace("\x00", "")
+    cleaned = _DELIMITER_RUN.sub("[filtered]", cleaned)
     for pattern in INJECTION_PATTERNS:
         cleaned = pattern.sub("[filtered]", cleaned)
+    if len(cleaned) > _MAX_SANITIZED_CHARS:
+        cleaned = cleaned[:_MAX_SANITIZED_CHARS]
     return cleaned.strip()
 
 

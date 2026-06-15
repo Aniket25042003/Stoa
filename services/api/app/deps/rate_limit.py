@@ -12,7 +12,7 @@ _lock = Lock()
 _buckets: dict[str, list[float]] = defaultdict(list)
 _redis_available: bool | None = None
 
-SENSITIVE_SCOPES = frozenset({"auth_signup", "auth_resend", "waitlist"})
+SENSITIVE_SCOPES = frozenset({"auth_signup", "auth_resend", "auth_signin", "waitlist"})
 
 
 def _memory_check(key: str, limit_per_minute: int) -> None:

@@ -129,6 +129,30 @@ def resend_verification(body: ResendVerificationBody, request: Request) -> dict[
     return {"status": "sent"}
 
 
+class RateLimitGateBody(BaseModel):
+    email: str = Field(min_length=3, max_length=320)
+    scope: str = Field(pattern="^(auth_signin|auth_signup|auth_resend)$")
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, value: str) -> str:
+        email = value.strip().lower()
+        if not re.fullmatch(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", email):
+            raise ValueError("Enter a valid email address.")
+        return email
+
+
+@router.post("/rate-limit-gate")
+def auth_rate_limit_gate(body: RateLimitGateBody, request: Request) -> dict[str, str]:
+    """Public gate used by the Next.js BFF before auth actions (sign-in, etc.)."""
+    check_public_rate_limit(
+        trusted_client_ip(request),
+        email=body.email,
+        scope=body.scope,
+    )
+    return {"status": "ok"}
+
+
 @router.get("/session-state")
 def get_session_state(claims: dict[str, Any] = Depends(verify_supabase_jwt_payload)) -> dict[str, Any]:
     user_id = str(claims["sub"])

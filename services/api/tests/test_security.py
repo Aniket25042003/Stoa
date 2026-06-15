@@ -76,3 +76,13 @@ def test_health_is_public():
     res = client.get("/health")
     assert res.status_code == 200
     assert res.json() == {"status": "ok"}
+
+
+def test_auth_rate_limit_gate_rejects_bad_email():
+    res = client.post("/v1/auth/rate-limit-gate", json={"email": "not-an-email", "scope": "auth_signin"})
+    assert res.status_code == 422
+
+
+def test_roles_catalog_requires_auth():
+    res = client.get("/v1/roles/catalog")
+    assert res.status_code == 401

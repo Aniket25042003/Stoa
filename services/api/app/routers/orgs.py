@@ -65,8 +65,12 @@ def _merge_profile(existing: dict[str, Any], update: OrgProfileUpdate | None) ->
 
 @router.get("")
 def list_orgs(user_id: str = Depends(verify_supabase_jwt)) -> dict[str, Any]:
+    sb = get_supabase_admin()
+    profile = sb.table("user_profiles").select("last_active_org_id").eq("user_id", user_id).limit(1).execute()
+    active_org_id = (profile.data or [{}])[0].get("last_active_org_id")
     memberships = list_user_memberships(user_id)
     return {
+        "active_org_id": str(active_org_id) if active_org_id else None,
         "organizations": [
             {
                 "org_id": m["org_id"],
@@ -77,7 +81,7 @@ def list_orgs(user_id: str = Depends(verify_supabase_jwt)) -> dict[str, Any]:
                 "org": m.get("organizations"),
             }
             for m in memberships
-        ]
+        ],
     }
 
 

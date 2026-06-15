@@ -19,6 +19,9 @@ validate_redis_security(settings)
 if settings.is_production and not settings.invite_token_pepper:
     raise RuntimeError("INVITE_TOKEN_PEPPER is required in production")
 
+if settings.is_production and not settings.internal_proxy_secret:
+    raise RuntimeError("INTERNAL_PROXY_SECRET is required in production")
+
 _openapi_url = None if settings.is_production else "/openapi.json"
 _docs_url = None if settings.is_production else "/docs"
 _redoc_url = None if settings.is_production else "/redoc"
@@ -39,6 +42,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+        response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'"
         if settings.is_production:
             response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         return response

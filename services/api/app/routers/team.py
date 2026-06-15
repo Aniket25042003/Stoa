@@ -6,7 +6,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
-from app.deps.auth import verify_supabase_jwt_payload
+from app.deps.auth import verify_supabase_jwt_payload_verified
 from app.deps.org_scope import require_onboarded_scope, verified_org_scope_dep
 from app.services.audit import write_audit
 from app.services.auth_state import email_from_claims, get_or_create_user_profile
@@ -235,7 +235,7 @@ def revoke_invite(invite_id: str, scope: OrgScope = Depends(require_onboarded_sc
 
 
 @router.post("/invites/accept")
-def accept_invite(body: InviteAccept, claims: dict[str, Any] = Depends(verify_supabase_jwt_payload)) -> dict[str, Any]:
+def accept_invite(body: InviteAccept, claims: dict[str, Any] = Depends(verify_supabase_jwt_payload_verified)) -> dict[str, Any]:
     user_id = str(claims["sub"])
     get_or_create_user_profile(user_id, claims)
     email = email_from_claims(claims)
