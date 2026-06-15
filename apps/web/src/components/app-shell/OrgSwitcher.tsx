@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api";
-import { ACTIVE_ORG_COOKIE } from "@/lib/active-org";
 
 type OrgEntry = {
   org_id: string;
@@ -22,12 +21,10 @@ export function OrgSwitcher() {
     void (async () => {
       const res = await apiFetch("/v1/orgs");
       if (res.ok) {
-        const body = await res.json();
-        const list = (body.organizations ?? []) as OrgEntry[];
+        const body = (await res.json()) as { organizations?: OrgEntry[]; active_org_id?: string | null };
+        const list = body.organizations ?? [];
         setOrgs(list);
-        const cookieMatch = document.cookie.match(new RegExp(`(?:^|; )${ACTIVE_ORG_COOKIE}=([^;]*)`));
-        const cookieOrg = cookieMatch ? decodeURIComponent(cookieMatch[1]) : null;
-        setActiveId(cookieOrg ?? list[0]?.org_id ?? null);
+        setActiveId(body.active_org_id ?? list[0]?.org_id ?? null);
       }
       setLoading(false);
     })();

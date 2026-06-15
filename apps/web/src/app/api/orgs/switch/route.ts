@@ -17,8 +17,9 @@ export async function POST(request: Request) {
   const response = NextResponse.json(body);
   if (body.active_org_id) {
     response.cookies.set(ACTIVE_ORG_COOKIE, body.active_org_id, {
-      httpOnly: false,
+      httpOnly: true,
       sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
       path: "/",
       maxAge: 60 * 60 * 24 * 365,
     });

@@ -20,6 +20,8 @@ const STEP_LABELS: Record<string, string> = {
   profile: "Your profile",
 };
 
+const ONBOARDING_STEP_KEY = "stoa-onboarding-step";
+
 export function OnboardingWizard() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -32,12 +34,11 @@ export function OnboardingWizard() {
   const [seedFile, setSeedFile] = useState<File | null>(null);
 
   useEffect(() => {
-    const saved = sessionStorage.getItem("stoa-onboarding-draft");
-    if (saved) {
-      try {
-        setDraft(JSON.parse(saved) as Record<string, string>);
-      } catch {
-        // ignore
+    const savedStep = sessionStorage.getItem(ONBOARDING_STEP_KEY);
+    if (savedStep) {
+      const parsed = Number.parseInt(savedStep, 10);
+      if (!Number.isNaN(parsed) && parsed >= 0) {
+        setStepIndex(parsed);
       }
     }
     void (async () => {
@@ -59,8 +60,8 @@ export function OnboardingWizard() {
   }, [createMode]);
 
   useEffect(() => {
-    sessionStorage.setItem("stoa-onboarding-draft", JSON.stringify(draft));
-  }, [draft]);
+    sessionStorage.setItem(ONBOARDING_STEP_KEY, String(stepIndex));
+  }, [stepIndex]);
 
   const steps = useMemo(() => context?.required_steps ?? [], [context]);
   const currentStep = steps[stepIndex] ?? "role";
@@ -110,7 +111,7 @@ export function OnboardingWizard() {
       setMessage(body?.detail?.message ?? body?.detail ?? "Could not complete onboarding.");
       return;
     }
-    sessionStorage.removeItem("stoa-onboarding-draft");
+    sessionStorage.removeItem(ONBOARDING_STEP_KEY);
     if (body.org_id) {
       await fetch("/api/orgs/switch", {
         method: "POST",
