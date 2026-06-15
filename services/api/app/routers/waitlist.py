@@ -39,6 +39,16 @@ def join_waitlist(body: WaitlistBody, request: Request) -> dict[str, str]:
     )
 
     sb = get_supabase_admin()
+    existing = (
+        sb.table("waitlist")
+        .select("id")
+        .eq("email", body.email)
+        .limit(1)
+        .execute()
+    )
+    if existing.data:
+        return {"status": "already_registered"}
+
     try:
         sb.table("waitlist").insert({"name": body.name, "email": body.email}).execute()
         return {"status": "registered"}

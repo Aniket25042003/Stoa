@@ -73,7 +73,10 @@ export function ProductOrbScene({ scrollProgress, activeSection }: ProductOrbSce
         (_, i) =>
           new THREE.MeshStandardMaterial({
             map: textures[i],
-            roughness: 0.22,
+            emissiveMap: textures[i],
+            emissive: new THREE.Color("#ffffff"),
+            emissiveIntensity: 0.42,
+            roughness: 0.92,
             metalness: 0,
             side: THREE.FrontSide,
           })
@@ -86,13 +89,13 @@ export function ProductOrbScene({ scrollProgress, activeSection }: ProductOrbSce
   const capMaterial = useMemo(
     () =>
       new THREE.MeshPhysicalMaterial({
-        color: "#F7F5F0",
+        color: "#FAF8F4",
         transparent: true,
-        opacity: 0.52,
-        roughness: 0.12,
+        opacity: 0.28,
+        roughness: 0.2,
         metalness: 0,
-        transmission: 0.18,
-        clearcoat: 0.65,
+        transmission: 0.08,
+        clearcoat: 0.35,
       }),
     []
   );
@@ -104,6 +107,7 @@ export function ProductOrbScene({ scrollProgress, activeSection }: ProductOrbSce
       const mat = materials[i];
       if (mat) {
         mat.map = tex;
+        mat.emissiveMap = tex;
         mat.needsUpdate = true;
       }
     });
@@ -112,9 +116,9 @@ export function ProductOrbScene({ scrollProgress, activeSection }: ProductOrbSce
   useLayoutEffect(() => {
     materials.forEach((mat, i) => {
       const isActive = i === activeSection;
-      mat.emissive.set(isActive ? "#6D66F0" : "#faf8f4");
-      mat.emissiveIntensity = isActive ? 0.1 : 0.04;
-      mat.color.set(isActive ? "#ffffff" : "#f6f4ef");
+      mat.emissive.set("#ffffff");
+      mat.emissiveIntensity = isActive ? 0.58 : 0.48;
+      mat.color.set("#ffffff");
       mat.transparent = false;
       mat.opacity = 1;
     });
@@ -145,8 +149,6 @@ export function ProductOrbScene({ scrollProgress, activeSection }: ProductOrbSce
               key={`face-${face.index}`}
               position={face.position}
               rotation={[0, face.rotationY, 0]}
-              castShadow
-              receiveShadow
             >
               <planeGeometry args={[FACE_PLANE, FACE_PLANE]} />
               <primitive object={materials[face.index]} attach="material" />
@@ -194,11 +196,11 @@ export function ProductOrbScene({ scrollProgress, activeSection }: ProductOrbSce
 
       <ContactShadows
         position={[0, -0.85, 0]}
-        opacity={0.14}
+        opacity={0.08}
         scale={5}
-        blur={3.2}
+        blur={3.6}
         far={3}
-        color="#9a94e8"
+        color="#c8c4bc"
       />
     </>
   );

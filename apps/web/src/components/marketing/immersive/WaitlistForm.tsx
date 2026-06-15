@@ -7,7 +7,7 @@ export function WaitlistForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "success" | "already_registered" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -35,6 +35,11 @@ export function WaitlistForm() {
               ? "Too many attempts. Please wait a minute and try again."
               : "Registration failed. Please try again.";
         throw new Error(detail);
+      }
+
+      if (body?.status === "already_registered") {
+        setStatus("already_registered");
+        return;
       }
 
       setStatus("success");
@@ -70,6 +75,29 @@ export function WaitlistForm() {
             <h3 className="font-syne mb-3 text-xl font-bold text-mkt-ink">You&apos;re on the list.</h3>
             <p className="font-dm-sans text-sm leading-relaxed text-mkt-muted">
               We&apos;ll be in touch as soon as Stoa early access opens.
+            </p>
+          </motion.div>
+        ) : status === "already_registered" ? (
+          <motion.div
+            key="already-registered"
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.96 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="text-center py-6"
+          >
+            <div className="mx-auto mb-6 flex h-12 w-12 items-center justify-center rounded-full bg-[#4F46E5]/10">
+              <svg className="h-6 w-6 text-[#4F46E5]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                />
+              </svg>
+            </div>
+            <h3 className="font-syne mb-3 text-xl font-bold text-mkt-ink">You&apos;re already on the waitlist.</h3>
+            <p className="font-dm-sans text-sm leading-relaxed text-mkt-muted">
+              We&apos;ve got your email. We&apos;ll notify you as soon as early access opens — no need to sign up again.
             </p>
           </motion.div>
         ) : (
