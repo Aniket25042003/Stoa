@@ -70,17 +70,6 @@ export function ScrollLinkedLanding() {
       {/* Section 1: Hero — tagline only, no 3D */}
       <div className="relative">
         <MarketingHero />
-
-        <div className="pointer-events-none absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-1.5 opacity-65">
-          <span className="font-dm-sans text-[8px] font-bold uppercase tracking-[0.25em] text-mkt-muted">
-            Scroll to explore
-          </span>
-          <motion.div
-            animate={{ y: [0, 6, 0] }}
-            transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
-            className="h-3 w-px bg-mkt-muted"
-          />
-        </div>
       </div>
 
       {/* Sections 2–7: 6 features with centered 3D vessel */}
