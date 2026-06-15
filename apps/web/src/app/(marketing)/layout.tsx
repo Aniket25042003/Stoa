@@ -1,14 +1,15 @@
 import { Footer } from "@/components/marketing/Footer";
-import { GridBackground } from "@/components/marketing/GridBackground";
 import { Navbar } from "@/components/marketing/Navbar";
+import { LenisProvider } from "@/components/marketing/immersive/LenisProvider";
 
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative min-h-screen">
-      <GridBackground />
-      <Navbar />
-      <main className="relative">{children}</main>
-      <Footer />
-    </div>
+    <LenisProvider>
+      <div className="marketing-v2 relative min-h-screen">
+        <Navbar />
+        <main className="marketing-v2-scroll relative">{children}</main>
+        <Footer />
+      </div>
+    </LenisProvider>
   );
 }

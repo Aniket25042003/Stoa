@@ -1,0 +1,24 @@
+{
+  "marketing_video": {
+    "meta": {
+      "spec_version": "1.0.0",
+      "title": "Stoa Competitive Capability Loop",
+      "output_filename": "capability-competitive-loop.mp4",
+      "duration_seconds": 8,
+      "fps": 24,
+      "aspect_ratio": "4:3",
+      "loop": "seamless"
+    },
+    "scene": {
+      "description": "Radar rings rotate slowly. Coral signal dots appear and fade at ring intersections, like early detection pulses.",
+      "palette": ["#F8F6F2", "#4F46E5", "#E85D4C", "#0E1018"]
+    },
+    "camera": {"movement": "static_with_micro_drift", "start_match_end": true},
+    "motion": {
+      "rings": "counter_rotating_slow",
+      "signal_dots": "appear_fade_staggered"
+    },
+    "constraints": {"no_text": true, "no_logos": true}
+  },
+  "render_prompt": "8 second seamless 4:3 loop. Abstract glass radar rings rotate slowly on ivory. Coral signal dots pulse at intersections. Competitive intelligence metaphor, no text, loopable."
+}

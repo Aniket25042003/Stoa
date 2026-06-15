@@ -1,0 +1,40 @@
+{
+  "marketing_image": {
+    "meta": {
+      "spec_version": "1.0.0",
+      "title": "Stoa Capability — Strategy",
+      "output_filename": "capability-strategy.webp",
+      "aspect_ratio": "4:3",
+      "resolution": "2K"
+    },
+    "subject": {
+      "type": "isometric_3d_board",
+      "name": "Strategy Signal Board",
+      "physical_properties": {
+        "material": "matte_white_and_glass",
+        "style": "isometric_product_render"
+      }
+    },
+    "props": {
+      "midground": [
+        {"type": "node_sphere", "count": 6, "notes": "connected by thin luminous lines, abstract market graph"},
+        {"type": "floating_card", "count": 3, "notes": "blank glass panels, no readable text"}
+      ]
+    },
+    "environment": {
+      "background": {"color": "#F8F6F2"},
+      "atmosphere": {"mood": "structured clarity", "keywords": ["strategy", "signals", "distilled"]}
+    },
+    "camera": {"angle": "top_down_isometric", "framing": "medium", "focal_length_mm": 50},
+    "lighting": {
+      "key_light_direction": "three_quarter_left",
+      "key_light_intensity": "high",
+      "rim_light_color": "#4F46E5"
+    },
+    "brand": {
+      "primary_colors": ["#F8F6F2", "#4F46E5", "#14141A"],
+      "forbidden_changes": ["no_text", "no_logos", "no_real_company_names"]
+    }
+  },
+  "render_prompt": "Isometric 3D strategy board on warm ivory (#F8F6F2). Abstract nodes connected by thin indigo (#4F46E5) light paths, floating blank glass cards. Premium studio lighting, marketing intelligence metaphor, no text."
+}

@@ -1,0 +1,94 @@
+{
+  "marketing_image": {
+    "meta": {
+      "spec_version": "1.0.0",
+      "title": "Product Orb Face — Content Creation Bottleneck",
+      "output_filename": "02-content-bottleneck.webp",
+      "output_path": "public/images/marketing/orb-faces/02-content-bottleneck.webp",
+      "aspect_ratio": "1:1",
+      "resolution": "2K",
+      "target_file_size_kb": 200,
+      "usage": "Hexagonal product orb face 1 — scroll chapter 02, corner anchor top-right",
+      "feature_mapping": {
+        "landing_section_id": "content-bottleneck",
+        "chapter": "02",
+        "eyebrow": "Content Velocity",
+        "title": "Content Creation Bottleneck"
+      }
+    },
+    "subject": {
+      "type": "abstract_ui_panel",
+      "name": "Content Pipeline Workspace",
+      "physical_properties": {
+        "material": "frosted_glass_and_wireframe",
+        "style": "abstract_saas_product_render",
+        "finish": "layered_glass_cards_with_depth"
+      },
+      "composition_rules": {
+        "subject_placement": "centered",
+        "margin_percent": 10,
+        "flow_direction": "left_to_right",
+        "notes": "Suggest signal-to-brief-to-asset pipeline without literal document text"
+      }
+    },
+    "props": {
+      "midground": [
+        {
+          "type": "central_signal_node",
+          "count": 1,
+          "color": "#4F46E5",
+          "notes": "Glowing indigo hub where signals enter"
+        },
+        {
+          "type": "stacked_document_cards",
+          "count": 3,
+          "material": "frosted_glass",
+          "notes": "Blank rectangular cards fanning outward, suggesting briefs and creative assets"
+        },
+        {
+          "type": "wireframe_arrow",
+          "count": 3,
+          "color": "#4F46E5",
+          "notes": "Thin luminous paths from hub to each card"
+        }
+      ],
+      "accent": [
+        {
+          "type": "card_edge_highlight",
+          "color": "#E85D4C",
+          "notes": "Coral accent on one card edge only"
+        }
+      ]
+    },
+    "environment": {
+      "background": { "color": "#F8F6F2" },
+      "atmosphere": {
+        "mood": "productive flow",
+        "keywords": ["content velocity", "briefs", "creative assets", "pipeline"]
+      }
+    },
+    "camera": {
+      "angle": "front_facing",
+      "framing": "medium",
+      "focal_length_mm": 45,
+      "depth_of_field": "medium"
+    },
+    "lighting": {
+      "key_light_direction": "three_quarter_right",
+      "key_light_intensity": "high_soft",
+      "rim_light_color": "#4F46E5",
+      "rim_light_intensity": "subtle"
+    },
+    "brand": {
+      "primary_colors": ["#F8F6F2", "#4F46E5", "#E85D4C", "#14141A"],
+      "forbidden_changes": ["no_text", "no_logos", "no_readable_labels", "no_real_company_names", "no_people"]
+    },
+    "generation": {
+      "tool": "nano-banana-pro",
+      "aspect_ratio": "1:1",
+      "size": "2K"
+    }
+  },
+  "render_prompt": "Abstract SaaS UI mockup on warm ivory #F8F6F2. Frosted glass workspace panel with a central indigo #4F46E5 glowing signal node on the left, three stacked blank frosted document cards flowing outward to the right, connected by thin luminous wireframe arrows. Small coral #E85D4C accent on one card edge. Premium studio product lighting, front-facing visualization, layered glass depth, soft shadows. Generous 10 percent margins, centered composition. Suggests briefs and creative assets generated from signals. No text, no logos, no readable words, no icons with letters, no people.",
+  "negative_prompt": "text, letters, lorem ipsum, logos, watermarks, readable UI copy, photographs, faces, dark background, messy layout, hyper-saturated colors"
+}

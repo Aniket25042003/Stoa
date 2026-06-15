@@ -1,0 +1,29 @@
+{
+  "marketing_video": {
+    "meta": {
+      "spec_version": "2.0.0",
+      "title": "Stoa Competitive Capability Loop",
+      "output_filename": "capability-competitive-loop.mp4",
+      "duration_seconds": 8,
+      "fps": 24,
+      "resolution": { "width": 1920, "height": 1080 },
+      "loop": "seamless",
+      "export": { "codec": "h264", "target_bitrate_mbps": 6 },
+      "notes": "Veo exports 16:9 — displayed in 4:3 card via object-cover"
+    },
+    "input_reference": { "image": "apps/web/public/images/marketing/capability-competitive.webp" },
+    "anti_patterns": ["ken_burns", "pan_on_still_image"],
+    "scene": {
+      "description": "Glass radar rings rotate counter to each other. Coral signal dots appear and fade at intersections.",
+      "palette": ["#F8F6F2", "#4F46E5", "#E85D4C", "#0E1018"]
+    },
+    "camera": { "movement": "static_with_micro_parallax_drift", "start_match_end": true },
+    "motion": {
+      "rings": "counter_rotating_slow_3d",
+      "signal_dots": "staggered_appear_fade_pulse",
+      "particles_inside_rings": "slow_flow"
+    },
+    "constraints": { "no_text": true, "no_logos": true }
+  },
+  "render_prompt": "8 second seamless loop, 16:9. Abstract glass radar rings rotate in opposite directions with real 3D depth. Coral signal dots pulse at intersections. NOT a still pan. Loopable."
+}

@@ -1,0 +1,95 @@
+{
+  "marketing_image": {
+    "meta": {
+      "spec_version": "1.0.0",
+      "title": "Product Orb Face — Competitive Intelligence",
+      "output_filename": "03-competitive-intel.webp",
+      "output_path": "public/images/marketing/orb-faces/03-competitive-intel.webp",
+      "aspect_ratio": "1:1",
+      "resolution": "2K",
+      "target_file_size_kb": 200,
+      "usage": "Hexagonal product orb face 2 — scroll chapter 03, corner anchor middle-left",
+      "feature_mapping": {
+        "landing_section_id": "competitive-intel",
+        "chapter": "03",
+        "eyebrow": "Market Radar",
+        "title": "Competitive Intelligence"
+      }
+    },
+    "subject": {
+      "type": "abstract_radar_panel",
+      "name": "Competitive Signal Radar",
+      "physical_properties": {
+        "material": "translucent_glass_rings",
+        "style": "abstract_data_sculpture_ui",
+        "finish": "glowing_wireframe_rings"
+      },
+      "composition_rules": {
+        "subject_placement": "centered",
+        "margin_percent": 10,
+        "notes": "Radar metaphor without maps, geography, or brand logos"
+      }
+    },
+    "props": {
+      "midground": [
+        {
+          "type": "concentric_radar_ring",
+          "count": 5,
+          "color": "#4F46E5",
+          "opacity": "translucent",
+          "notes": "Frosted glass rings, slight low-angle depth"
+        },
+        {
+          "type": "pulse_dot",
+          "count": 8,
+          "color": "#E85D4C",
+          "notes": "Small competitor signal points on rings, varied positions"
+        },
+        {
+          "type": "frosted_glass_panel",
+          "count": 1,
+          "notes": "Subtle backing panel framing the radar"
+        }
+      ],
+      "background": [
+        {
+          "type": "minimal_grid",
+          "color": "#14141A",
+          "opacity": "very_low",
+          "notes": "Faint ink grid lines only, not a map"
+        }
+      ]
+    },
+    "environment": {
+      "background": { "color": "#F8F6F2" },
+      "atmosphere": {
+        "mood": "early awareness",
+        "keywords": ["competitive", "radar", "market signals", "ahead of noise"]
+      }
+    },
+    "camera": {
+      "angle": "slight_low_angle",
+      "framing": "medium",
+      "focal_length_mm": 55,
+      "depth_of_field": "medium"
+    },
+    "lighting": {
+      "key_light_direction": "back_three_quarter",
+      "key_light_intensity": "high",
+      "rim_light": true,
+      "rim_light_color": "#4F46E5",
+      "accent_glow_color": "#E85D4C"
+    },
+    "brand": {
+      "primary_colors": ["#F8F6F2", "#4F46E5", "#E85D4C", "#14141A"],
+      "forbidden_changes": ["no_text", "no_logos", "no_maps", "no_geography", "no_country_outlines", "no_real_company_names"]
+    },
+    "generation": {
+      "tool": "nano-banana-pro",
+      "aspect_ratio": "1:1",
+      "size": "2K"
+    }
+  },
+  "render_prompt": "Abstract competitive intelligence UI on warm ivory #F8F6F2. Centered frosted glass panel containing five concentric translucent indigo #4F46E5 radar rings viewed from a slight low angle, cinematic depth. Eight small coral #E85D4C pulse dots on the rings suggesting competitor signals. Very faint minimal dark ink #14141A grid lines in background, not a map, no geography. Premium product render, soft rim light indigo, subtle coral accents. Clean 10 percent margins. No text, no logos, no maps, no flags, no brand icons.",
+  "negative_prompt": "world map, geography, country borders, text, logos, company names, globe, satellite imagery, military UI, dark mode, neon green radar"
+}

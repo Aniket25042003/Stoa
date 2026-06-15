@@ -1,0 +1,83 @@
+{
+  "marketing_image": {
+    "meta": {
+      "spec_version": "1.0.0",
+      "title": "Product Orb — No-WebGL Fallback Poster",
+      "output_filename": "orb-fallback.webp",
+      "output_path": "public/images/marketing/orb-faces/orb-fallback.webp",
+      "aspect_ratio": "1:1",
+      "resolution": "2K",
+      "target_file_size_kb": 150,
+      "usage": "Static fallback when WebGL disabled or prefers-reduced-motion on small devices",
+      "feature_mapping": null
+    },
+    "subject": {
+      "type": "hexagonal_glass_orb_hero",
+      "name": "Stoa Product Orb",
+      "physical_properties": {
+        "material": "frosted_glass_hex_prism",
+        "style": "premium_3d_product_hero",
+        "finish": "transmission_glass_with_indigo_edge_glow"
+      },
+      "composition_rules": {
+        "subject_placement": "centered",
+        "margin_percent": 15,
+        "notes": "Orb should float with soft shadow; faint abstract UI visible through glass"
+      }
+    },
+    "props": {
+      "midground": [
+        {
+          "type": "hexagonal_orb",
+          "count": 1,
+          "faces": 6,
+          "notes": "Frosted glass hexagonal prism, subtle facet edges"
+        },
+        {
+          "type": "inner_ui_texture",
+          "count": 1,
+          "notes": "Very faint abstract indigo wireframe visible inside orb"
+        },
+        {
+          "type": "radial_gradient",
+          "count": 1,
+          "color": "#4F46E5",
+          "opacity": "very_low",
+          "notes": "Soft glow behind orb"
+        }
+      ]
+    },
+    "environment": {
+      "background": { "color": "#F8F6F2" },
+      "atmosphere": {
+        "mood": "premium intelligence product",
+        "keywords": ["marketing intelligence", "glass orb", "signals"]
+      }
+    },
+    "camera": {
+      "angle": "three_quarter_front",
+      "framing": "medium_full_orb",
+      "focal_length_mm": 55,
+      "depth_of_field": "shallow"
+    },
+    "lighting": {
+      "key_light_direction": "three_quarter_left",
+      "key_light_intensity": "high",
+      "rim_light": true,
+      "rim_light_color": "#4F46E5",
+      "accent_glow_color": "#E85D4C",
+      "accent_glow_intensity": "subtle"
+    },
+    "brand": {
+      "primary_colors": ["#F8F6F2", "#4F46E5", "#E85D4C", "#14141A"],
+      "forbidden_changes": ["no_text", "no_logos", "no_stoa_wordmark"]
+    },
+    "generation": {
+      "tool": "nano-banana-pro",
+      "aspect_ratio": "1:1",
+      "size": "2K"
+    }
+  },
+  "render_prompt": "Abstract 3D hexagonal glass orb floating centered on warm ivory #F8F6F2 background. Frosted glass hex prism with indigo #4F46E5 edge glow and subtle coral #E85D4C accent on one facet. Faint abstract UI wireframe texture visible through the glass. Soft radial indigo gradient halo behind orb, gentle contact shadow below. Premium product hero render, cinematic studio lighting, three-quarter front angle. No text, no logos, no wordmark. Clean minimal marketing intelligence aesthetic.",
+  "negative_prompt": "text, logos, water bottle, beverage, text labels, busy background, dark mode, low poly game asset look"
+}

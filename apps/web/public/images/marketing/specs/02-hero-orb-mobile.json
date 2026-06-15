@@ -1,0 +1,36 @@
+{
+  "marketing_image": {
+    "meta": {
+      "spec_version": "1.0.0",
+      "title": "Stoa Hero Mobile Poster",
+      "output_filename": "hero-orb-mobile.webp",
+      "aspect_ratio": "9:16",
+      "resolution": "2K"
+    },
+    "subject": {
+      "type": "abstract_3d_orb",
+      "name": "Marketing Intelligence Orb",
+      "physical_properties": {"material": "frosted_glass", "scale": "centered_vertical"}
+    },
+    "environment": {
+      "background": {"color": "#F8F6F2", "effect": "soft_haze"},
+      "atmosphere": {"mood": "premium mobile hero", "keywords": ["vertical", "centered"]}
+    },
+    "camera": {
+      "angle": "front",
+      "framing": "medium",
+      "composition_notes": "orb centered in upper 60%; bottom 35% clean for headline and CTA overlay"
+    },
+    "lighting": {
+      "key_light_direction": "top",
+      "rim_light": true,
+      "rim_light_color": "#4F46E5",
+      "accent_glow_color": "#E85D4C"
+    },
+    "brand": {
+      "primary_colors": ["#F8F6F2", "#4F46E5", "#E85D4C"],
+      "forbidden_changes": ["no_text", "no_logos"]
+    }
+  },
+  "render_prompt": "Vertical 9:16 photorealistic 3D mobile hero. Frosted glass intelligence orb centered upper portion with indigo rim light and coral accent on warm ivory (#F8F6F2). Bottom third empty negative space. No text, no logos."
+}

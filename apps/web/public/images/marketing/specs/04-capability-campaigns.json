@@ -1,0 +1,37 @@
+{
+  "marketing_image": {
+    "meta": {
+      "spec_version": "1.0.0",
+      "title": "Stoa Capability — Campaigns",
+      "output_filename": "capability-campaigns.webp",
+      "aspect_ratio": "4:3",
+      "resolution": "2K"
+    },
+    "subject": {
+      "type": "floating_creative_stack",
+      "name": "Campaign Asset Cluster",
+      "physical_properties": {"material": "glass_and_soft_paper", "style": "levitating_product_shot"}
+    },
+    "props": {
+      "midground": [
+        {"type": "creative_frame", "count": 4, "notes": "overlapping ad frames, storyboard panels, blank content"},
+        {"type": "ribbon_path", "count": 1, "notes": "coral accent line connecting frames"}
+      ]
+    },
+    "environment": {
+      "background": {"color": "#F8F6F2", "effect": "soft_studio_gradient"},
+      "atmosphere": {"mood": "creative momentum", "keywords": ["campaigns", "connected", "ship"]}
+    },
+    "camera": {"angle": "three_quarter_front", "framing": "medium_close", "depth_of_field": "shallow"},
+    "lighting": {
+      "key_light_direction": "right",
+      "accent_glow_color": "#E85D4C",
+      "rim_light_color": "#4F46E5"
+    },
+    "brand": {
+      "primary_colors": ["#F8F6F2", "#E85D4C", "#4F46E5"],
+      "forbidden_changes": ["no_text", "no_logos", "no_brand_names_on_frames"]
+    }
+  },
+  "render_prompt": "3D floating campaign creative frames and blank storyboard panels in soft studio light on ivory (#F8F6F2). Coral (#E85D4C) accent ribbon connects frames. Shallow depth of field, premium advertising aesthetic, no readable text."
+}

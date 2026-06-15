@@ -1,0 +1,32 @@
+{
+  "marketing_image": {
+    "meta": {
+      "spec_version": "1.0.0",
+      "title": "Stoa Dark Immersion Band Poster",
+      "output_filename": "immersion-signals.webp",
+      "aspect_ratio": "21:9",
+      "resolution": "2K"
+    },
+    "subject": {
+      "type": "abstract_signal_field",
+      "name": "Luminous Signal Trails",
+      "physical_properties": {"material": "light_particles_and_trails", "style": "cinematic_wide"}
+    },
+    "environment": {
+      "background": {"color": "#0E1018", "effect": "deep_vignette"},
+      "atmosphere": {"mood": "immersive, focused, premium dark", "keywords": ["workspace", "every signal", "clarity"]}
+    },
+    "camera": {"angle": "wide", "framing": "wide", "composition_notes": "center band of light activity; edges dark for text overlay"},
+    "lighting": {
+      "key_light_intensity": "low",
+      "accent_glow_color": "#4F46E5",
+      "secondary_accent": "#E85D4C",
+      "color_temperature": "cool"
+    },
+    "brand": {
+      "primary_colors": ["#0E1018", "#4F46E5", "#E85D4C", "#F2F0EB"],
+      "forbidden_changes": ["no_text", "no_logos"]
+    }
+  },
+  "render_prompt": "Ultra-wide 21:9 cinematic dark navy (#0E1018) abstract field of soft indigo and coral luminous signal trails and particles. Center-weighted glow, edge vignette, CURA-style immersion band, no text."
+}

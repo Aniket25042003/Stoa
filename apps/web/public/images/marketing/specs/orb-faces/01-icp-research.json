@@ -1,0 +1,119 @@
+{
+  "marketing_image": {
+    "meta": {
+      "spec_version": "1.0.0",
+      "title": "Product Orb Face — ICP & Customer Research",
+      "output_filename": "01-icp-research.webp",
+      "output_path": "public/images/marketing/orb-faces/01-icp-research.webp",
+      "aspect_ratio": "1:1",
+      "resolution": "2K",
+      "target_file_size_kb": 200,
+      "usage": "Hexagonal product orb face 0 — scroll chapter 01, corner anchor top-left",
+      "feature_mapping": {
+        "landing_section_id": "icp-research",
+        "chapter": "01",
+        "eyebrow": "Customer Intelligence",
+        "title": "ICP & Customer Research"
+      }
+    },
+    "subject": {
+      "type": "abstract_ui_panel",
+      "name": "Customer Signal Graph Panel",
+      "physical_properties": {
+        "material": "frosted_glass_and_wireframe",
+        "style": "abstract_saas_product_render",
+        "finish": "matte_glass_with_soft_glow_edges"
+      },
+      "composition_rules": {
+        "subject_placement": "centered",
+        "margin_percent": 10,
+        "notes": "Leave clean negative space at all edges for 3D cylindrical face UV mapping; avoid elements touching frame border"
+      }
+    },
+    "props": {
+      "foreground": [],
+      "midground": [
+        {
+          "type": "frosted_glass_dashboard_card",
+          "count": 1,
+          "size": "large_centered",
+          "notes": "Primary panel housing the signal graph"
+        },
+        {
+          "type": "node_sphere",
+          "count": 6,
+          "color": "#4F46E5",
+          "notes": "Small luminous nodes connected by thin lines, clustering into abstract persona silhouette"
+        },
+        {
+          "type": "floating_glass_card",
+          "count": 2,
+          "notes": "Blank frosted panels flanking the graph, no readable content"
+        }
+      ],
+      "background": [
+        {
+          "type": "soft_gradient",
+          "color": "#F8F6F2",
+          "notes": "Flat warm ivory, no texture noise"
+        }
+      ],
+      "accent": [
+        {
+          "type": "highlight_node",
+          "color": "#E85D4C",
+          "notes": "Single coral accent on central node only"
+        }
+      ]
+    },
+    "environment": {
+      "background": { "color": "#F8F6F2" },
+      "atmosphere": {
+        "mood": "structured clarity",
+        "keywords": ["ICP", "customer signals", "persona", "precomputed intelligence"]
+      }
+    },
+    "camera": {
+      "angle": "front_facing_slight_isometric",
+      "framing": "medium_tight_on_panel",
+      "focal_length_mm": 50,
+      "depth_of_field": "shallow_soft_background"
+    },
+    "lighting": {
+      "key_light_direction": "three_quarter_left",
+      "key_light_intensity": "high_soft",
+      "fill_light": "low_ambient_ivory",
+      "rim_light": true,
+      "rim_light_color": "#4F46E5",
+      "rim_light_intensity": "subtle"
+    },
+    "brand": {
+      "primary_colors": ["#F8F6F2", "#4F46E5", "#E85D4C", "#14141A"],
+      "color_roles": {
+        "surface": "#F8F6F2",
+        "accent_primary": "#4F46E5",
+        "accent_warm": "#E85D4C",
+        "ink": "#14141A"
+      },
+      "forbidden_changes": [
+        "no_text",
+        "no_logos",
+        "no_readable_labels",
+        "no_numbers",
+        "no_real_company_names",
+        "no_people",
+        "no_faces",
+        "no_stock_photo_aesthetic"
+      ]
+    },
+    "generation": {
+      "tool": "nano-banana-pro",
+      "model": "gemini-3-pro-image",
+      "aspect_ratio": "1:1",
+      "size": "2K",
+      "cli_example": "python3 ~/.cursor/skills/nano-banana-pro/generate_image.py \"$(jq -r .render_prompt 01-icp-research.json)\" -o ../orb-faces/01-icp-research.webp --aspect-ratio 1:1 --size 2K"
+    }
+  },
+  "render_prompt": "Abstract marketing intelligence UI mockup on warm ivory background #F8F6F2. Centered frosted glass dashboard panel showing a customer signal graph: six small indigo #4F46E5 nodes connected by thin luminous wireframe lines clustering into an abstract persona silhouette shape. Two floating blank frosted glass cards beside the graph with no content. Subtle coral #E85D4C highlight glow on the central node only. Premium SaaS product visualization, soft studio lighting, shallow depth of field, front-facing with slight isometric depth. Matte glass materials, thin indigo edge glows, clean minimal composition. Approximately 10 percent margin on all sides. No text, no logos, no readable labels, no numbers, no people, no faces.",
+  "negative_prompt": "text, letters, words, logos, watermarks, brand names, UI labels, axis labels, charts with numbers, photographs of people, faces, hands, cluttered background, dark mode, neon cyberpunk, generic stock photo, blurry, low quality, jpeg artifacts"
+}

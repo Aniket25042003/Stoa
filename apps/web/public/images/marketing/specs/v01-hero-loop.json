@@ -1,0 +1,41 @@
+{
+  "marketing_video": {
+    "meta": {
+      "spec_version": "1.0.0",
+      "title": "Stoa Hero Ambient Loop",
+      "output_filename": "hero-loop.mp4",
+      "duration_seconds": 10,
+      "fps": 24,
+      "aspect_ratio": "16:9",
+      "loop": "seamless"
+    },
+    "scene": {
+      "description": "Frosted glass intelligence orb floating in warm ivory void. Four thin glass abstract shapes slowly orbit: chart arc, megaphone silhouette, target rings, document stack.",
+      "palette": ["#F8F6F2", "#4F46E5", "#E85D4C", "#14141A"],
+      "mood": "calm premium GTM intelligence, CURA-style cinematic"
+    },
+    "camera": {
+      "movement": "slow_push_in_then_ease_back",
+      "speed": "very_slow",
+      "start_match_end": true,
+      "notes": "10 second loop; final frame matches first frame for seamless repeat"
+    },
+    "motion": {
+      "orb_rotation": "slow_y_axis_15_degrees_total",
+      "floating_props": "gentle_orbital_drift",
+      "particle_drift": "subtle_indigo_dust"
+    },
+    "lighting": {
+      "rim_light_color": "#4F46E5",
+      "accent_pulse": "soft_coral_breathing_glow",
+      "intensity_variation": "minimal"
+    },
+    "constraints": {
+      "no_text": true,
+      "no_logos": true,
+      "no_ui": true,
+      "no_people": true
+    }
+  },
+  "render_prompt": "10 second seamless loop, 16:9, 24fps. Cinematic slow camera drift around a frosted glass orb in ivory space (#F8F6F2). Glass marketing icons orbit slowly. Indigo rim light, subtle coral glow pulse. Premium product film, no text, loopable."
+}

@@ -1,0 +1,98 @@
+{
+  "marketing_image": {
+    "meta": {
+      "spec_version": "1.0.0",
+      "title": "Product Orb Face — Campaign Analysis",
+      "output_filename": "04-campaign-analysis.webp",
+      "output_path": "public/images/marketing/orb-faces/04-campaign-analysis.webp",
+      "aspect_ratio": "1:1",
+      "resolution": "2K",
+      "target_file_size_kb": 200,
+      "usage": "Hexagonal product orb face 3 — scroll chapter 04, corner anchor middle-right",
+      "feature_mapping": {
+        "landing_section_id": "campaign-analysis",
+        "chapter": "04",
+        "eyebrow": "Performance",
+        "title": "Campaign Analysis"
+      }
+    },
+    "subject": {
+      "type": "abstract_analytics_panel",
+      "name": "Evidence Dashboard Card",
+      "physical_properties": {
+        "material": "frosted_glass_and_wireframe_charts",
+        "style": "abstract_saas_analytics_render",
+        "finish": "soft_glow_bars_and_lines"
+      },
+      "composition_rules": {
+        "subject_placement": "centered",
+        "margin_percent": 10,
+        "notes": "Charts must have no axis labels, numbers, or tick marks"
+      }
+    },
+    "props": {
+      "midground": [
+        {
+          "type": "frosted_dashboard_card",
+          "count": 1,
+          "notes": "Primary analytics container"
+        },
+        {
+          "type": "wireframe_bar_chart",
+          "count": 1,
+          "bar_count": 5,
+          "color": "#4F46E5",
+          "notes": "Minimal glowing bars, one bar highlighted coral"
+        },
+        {
+          "type": "wireframe_line_graph",
+          "count": 1,
+          "color": "#4F46E5",
+          "notes": "Smooth line overlay, no data points labeled"
+        },
+        {
+          "type": "evidence_chip",
+          "count": 4,
+          "material": "small_glass_pills",
+          "notes": "Floating glass chips around chart suggesting stored evidence"
+        }
+      ],
+      "accent": [
+        {
+          "type": "highlight_bar",
+          "color": "#E85D4C",
+          "notes": "Single coral bar as performance highlight"
+        }
+      ]
+    },
+    "environment": {
+      "background": { "color": "#F8F6F2" },
+      "atmosphere": {
+        "mood": "evidence-backed clarity",
+        "keywords": ["campaign performance", "analytics", "proof", "insights"]
+      }
+    },
+    "camera": {
+      "angle": "front_facing",
+      "framing": "medium",
+      "focal_length_mm": 50,
+      "depth_of_field": "shallow"
+    },
+    "lighting": {
+      "key_light_direction": "three_quarter_left",
+      "key_light_intensity": "high_soft",
+      "rim_light_color": "#4F46E5"
+    },
+    "brand": {
+      "primary_colors": ["#F8F6F2", "#4F46E5", "#E85D4C", "#14141A"],
+      "forbidden_changes": ["no_text", "no_logos", "no_axis_labels", "no_numbers", "no_percentages"]
+    },
+    "generation": {
+      "tool": "nano-banana-pro",
+      "aspect_ratio": "1:1",
+      "size": "2K"
+    }
+  },
+  "render_prompt": "Abstract campaign analytics UI mockup on warm ivory #F8F6F2. Centered frosted glass dashboard card with minimalist bar chart and line graph made of indigo #4F46E5 wireframe geometry and soft glowing bars, absolutely no axis labels numbers or tick marks. One coral #E85D4C highlight bar. Four small floating frosted glass evidence chips around the chart. Premium studio lighting, front view, shallow depth of field. Clean margins for 3D texture mapping. No text, no logos, no readable data.",
+  "negative_prompt": "numbers, percentages, axis labels, grid numbers, text, logos, excel screenshot, real dashboard screenshot, dark theme, cluttered UI"
+}

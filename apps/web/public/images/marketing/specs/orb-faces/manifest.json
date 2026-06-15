@@ -1,0 +1,72 @@
+{
+  "spec_version": "1.0.0",
+  "collection": "Stoa Product Orb Faces",
+  "description": "Six 1:1 abstract UI textures for the scroll-linked hexagonal product orb on the marketing landing page, plus one fallback poster.",
+  "brand_palette": {
+    "surface": "#F8F6F2",
+    "accent_primary": "#4F46E5",
+    "accent_warm": "#E85D4C",
+    "ink": "#14141A"
+  },
+  "global_constraints": [
+    "aspect_ratio 1:1",
+    "resolution 2K",
+    "no readable text",
+    "no logos or wordmarks",
+    "no real company names",
+    "10% margin for 3D face mapping",
+    "abstract frosted glass SaaS UI style"
+  ],
+  "assets": [
+    {
+      "id": "01",
+      "spec_file": "01-icp-research.json",
+      "output": "orb-faces/01-icp-research.webp",
+      "feature": "ICP & Customer Research",
+      "orb_face_index": 0
+    },
+    {
+      "id": "02",
+      "spec_file": "02-content-bottleneck.json",
+      "output": "orb-faces/02-content-bottleneck.webp",
+      "feature": "Content Creation Bottleneck",
+      "orb_face_index": 1
+    },
+    {
+      "id": "03",
+      "spec_file": "03-competitive-intel.json",
+      "output": "orb-faces/03-competitive-intel.webp",
+      "feature": "Competitive Intelligence",
+      "orb_face_index": 2
+    },
+    {
+      "id": "04",
+      "spec_file": "04-campaign-analysis.json",
+      "output": "orb-faces/04-campaign-analysis.webp",
+      "feature": "Campaign Analysis",
+      "orb_face_index": 3
+    },
+    {
+      "id": "05",
+      "spec_file": "05-gtm-alignment.json",
+      "output": "orb-faces/05-gtm-alignment.webp",
+      "feature": "Sales–Marketing Alignment",
+      "orb_face_index": 4
+    },
+    {
+      "id": "06",
+      "spec_file": "06-launch-orchestration.json",
+      "output": "orb-faces/06-launch-orchestration.webp",
+      "feature": "Campaign Launch Orchestration",
+      "orb_face_index": 5
+    },
+    {
+      "id": "fallback",
+      "spec_file": "orb-fallback.json",
+      "output": "orb-faces/orb-fallback.webp",
+      "feature": null,
+      "orb_face_index": null
+    }
+  ],
+  "batch_generation_script": "# From repo root with GEMINI_API_KEY set:\nfor f in apps/web/public/images/marketing/specs/orb-faces/0*.json apps/web/public/images/marketing/specs/orb-faces/orb-fallback.json; do\n  out=$(jq -r '.marketing_image.meta.output_path' \"$f\" | sed 's|public/|apps/web/public/|')\n  python3 ~/.cursor/skills/nano-banana-pro/generate_image.py \\\n    \"$(jq -r .render_prompt \"$f\")\" \\\n    -o \"$out\" --aspect-ratio 1:1 --size 2K\ndone"
+}

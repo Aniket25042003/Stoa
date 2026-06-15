@@ -1,0 +1,24 @@
+{
+  "marketing_image": {
+    "meta": {
+      "spec_version": "1.0.0",
+      "title": "Stoa Waitlist Backdrop",
+      "output_filename": "waitlist-backdrop.webp",
+      "aspect_ratio": "16:9",
+      "resolution": "2K"
+    },
+    "subject": {
+      "type": "abstract_3d_orb",
+      "name": "Soft Intelligence Orb",
+      "physical_properties": {"material": "heavily_blurred_glass", "scale": "environmental"}
+    },
+    "environment": {
+      "background": {"color": "#F8F6F2", "effect": "heavy_gaussian_blur"},
+      "atmosphere": {"mood": "calm conversion focus", "keywords": ["waitlist", "soft", "premium"]}
+    },
+    "camera": {"framing": "wide", "composition_notes": "center soft orb bloom; edges very clean for form card overlay"},
+    "lighting": {"rim_light_color": "#4F46E5", "accent_glow_color": "#E85D4C", "key_light_intensity": "very_low"},
+    "brand": {"forbidden_changes": ["no_text", "no_logos"]}
+  },
+  "render_prompt": "Soft blurred frosted glass orb atmosphere on warm ivory (#F8F6F2). Heavy depth blur, indigo and coral light leaks, designed as waitlist page background behind a form card. No text."
+}

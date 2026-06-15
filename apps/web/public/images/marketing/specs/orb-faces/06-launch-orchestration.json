@@ -1,0 +1,93 @@
+{
+  "marketing_image": {
+    "meta": {
+      "spec_version": "1.0.0",
+      "title": "Product Orb Face — Campaign Launch Orchestration",
+      "output_filename": "06-launch-orchestration.webp",
+      "output_path": "public/images/marketing/orb-faces/06-launch-orchestration.webp",
+      "aspect_ratio": "1:1",
+      "resolution": "2K",
+      "target_file_size_kb": 200,
+      "usage": "Hexagonal product orb face 5 — scroll chapter 06, corner anchor bottom-right",
+      "feature_mapping": {
+        "landing_section_id": "launch-orchestration",
+        "chapter": "06",
+        "eyebrow": "Orchestration",
+        "title": "Campaign Launch Orchestration"
+      }
+    },
+    "subject": {
+      "type": "abstract_orchestration_panel",
+      "name": "Launch Hub & Channel Router",
+      "physical_properties": {
+        "material": "frosted_glass_hub_and_cards",
+        "style": "abstract_saas_workflow_render",
+        "finish": "radial_wireframe_paths"
+      },
+      "composition_rules": {
+        "subject_placement": "centered",
+        "margin_percent": 10,
+        "flow_direction": "hub_to_spokes",
+        "notes": "Channel cards as abstract shapes only — no email/social icons with text"
+      }
+    },
+    "props": {
+      "midground": [
+        {
+          "type": "central_hub",
+          "count": 1,
+          "color": "#4F46E5",
+          "glow": "#E85D4C",
+          "notes": "Frosted glass hub with coral center glow"
+        },
+        {
+          "type": "wireframe_arrow",
+          "count": 5,
+          "color": "#4F46E5",
+          "notes": "Thin arrows radiating outward from hub"
+        },
+        {
+          "type": "channel_card",
+          "count": 5,
+          "material": "blank_glass_rectangles",
+          "notes": "Abstract channel destinations — email envelope shape, social rectangle, ad rectangle, all without text or branded icons"
+        },
+        {
+          "type": "pipeline_path",
+          "count": 1,
+          "notes": "Subtle left-to-right wireframe path suggesting strategy to launch"
+        }
+      ]
+    },
+    "environment": {
+      "background": { "color": "#F8F6F2" },
+      "atmosphere": {
+        "mood": "coordinated launch",
+        "keywords": ["orchestration", "multi-channel", "campaign launch", "workflow"]
+      }
+    },
+    "camera": {
+      "angle": "front_facing_slight_top",
+      "framing": "medium",
+      "focal_length_mm": 48,
+      "depth_of_field": "medium"
+    },
+    "lighting": {
+      "key_light_direction": "three_quarter_left",
+      "key_light_intensity": "high_soft",
+      "rim_light_color": "#4F46E5",
+      "hub_glow_color": "#E85D4C"
+    },
+    "brand": {
+      "primary_colors": ["#F8F6F2", "#4F46E5", "#E85D4C", "#14141A"],
+      "forbidden_changes": ["no_text", "no_logos", "no_branded_social_icons", "no_real_platform_logos"]
+    },
+    "generation": {
+      "tool": "nano-banana-pro",
+      "aspect_ratio": "1:1",
+      "size": "2K"
+    }
+  },
+  "render_prompt": "Abstract campaign launch orchestration UI on warm ivory #F8F6F2. Central frosted glass hub with coral #E85D4C glow at center and indigo #4F46E5 outer ring. Five thin luminous wireframe arrows radiating outward to five blank frosted channel cards — abstract geometric shapes suggesting email, social, and ads without branded icons or text. Subtle left-to-right pipeline wireframe path in background. Premium studio lighting, front-facing slight top angle. Clean margins. No text, no logos, no Meta Google LinkedIn icons, no readable labels.",
+  "negative_prompt": "text, logos, social media brand icons, facebook, instagram, google ads logo, readable UI, rocket emoji style, dark mode, chaotic lines"
+}

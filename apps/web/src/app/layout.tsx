@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Manrope, Space_Grotesk } from "next/font/google";
+import { Inter, Manrope, Space_Grotesk, Syne, DM_Sans } from "next/font/google";
 import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 import { BRAND_NAME, BRAND_SUBHEAD, BRAND_TAGLINE } from "@/lib/brand";
@@ -9,15 +9,42 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope", display: "swap" });
 const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-space-grotesk", display: "swap" });
+const syne = Syne({ subsets: ["latin"], variable: "--font-syne", display: "swap" });
+const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm-sans", display: "swap" });
 
 export const metadata: Metadata = {
-  title: BRAND_NAME,
+  title: {
+    default: BRAND_NAME,
+    template: `%s | ${BRAND_NAME}`
+  },
   description: `${BRAND_TAGLINE} ${BRAND_SUBHEAD}`,
+  openGraph: {
+    title: BRAND_NAME,
+    description: `${BRAND_TAGLINE} ${BRAND_SUBHEAD}`,
+    url: "https://stoa.ai",
+    siteName: BRAND_NAME,
+    images: [
+      {
+        url: "/images/marketing/og-stoa.webp",
+        width: 1200,
+        height: 675,
+        alt: `${BRAND_NAME} — ${BRAND_TAGLINE}`,
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: BRAND_NAME,
+    description: `${BRAND_TAGLINE} ${BRAND_SUBHEAD}`,
+    images: ["/images/marketing/og-stoa.webp"],
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${manrope.variable} ${spaceGrotesk.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${manrope.variable} ${spaceGrotesk.variable} ${syne.variable} ${dmSans.variable}`}>
       <head>
         <Script id="theme-init" strategy="beforeInteractive">
           {`(() => {

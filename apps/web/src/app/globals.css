@@ -2,6 +2,15 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
+  /* Marketing V2 Design Tokens */
+  --mkt-surface: #F8F6F2;
+  --mkt-ink: #14141A;
+  --mkt-muted: #6B6F7D;
+  --mkt-accent: #4F46E5;
+  --mkt-accent-warm: #E85D4C;
+  --mkt-dark-band: #0E1018;
+  --mkt-dark-ink: #F2F0EB;
+
   --surface: #F5E6C8; /* Sand canvas backdrop */
   --surface-dim: #EADCBF;
   --surface-bright: #FBF5E8;
@@ -109,8 +118,18 @@ html.dark {
   --color-indigo-pulse: var(--indigo-pulse);
   --color-violet-pulse: var(--violet-pulse);
 
+  --color-mkt-surface: var(--mkt-surface);
+  --color-mkt-ink: var(--mkt-ink);
+  --color-mkt-muted: var(--mkt-muted);
+  --color-mkt-accent: var(--mkt-accent);
+  --color-mkt-accent-warm: var(--mkt-accent-warm);
+  --color-mkt-dark-band: var(--mkt-dark-band);
+  --color-mkt-dark-ink: var(--mkt-dark-ink);
+
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --font-syne: var(--font-syne), sans-serif;
+  --font-dm-sans: var(--font-dm-sans), sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   --shadow-glow: 0 22px 70px -26px rgb(255 107 53 / 55%), 0 10px 35px -28px rgb(196 162 101 / 45%);
@@ -436,5 +455,55 @@ html.dark {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Marketing V2 Styling Override */
+.marketing-v2 {
+  background-color: var(--mkt-surface);
+  color: var(--mkt-ink);
+  font-family: var(--font-dm-sans), var(--font-sans), sans-serif;
+}
+
+.marketing-v2-dark-band {
+  background-color: var(--mkt-dark-band);
+  color: var(--mkt-dark-ink);
+}
+
+.marketing-v2-scroll {
+  scroll-snap-type: y proximity;
+}
+
+.marketing-snap-section {
+  scroll-snap-align: start;
+  scroll-snap-stop: normal;
+}
+
+.font-syne {
+  font-family: var(--font-syne), var(--font-display), sans-serif;
+}
+
+.font-dm-sans {
+  font-family: var(--font-dm-sans), var(--font-sans), sans-serif;
+}
+
+/* Lenis Smooth Scroll Rules */
+html.lenis, html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overflow: clip;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
 }
 

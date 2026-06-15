@@ -1,10 +1,10 @@
 export const BRAND_NAME = "Stoa";
 
-export const BRAND_TAGLINE = "Strategy meets execution. Markets don't stand a chance.";
+export const BRAND_TAGLINE = "Know your market. Ship faster.";
 
 /** Supporting subhead — hero body, section leads, footer blurb */
 export const BRAND_SUBHEAD =
-  "From first idea to market-ready strategy and campaigns — faster than you thought possible.";
+  "From customer signals to campaign-ready output - in one place.";
 
 export const BRAND_LOGO_LETTER = "S";
 

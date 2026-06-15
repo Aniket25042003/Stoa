@@ -1,0 +1,85 @@
+{
+  "marketing_image": {
+    "meta": {
+      "spec_version": "1.0.0",
+      "title": "Stoa Hero Intelligence Orb",
+      "campaign": "stoa_signal_studio_v1",
+      "brand_name": "Stoa",
+      "usage_context": "web_hero_poster",
+      "output_filename": "hero-orb.webp",
+      "aspect_ratio": "16:9",
+      "resolution": "4K"
+    },
+    "subject": {
+      "type": "abstract_3d_orb",
+      "name": "Marketing Intelligence Orb",
+      "variant": "glass_translucent",
+      "physical_properties": {
+        "material": "frosted_glass_with_subsurface_scatter",
+        "scale": "hero_centerpiece",
+        "finish": "premium_product_render"
+      }
+    },
+    "props": {
+      "foreground": [],
+      "midground": [
+        {
+          "type": "floating_icon_plane",
+          "count": 4,
+          "items": [
+            {"shape": "abstract_chart_arc", "material": "thin_glass", "position": "orbit_upper_left"},
+            {"shape": "megaphone_silhouette", "material": "thin_glass", "position": "orbit_right"},
+            {"shape": "target_rings", "material": "thin_glass", "position": "orbit_lower"},
+            {"shape": "document_stack", "material": "thin_glass", "position": "orbit_upper_right"}
+          ],
+          "notes": "abstract marketing metaphors only, no readable UI text"
+        }
+      ],
+      "background": [
+        {
+          "type": "soft_gradient_field",
+          "position": "full_frame",
+          "notes": "warm ivory atmosphere, subtle depth haze"
+        }
+      ]
+    },
+    "environment": {
+      "surface": {"material": "invisible", "reflection_strength": 0},
+      "background": {
+        "color": "#F8F6F2",
+        "texture": "smooth",
+        "effect": "soft_volumetric_haze"
+      },
+      "atmosphere": {
+        "mood": "premium, calm, intelligent, GTM-ready",
+        "keywords": ["clarity", "momentum", "signal", "editorial"]
+      }
+    },
+    "camera": {
+      "angle": "three_quarter_front",
+      "framing": "wide",
+      "focal_length_mm": 35,
+      "depth_of_field": "medium",
+      "composition_notes": "orb in right two-thirds; leave left third clean negative space for headline overlay"
+    },
+    "lighting": {
+      "key_light_direction": "three_quarter_left",
+      "key_light_intensity": "medium",
+      "fill_light_direction": "right",
+      "fill_light_intensity": "low",
+      "rim_light": true,
+      "rim_light_color": "#4F46E5",
+      "accent_glow_color": "#E85D4C",
+      "color_temperature": "warm_neutral"
+    },
+    "brand": {
+      "primary_colors": ["#F8F6F2", "#4F46E5", "#E85D4C", "#14141A"],
+      "forbidden_changes": ["no_text", "no_logos", "no_watermarks", "no_ui_screenshots"]
+    },
+    "controls": {
+      "lock_palette": true,
+      "allow_background_variation": false
+    }
+  },
+  "render_prompt": "Photorealistic 3D render of a large frosted glass intelligence orb floating in warm ivory space (#F8F6F2). Four thin glass abstract shapes orbit the orb: chart arc, megaphone silhouette, target rings, document stack. Indigo (#4F46E5) rim light and subtle coral (#E85D4C) glow. Orb positioned right two-thirds; left third empty for text. Premium product visualization, cinematic, no text, no logos."
+}

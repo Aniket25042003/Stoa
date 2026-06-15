@@ -1,0 +1,26 @@
+{
+  "marketing_image": {
+    "meta": {
+      "spec_version": "1.0.0",
+      "title": "Stoa Loading Mark",
+      "output_filename": "loading-brand-mark.webp",
+      "aspect_ratio": "1:1",
+      "resolution": "1K"
+    },
+    "subject": {
+      "type": "abstract_monogram_sculpture",
+      "name": "Stoa S Mark",
+      "physical_properties": {"material": "polished_glass_letterform", "style": "minimal_3d_icon"}
+    },
+    "environment": {
+      "background": {"color": "#F8F6F2", "texture": "smooth"},
+      "atmosphere": {"mood": "loading gate centerpiece"}
+    },
+    "camera": {"angle": "front", "framing": "close_up"},
+    "lighting": {"rim_light_color": "#4F46E5", "accent_glow_color": "#E85D4C"},
+    "brand": {
+      "forbidden_changes": ["no_full_wordmark", "no_extra_text"]
+    }
+  },
+  "render_prompt": "Square 1:1 minimal 3D abstract letter S sculpted from polished glass on ivory (#F8F6F2). Indigo rim light, coral accent reflection. Icon for loading screen, no full wordmark, no other text."
+}

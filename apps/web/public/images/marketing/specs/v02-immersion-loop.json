@@ -1,0 +1,30 @@
+{
+  "marketing_video": {
+    "meta": {
+      "spec_version": "1.0.0",
+      "title": "Stoa Dark Immersion Loop",
+      "output_filename": "immersion-loop.mp4",
+      "duration_seconds": 12,
+      "fps": 24,
+      "aspect_ratio": "21:9",
+      "loop": "seamless"
+    },
+    "scene": {
+      "description": "Deep navy void (#0E1018) filled with slow-moving indigo and coral luminous signal trails, like data currents in space.",
+      "palette": ["#0E1018", "#4F46E5", "#E85D4C", "#F2F0EB"],
+      "mood": "immersive, focused, cinematic dark band"
+    },
+    "camera": {
+      "movement": "imperceptible_slow_pan_right",
+      "speed": "very_slow",
+      "start_match_end": true
+    },
+    "motion": {
+      "signal_trails": "flow_left_to_right_and_fade",
+      "particle_density": "medium_low",
+      "glow_variation": "gentle_breathing"
+    },
+    "constraints": {"no_text": true, "no_logos": true}
+  },
+  "render_prompt": "12 second seamless ultra-wide 21:9 loop. Dark navy (#0E1018) abstract signal trails in indigo and coral slowly flowing. Center glow, edge vignette. CURA-style immersion, no text, loopable."
+}

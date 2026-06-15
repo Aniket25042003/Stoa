@@ -1,0 +1,95 @@
+{
+  "marketing_image": {
+    "meta": {
+      "spec_version": "1.0.0",
+      "title": "Product Orb Face — Sales–Marketing Alignment",
+      "output_filename": "05-gtm-alignment.webp",
+      "output_path": "public/images/marketing/orb-faces/05-gtm-alignment.webp",
+      "aspect_ratio": "1:1",
+      "resolution": "2K",
+      "target_file_size_kb": 200,
+      "usage": "Hexagonal product orb face 4 — scroll chapter 05, corner anchor bottom-left",
+      "feature_mapping": {
+        "landing_section_id": "sales-marketing-align",
+        "chapter": "05",
+        "eyebrow": "GTM Alignment",
+        "title": "Sales–Marketing Alignment"
+      }
+    },
+    "subject": {
+      "type": "abstract_alignment_panel",
+      "name": "Unified Intelligence Bridge",
+      "physical_properties": {
+        "material": "dual_tinted_glass_panels",
+        "style": "symmetrical_product_render",
+        "finish": "indigo_and_coral_glass_merge"
+      },
+      "composition_rules": {
+        "subject_placement": "centered_symmetrical",
+        "margin_percent": 10,
+        "symmetry_axis": "vertical",
+        "notes": "Two sides merging into one — metaphor for sales + marketing on one layer"
+      }
+    },
+    "props": {
+      "midground": [
+        {
+          "type": "glass_panel_left",
+          "count": 1,
+          "tint": "#4F46E5",
+          "opacity": "light",
+          "notes": "Indigo-tinted frosted panel, left half"
+        },
+        {
+          "type": "glass_panel_right",
+          "count": 1,
+          "tint": "#E85D4C",
+          "opacity": "light",
+          "notes": "Coral-tinted frosted panel, right half"
+        },
+        {
+          "type": "shared_glow_node",
+          "count": 1,
+          "position": "center_merge_point",
+          "notes": "Single luminous hub where panels meet"
+        },
+        {
+          "type": "wireframe_bridge",
+          "count": 1,
+          "color": "#4F46E5",
+          "notes": "Thin connecting path between panels through center node"
+        }
+      ]
+    },
+    "environment": {
+      "background": { "color": "#F8F6F2" },
+      "atmosphere": {
+        "mood": "unified trust",
+        "keywords": ["alignment", "GTM", "shared truth", "one intelligence layer"]
+      }
+    },
+    "camera": {
+      "angle": "front_facing",
+      "framing": "medium",
+      "focal_length_mm": 50,
+      "depth_of_field": "medium"
+    },
+    "lighting": {
+      "key_light_direction": "center_top",
+      "key_light_intensity": "balanced",
+      "rim_light_color": "#4F46E5",
+      "secondary_rim_color": "#E85D4C"
+    },
+    "brand": {
+      "primary_colors": ["#F8F6F2", "#4F46E5", "#E85D4C", "#14141A"],
+      "forbidden_changes": ["no_text", "no_logos", "no_people_icons", "no_org_chart_labels"]
+    },
+    "generation": {
+      "tool": "nano-banana-pro",
+      "aspect_ratio": "1:1",
+      "size": "2K"
+    }
+  },
+  "render_prompt": "Abstract GTM alignment UI on warm ivory #F8F6F2. Symmetrical composition: two frosted glass panels merging at center — left panel lightly tinted indigo #4F46E5, right panel lightly tinted coral #E85D4C — joining at a single shared glowing node in the middle with a thin wireframe bridge. Balanced premium product render, soft studio lighting, front-facing. Suggests two teams on one intelligence layer. Clean 10 percent margins. No text, no logos, no people icons, no org chart labels.",
+  "negative_prompt": "text, logos, people silhouettes, handshake stock photo, org chart with names, arrows with labels, dark mode"
+}

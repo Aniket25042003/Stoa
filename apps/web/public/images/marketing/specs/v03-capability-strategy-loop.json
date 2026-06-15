@@ -1,0 +1,24 @@
+{
+  "marketing_video": {
+    "meta": {
+      "spec_version": "1.0.0",
+      "title": "Stoa Strategy Capability Loop",
+      "output_filename": "capability-strategy-loop.mp4",
+      "duration_seconds": 8,
+      "fps": 24,
+      "aspect_ratio": "4:3",
+      "loop": "seamless"
+    },
+    "scene": {
+      "description": "Isometric strategy board with glowing node connections. Nodes gently pulse; light travels along connection paths.",
+      "palette": ["#F8F6F2", "#4F46E5", "#14141A"]
+    },
+    "camera": {"movement": "slow_orbit_5_degrees", "start_match_end": true},
+    "motion": {
+      "node_pulse": "sequential_soft_glow",
+      "path_animation": "light_traveling_along_edges"
+    },
+    "constraints": {"no_text": true, "no_logos": true}
+  },
+  "render_prompt": "8 second seamless 4:3 loop. Isometric 3D strategy node board on ivory. Indigo light pulses travel along connection lines. Slow camera orbit, no text, loopable."
+}

@@ -1,0 +1,46 @@
+{
+  "marketing_video": {
+    "meta": {
+      "spec_version": "2.0.0",
+      "title": "Stoa Hero Ambient Loop",
+      "output_filename": "hero-loop.mp4",
+      "duration_seconds": 10,
+      "fps": 24,
+      "resolution": { "width": 1920, "height": 1080 },
+      "loop": "seamless",
+      "export": { "codec": "h264", "target_bitrate_mbps": 8 },
+      "notes": "Veo exports 16:9 — use as-is for hero background with object-cover"
+    },
+    "input_reference": {
+      "image": "apps/web/public/images/marketing/hero-orb.webp",
+      "usage": "style_and_subject_lock",
+      "allow_redesign": false
+    },
+    "anti_patterns": [
+      "ken_burns",
+      "pan_on_still_image",
+      "zoom_on_still_image",
+      "crossfade_slideshow",
+      "morphing_between_unrelated_frames"
+    ],
+    "scene": {
+      "description": "Frosted glass intelligence orb in warm ivory void. Four thin glass shapes orbit in true 3D: chart arc, megaphone silhouette, target rings, document stack.",
+      "palette": ["#F8F6F2", "#4F46E5", "#E85D4C", "#14141A"]
+    },
+    "camera": {
+      "movement": "slow_orbital_dolly_around_subject",
+      "arc_degrees": 12,
+      "speed": "very_slow",
+      "parallax": "high",
+      "start_match_end": true
+    },
+    "motion": {
+      "orb": "slow_y_rotation_plus_subtle_float",
+      "orbit_icons": "independent_3d_drift_paths",
+      "particles": "sparse_indigo_dust_with_depth",
+      "core_glow": "soft_coral_breathing_pulse"
+    },
+    "constraints": { "no_text": true, "no_logos": true, "no_ui": true, "no_people": true }
+  },
+  "render_prompt": "10 second seamless cinematic loop, 16:9, 24fps, 1080p. True 3D motion: camera slowly orbits a frosted glass orb in ivory space. Glass marketing icons orbit independently with parallax depth. Indigo rim light, coral core pulse. NOT a zoom on a still photo. Premium product film like CURA Climate hero. Loopable with matching first/last frame."
+}

@@ -1,0 +1,28 @@
+{
+  "marketing_video": {
+    "meta": {
+      "spec_version": "2.0.0",
+      "title": "Stoa Campaigns Capability Loop",
+      "output_filename": "capability-campaigns-loop.mp4",
+      "duration_seconds": 8,
+      "fps": 24,
+      "resolution": { "width": 1920, "height": 1080 },
+      "loop": "seamless",
+      "export": { "codec": "h264", "target_bitrate_mbps": 6 },
+      "notes": "Veo exports 16:9 — displayed in 4:3 card via object-cover"
+    },
+    "input_reference": { "image": "apps/web/public/images/marketing/capability-campaigns.webp" },
+    "anti_patterns": ["ken_burns", "pan_on_still_image", "people", "flat_illustrations"],
+    "scene": {
+      "description": "Blank glass campaign frames float and rotate gently in depth. Coral ribbon light pulses along a connecting path.",
+      "palette": ["#F8F6F2", "#E85D4C", "#4F46E5"]
+    },
+    "camera": { "movement": "subtle_dolly_in_out_with_parallax", "start_match_end": true },
+    "motion": {
+      "frames": "independent_slow_float_and_y_rotation",
+      "ribbon": "light_pulse_traveling_along_path"
+    },
+    "constraints": { "no_text": true, "no_logos": true, "no_people": true }
+  },
+  "render_prompt": "8 second seamless loop, 16:9. Floating blank glass ad frames drift in 3D with parallax. Coral light ribbon pulses through the scene. True object motion, NOT image pan. No people. Loopable."
+}

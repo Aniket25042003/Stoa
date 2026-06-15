@@ -1,0 +1,64 @@
+{
+  "social_graphic": {
+    "meta": {
+      "spec_version": "1.0.0",
+      "title": "Stoa Open Graph Image",
+      "campaign": "stoa_signal_studio_v1",
+      "brand_name": "Stoa",
+      "output_filename": "og-stoa.webp"
+    },
+    "platform": "twitter_card",
+    "dimensions": {"width": 1200, "height": 675, "unit": "px"},
+    "background": {
+      "type": "gradient",
+      "gradient": {
+        "direction": "radial_center",
+        "colors": ["#F8F6F2", "#EDE9E3", "#F8F6F2"]
+      }
+    },
+    "visual_elements": [
+      {
+        "id": "hero_orb",
+        "type": "image_placeholder",
+        "position": "center_right",
+        "size": {"width": 420, "height": 420},
+        "description": "frosted glass intelligence orb with indigo rim light, same as hero asset",
+        "effects": ["soft_glow", "subtle_shadow"]
+      }
+    ],
+    "text_layers": [
+      {
+        "id": "brand_name",
+        "content": "Stoa",
+        "position": "center_left",
+        "offset_x": -80,
+        "style": {
+          "font_family": "Syne",
+          "font_weight": "bold",
+          "font_size": 72,
+          "color": "#14141A"
+        }
+      },
+      {
+        "id": "tagline",
+        "content": "Know your market. Ship faster.",
+        "position": "center_left",
+        "offset_y": 60,
+        "offset_x": -80,
+        "style": {
+          "font_family": "DM Sans",
+          "font_weight": "regular",
+          "font_size": 28,
+          "color": "#6B6F7D",
+          "max_width": 480
+        }
+      }
+    ],
+    "brand": {
+      "primary_colors": ["#F8F6F2", "#14141A", "#4F46E5", "#E85D4C"],
+      "forbidden_changes": ["lock_text_content", "lock_brand_name"]
+    },
+    "constraints": {"lock_text_content": true, "allow_layout_adjustment": "minor"}
+  },
+  "render_prompt": "Social share card 1200x675. Left: bold Syne 'Stoa' and tagline 'Know your market. Ship faster.' in DM Sans. Right: frosted glass orb with indigo rim on warm ivory gradient. Premium, minimal, readable at small size."
+}

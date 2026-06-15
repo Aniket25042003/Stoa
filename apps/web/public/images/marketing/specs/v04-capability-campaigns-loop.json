@@ -1,0 +1,24 @@
+{
+  "marketing_video": {
+    "meta": {
+      "spec_version": "1.0.0",
+      "title": "Stoa Campaigns Capability Loop",
+      "output_filename": "capability-campaigns-loop.mp4",
+      "duration_seconds": 8,
+      "fps": 24,
+      "aspect_ratio": "4:3",
+      "loop": "seamless"
+    },
+    "scene": {
+      "description": "Floating blank creative frames gently rotate and shift in depth. Coral ribbon path pulses with soft light.",
+      "palette": ["#F8F6F2", "#E85D4C", "#4F46E5"]
+    },
+    "camera": {"movement": "subtle_dolly_in_out", "start_match_end": true},
+    "motion": {
+      "frames": "slow_floating_rotation",
+      "ribbon": "soft_light_pulse_along_path"
+    },
+    "constraints": {"no_text": true, "no_logos": true}
+  },
+  "render_prompt": "8 second seamless 4:3 loop. Floating blank ad frames in studio ivory space, coral accent ribbon pulses. Gentle parallax float, no text, loopable."
+}

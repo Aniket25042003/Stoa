@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { Check, X } from "lucide-react";
 import { useState } from "react";
+import { MarketingCtaBand } from "@/components/marketing/MarketingCtaBand";
 import { PricingCard } from "@/components/marketing/PricingCard";
 import { RevealOnScroll } from "@/components/marketing/RevealOnScroll";
 import { SectionHeader } from "@/components/marketing/SectionHeader";
+import { MarketingPageShell } from "@/components/marketing/immersive/MarketingPageShell";
 import { getAuthEntryPath } from "@/lib/auth-entry";
 import { BRAND_SUBHEAD } from "@/lib/brand";
 import { cn } from "@/lib/cn";
@@ -26,7 +28,13 @@ const tiers = (yearly: boolean, authEntry: string) => [
     price: yearly ? "$190" : "$19",
     period: yearly ? "/ year" : "/ month",
     description: "For growing companies launching dynamic weekly campaigns.",
-    features: ["5 brand workspaces", "Full strategy development", "Campaign-ready deliverables", "Creative direction tools", "Priority support"],
+    features: [
+      "5 brand workspaces",
+      "Full strategy development",
+      "Campaign-ready deliverables",
+      "Creative direction tools",
+      "Priority support",
+    ],
     cta: "Get Pro",
     href: authEntry,
     highlighted: true,
@@ -36,7 +44,12 @@ const tiers = (yearly: boolean, authEntry: string) => [
     price: yearly ? "$490" : "$49",
     period: yearly ? "/ year" : "/ month",
     description: "For agencies and teams running campaign studios at scale.",
-    features: ["Unlimited brand workspaces", "Shared team dashboard", "Priority support", "Export-ready documents"],
+    features: [
+      "Unlimited brand workspaces",
+      "Shared team dashboard",
+      "Priority support",
+      "Export-ready documents",
+    ],
     cta: "Talk to us",
     href: "/faq",
     highlighted: false,
@@ -53,11 +66,12 @@ const rows = [
 function CompareCell({ value }: { value: string }) {
   const v = value.toLowerCase();
   const tdClass = "px-3 py-3 align-middle sm:px-5 sm:py-4 text-center tabular-nums";
+
   if (v === "yes") {
     return (
       <td className={tdClass}>
         <span className="flex h-full min-h-[1.5rem] w-full items-center justify-center">
-          <Check className="h-5 w-5 shrink-0 text-primary" strokeWidth={2.5} aria-label="Included" />
+          <Check className="h-5 w-5 shrink-0 text-mkt-accent" strokeWidth={2.5} aria-label="Included" />
         </span>
       </td>
     );
@@ -66,14 +80,14 @@ function CompareCell({ value }: { value: string }) {
     return (
       <td className={tdClass}>
         <span className="flex h-full min-h-[1.5rem] w-full items-center justify-center">
-          <X className="h-5 w-5 shrink-0 text-on-surface-variant/55" strokeWidth={2.5} aria-label="Not included" />
+          <X className="h-5 w-5 shrink-0 text-mkt-muted/50" strokeWidth={2.5} aria-label="Not included" />
         </span>
       </td>
     );
   }
   return (
     <td className={tdClass}>
-      <span className="inline-block w-full text-center font-medium text-on-surface">{value}</span>
+      <span className="inline-block w-full text-center font-dm-sans font-medium text-mkt-ink">{value}</span>
     </td>
   );
 }
@@ -83,7 +97,7 @@ export default function PricingPage() {
   const list = tiers(yearly, getAuthEntryPath());
 
   return (
-    <div className="container-page py-16 md:py-24">
+    <MarketingPageShell>
       <RevealOnScroll>
         <SectionHeader
           eyebrow="Pricing"
@@ -93,13 +107,13 @@ export default function PricingPage() {
       </RevealOnScroll>
 
       <div className="mt-10 flex justify-center">
-        <div className="inline-flex rounded-full border border-outline-variant/60 bg-surface-container-low/80 p-1 shadow-soft backdrop-blur-md">
+        <div className="inline-flex rounded-sm border border-mkt-ink/[0.08] bg-mkt-surface/80 p-1 shadow-[0_4px_20px_-8px_rgba(20,20,26,0.1)]">
           <button
             type="button"
             onClick={() => setYearly(false)}
             className={cn(
-              "rounded-full px-5 py-2 text-sm font-bold transition-colors",
-              !yearly ? "bg-slate-deep text-on-surface shadow-sm" : "text-on-surface-variant hover:text-on-surface"
+              "rounded-sm px-5 py-2 font-dm-sans text-[10px] font-bold uppercase tracking-widest transition-colors",
+              !yearly ? "bg-mkt-ink text-mkt-dark-ink shadow-sm" : "text-mkt-muted hover:text-mkt-ink"
             )}
           >
             Monthly
@@ -108,8 +122,8 @@ export default function PricingPage() {
             type="button"
             onClick={() => setYearly(true)}
             className={cn(
-              "rounded-full px-5 py-2 text-sm font-bold transition-colors",
-              yearly ? "bg-slate-deep text-on-surface shadow-sm" : "text-on-surface-variant hover:text-on-surface"
+              "rounded-sm px-5 py-2 font-dm-sans text-[10px] font-bold uppercase tracking-widest transition-colors",
+              yearly ? "bg-mkt-ink text-mkt-dark-ink shadow-sm" : "text-mkt-muted hover:text-mkt-ink"
             )}
           >
             Yearly
@@ -125,9 +139,9 @@ export default function PricingPage() {
         ))}
       </div>
 
-      <div className="mt-20 overflow-x-auto rounded-3xl border border-outline-variant/60 bg-surface-container-low/80 shadow-soft backdrop-blur-md">
+      <div className="mt-20 overflow-x-auto rounded-sm border border-mkt-ink/[0.06] bg-mkt-surface/90 shadow-[0_8px_32px_-16px_rgba(20,20,26,0.08)]">
         <table className="w-full min-w-[600px] text-sm">
-          <thead className="border-b border-outline-variant/60 bg-surface-container-low font-mono text-xs font-semibold uppercase tracking-[0.14em] text-primary">
+          <thead className="border-b border-mkt-ink/[0.06] bg-mkt-accent/[0.04] font-dm-sans text-[10px] font-bold uppercase tracking-[0.16em] text-mkt-accent">
             <tr>
               <th className="px-3 py-3 text-left sm:px-5 sm:py-4">Compare</th>
               <th className="px-3 py-3 text-center sm:px-5 sm:py-4">Starter</th>
@@ -135,10 +149,10 @@ export default function PricingPage() {
               <th className="px-3 py-3 text-center sm:px-5 sm:py-4">Team</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-outline-variant/45">
+          <tbody className="divide-y divide-mkt-ink/[0.06]">
             {rows.map((r) => (
-              <tr key={r.label} className="text-on-surface-variant">
-                <td className="px-3 py-3 text-left font-semibold text-on-surface sm:px-5 sm:py-4">{r.label}</td>
+              <tr key={r.label} className="font-dm-sans text-mkt-muted">
+                <td className="px-3 py-3 text-left font-semibold text-mkt-ink sm:px-5 sm:py-4">{r.label}</td>
                 <CompareCell value={r.starter} />
                 <CompareCell value={r.pro} />
                 <CompareCell value={r.team} />
@@ -148,13 +162,24 @@ export default function PricingPage() {
         </table>
       </div>
 
-      <p className="mt-10 text-center text-sm text-on-surface-variant">
+      <p className="mt-10 text-center font-dm-sans text-sm text-mkt-muted">
         Questions?{" "}
-        <Link href="/faq" className="font-bold text-primary underline-offset-4 hover:underline">
+        <Link href="/faq" className="font-semibold text-mkt-accent underline-offset-4 hover:underline">
           Read the FAQ
         </Link>
         .
       </p>
-    </div>
+
+      <RevealOnScroll>
+        <MarketingCtaBand
+          className="mt-16"
+          eyebrow="Early access"
+          title="Get on the list"
+          description="Join the waitlist while we roll out billing and team workspaces."
+          ctaLabel="Join waitlist"
+          ctaHref="/waitlist"
+        />
+      </RevealOnScroll>
+    </MarketingPageShell>
   );
 }

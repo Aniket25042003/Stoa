@@ -1,0 +1,29 @@
+{
+  "marketing_video": {
+    "meta": {
+      "spec_version": "2.0.0",
+      "title": "Stoa Strategy Capability Loop",
+      "output_filename": "capability-strategy-loop.mp4",
+      "duration_seconds": 8,
+      "fps": 24,
+      "resolution": { "width": 1920, "height": 1080 },
+      "loop": "seamless",
+      "export": { "codec": "h264", "target_bitrate_mbps": 6 },
+      "notes": "Veo exports 16:9 — displayed in 4:3 card via object-cover center crop"
+    },
+    "input_reference": { "image": "apps/web/public/images/marketing/capability-strategy.webp" },
+    "anti_patterns": ["ken_burns", "pan_on_still_image"],
+    "scene": {
+      "description": "Isometric strategy node board. Light pulses travel along connection paths between nodes.",
+      "palette": ["#F8F6F2", "#4F46E5", "#14141A"]
+    },
+    "camera": { "movement": "slow_isometric_orbit_8_degrees", "start_match_end": true },
+    "motion": {
+      "nodes": "sequential_soft_indigo_pulse",
+      "paths": "light_particle_travel_along_edges",
+      "glass_panels": "subtle_hover"
+    },
+    "constraints": { "no_text": true, "no_logos": true }
+  },
+  "render_prompt": "8 second seamless loop, 16:9. Isometric 3D strategy board. Indigo light pulses travel along node connection lines with real depth motion. Slow camera orbit. NOT a still image pan. Loopable."
+}

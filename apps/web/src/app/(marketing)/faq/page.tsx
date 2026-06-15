@@ -1,11 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { useMemo, useState } from "react";
+import { MarketingCtaBand } from "@/components/marketing/MarketingCtaBand";
 import { FaqItem } from "@/components/marketing/FaqItem";
 import { RevealOnScroll } from "@/components/marketing/RevealOnScroll";
 import { SectionHeader } from "@/components/marketing/SectionHeader";
+import { MarketingPageShell } from "@/components/marketing/immersive/MarketingPageShell";
 import { BRAND_NAME, BRAND_SUBHEAD, BRAND_TAGLINE } from "@/lib/brand";
 import { cn } from "@/lib/cn";
 
@@ -83,7 +84,7 @@ export default function FaqPage() {
   const filtered = useMemo(() => faqs.filter((f) => f.cat === activeCat), [activeCat]);
 
   return (
-    <div className="container-page py-16 md:py-24">
+    <MarketingPageShell>
       <RevealOnScroll>
         <SectionHeader
           eyebrow="FAQ"
@@ -92,9 +93,11 @@ export default function FaqPage() {
         />
       </RevealOnScroll>
 
-      <div className="mt-14 lg:grid lg:grid-cols-[240px_1fr] lg:gap-12">
+      <div className="mt-14 lg:grid lg:grid-cols-[220px_1fr] lg:gap-12">
         <aside className="mb-8 lg:sticky lg:top-28 lg:mb-0 lg:self-start">
-          <p className="eyebrow">Categories</p>
+          <p className="font-dm-sans text-[9px] font-bold uppercase tracking-[0.22em] text-mkt-accent">
+            Categories
+          </p>
           <nav className="mt-4 flex flex-wrap gap-2 lg:flex-col" aria-label="FAQ categories">
             {categories.map((c) => (
               <button
@@ -106,8 +109,10 @@ export default function FaqPage() {
                   setOpenId(first?.id ?? null);
                 }}
                 className={cn(
-                  "rounded-2xl px-4 py-3 text-left text-sm font-bold transition-colors",
-                  activeCat === c ? "bg-primary text-white shadow-glow" : "bg-surface-container-low/70 text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
+                  "rounded-sm px-4 py-3 text-left font-dm-sans text-[10px] font-bold uppercase tracking-widest transition-all",
+                  activeCat === c
+                    ? "bg-mkt-accent text-mkt-dark-ink shadow-[0_6px_20px_rgba(79,70,229,0.22)]"
+                    : "border border-mkt-ink/[0.06] bg-mkt-surface/80 text-mkt-muted hover:border-mkt-accent/25 hover:text-mkt-ink"
                 )}
               >
                 {c}
@@ -115,7 +120,8 @@ export default function FaqPage() {
             ))}
           </nav>
         </aside>
-        <div className="rounded-3xl border border-outline-variant/50 bg-transparent px-4 py-1 backdrop-blur-[2px] md:px-7">
+
+        <div className="rounded-sm border border-mkt-ink/[0.06] bg-mkt-surface/90 px-4 md:px-7">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeCat}
@@ -140,14 +146,15 @@ export default function FaqPage() {
       </div>
 
       <RevealOnScroll>
-        <div className="mt-16 rounded-3xl p-8 text-center card-glass">
-          <p className="font-display text-xl font-bold text-on-surface">Still curious?</p>
-          <p className="mt-2 text-sm text-on-surface-variant">Create a brand workspace and explore Strategy and campaigns side by side.</p>
-          <Link href="/login" className="btn-primary mt-6 px-6 py-3 text-sm">
-            Sign up free
-          </Link>
-        </div>
+        <MarketingCtaBand
+          className="mt-16"
+          eyebrow="Still curious?"
+          title="See it in action"
+          description="Explore how Stoa connects customer signals to campaign-ready output."
+          ctaLabel="View the walkthrough"
+          ctaHref="/see-it-in-action"
+        />
       </RevealOnScroll>
-    </div>
+    </MarketingPageShell>
   );
 }

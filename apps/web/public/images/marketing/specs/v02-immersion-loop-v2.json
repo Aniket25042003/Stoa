@@ -1,0 +1,36 @@
+{
+  "marketing_video": {
+    "meta": {
+      "spec_version": "2.0.0",
+      "title": "Stoa Dark Immersion Loop",
+      "output_filename": "immersion-loop.mp4",
+      "duration_seconds": 10,
+      "fps": 24,
+      "resolution": { "width": 1920, "height": 1080 },
+      "loop": "seamless",
+      "export": { "codec": "h264", "target_bitrate_mbps": 10 },
+      "notes": "Veo exports 16:9 — crop center band in CSS via object-cover on wide section"
+    },
+    "input_reference": {
+      "image": "apps/web/public/images/marketing/immersion-signals.webp",
+      "usage": "palette_and_mood_lock"
+    },
+    "anti_patterns": ["ken_burns", "pan_on_still_image", "ui_elements", "text_ticker"],
+    "scene": {
+      "description": "Deep navy void with flowing indigo and coral signal trails moving through depth like underwater light currents.",
+      "palette": ["#0E1018", "#4F46E5", "#E85D4C"]
+    },
+    "camera": {
+      "movement": "imperceptible_forward_drift",
+      "speed": "very_slow",
+      "start_match_end": true
+    },
+    "motion": {
+      "signal_trails": "fluid_3d_flow_with_depth_layering",
+      "particles": "drift_toward_camera_and_fade",
+      "center_glow": "gentle_breathing_intensity"
+    },
+    "constraints": { "no_text": true, "no_logos": true, "no_hud": true }
+  },
+  "render_prompt": "10 second seamless cinematic loop, 16:9. Dark navy (#0E1018) abstract signal trails flow in true 3D depth — indigo and coral light currents with parallax layers. NOT panning a still image. No HUD, no text. CURA-style cinematic immersion. Loopable."
+}

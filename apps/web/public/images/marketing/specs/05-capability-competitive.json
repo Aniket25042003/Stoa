@@ -1,0 +1,38 @@
+{
+  "marketing_image": {
+    "meta": {
+      "spec_version": "1.0.0",
+      "title": "Stoa Capability — Competitive Edge",
+      "output_filename": "capability-competitive.webp",
+      "aspect_ratio": "4:3",
+      "resolution": "2K"
+    },
+    "subject": {
+      "type": "radar_signal_sculpture",
+      "name": "Competitive Signal Radar",
+      "physical_properties": {"material": "glass_rings_and_light", "style": "abstract_data_sculpture"}
+    },
+    "props": {
+      "midground": [
+        {"type": "concentric_ring", "count": 5, "notes": "translucent radar rings, indigo glow"},
+        {"type": "pulse_dot", "count": 8, "notes": "small coral signal points on rings"}
+      ]
+    },
+    "environment": {
+      "background": {"color": "#F8F6F2"},
+      "atmosphere": {"mood": "early awareness", "keywords": ["competitive", "ahead", "signals"]}
+    },
+    "camera": {"angle": "low_angle", "framing": "medium", "depth_of_field": "medium"},
+    "lighting": {
+      "key_light_direction": "back",
+      "rim_light": true,
+      "rim_light_color": "#4F46E5",
+      "accent_glow_color": "#E85D4C"
+    },
+    "brand": {
+      "primary_colors": ["#F8F6F2", "#4F46E5", "#E85D4C", "#0E1018"],
+      "forbidden_changes": ["no_text", "no_logos", "no_map_geography"]
+    }
+  },
+  "render_prompt": "Abstract 3D radar sculpture with five translucent indigo rings and small coral signal points on warm ivory background. Low angle, cinematic product render, competitive intelligence metaphor, no text."
+}
