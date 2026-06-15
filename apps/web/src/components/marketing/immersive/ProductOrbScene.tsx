@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useLayoutEffect } from "react";
 import { useFrame } from "@react-three/fiber";
-import { ContactShadows, Environment, Float, useTexture } from "@react-three/drei";
+import { ContactShadows, Float, useTexture } from "@react-three/drei";
 import * as THREE from "three";
 import { ORB_FACE_IMAGES } from "@/lib/landingFeatures";
 
@@ -75,7 +75,7 @@ export function ProductOrbScene({ scrollProgress, activeSection }: ProductOrbSce
             map: textures[i],
             roughness: 0.28,
             metalness: 0.02,
-            envMapIntensity: 0.35,
+            envMapIntensity: 0,
             side: THREE.FrontSide,
           })
       ),
@@ -94,7 +94,7 @@ export function ProductOrbScene({ scrollProgress, activeSection }: ProductOrbSce
         metalness: 0.04,
         transmission: 0.22,
         clearcoat: 0.45,
-        envMapIntensity: 0.45,
+        envMapIntensity: 0,
       }),
     []
   );
@@ -139,7 +139,7 @@ export function ProductOrbScene({ scrollProgress, activeSection }: ProductOrbSce
 
   return (
     <>
-      <Environment preset="studio" environmentIntensity={0.28} />
+      <hemisphereLight intensity={0.42} color="#f2f0eb" groundColor="#4F46E5" />
 
       <Float speed={1.1} rotationIntensity={0.02} floatIntensity={0.15}>
         <group ref={groupRef}>
