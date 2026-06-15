@@ -28,7 +28,13 @@ export function WaitlistForm() {
       const body = (await res.json().catch(() => null)) as { status?: string; detail?: string } | null;
 
       if (!res.ok) {
-        throw new Error(body?.detail || "Registration failed. Please try again.");
+        const detail =
+          typeof body?.detail === "string"
+            ? body.detail
+            : res.status === 429
+              ? "Too many attempts. Please wait a minute and try again."
+              : "Registration failed. Please try again.";
+        throw new Error(detail);
       }
 
       setStatus("success");
