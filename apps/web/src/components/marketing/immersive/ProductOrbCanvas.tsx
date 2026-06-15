@@ -52,19 +52,19 @@ export function ProductOrbCanvas({
           className="h-full w-full"
         >
           <Suspense fallback={null}>
-            <ambientLight intensity={0.55} color="#f2f0eb" />
-            <hemisphereLight intensity={0.38} color="#ffffff" groundColor="#e8e4dc" />
+            <ambientLight intensity={0.72} color="#f8f6f2" />
+            <hemisphereLight intensity={0.5} color="#ffffff" groundColor="#ebe7df" />
             <directionalLight
               position={[4, 6, 5]}
-              intensity={1.45}
+              intensity={1.65}
               castShadow
               shadow-mapSize={[1024, 1024]}
               color="#fffef8"
             />
-            <directionalLight position={[-4, 3, -2]} intensity={0.42} color="#eef0ff" />
-            <directionalLight position={[0, -2, 4]} intensity={0.22} color="#f2f0eb" />
-            <pointLight position={[0, 2.5, 3]} intensity={0.35} color="#ffffff" />
-            <pointLight position={[-2, 0, 2]} intensity={0.18} color="#E85D4C" />
+            <directionalLight position={[-4, 3, -2]} intensity={0.55} color="#eef0ff" />
+            <directionalLight position={[0, -2, 4]} intensity={0.35} color="#f2f0eb" />
+            <pointLight position={[0, 2.5, 3]} intensity={0.48} color="#ffffff" />
+            <pointLight position={[-2, 0, 2]} intensity={0.22} color="#E85D4C" />
             <ProductOrbScene scrollProgress={scrollProgress} activeSection={activeSection} />
           </Suspense>
         </Canvas>

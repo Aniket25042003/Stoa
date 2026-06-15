@@ -2,9 +2,9 @@
 
 import { useMemo, useRef, useLayoutEffect } from "react";
 import { useFrame } from "@react-three/fiber";
-import { ContactShadows, Environment, Float, useTexture } from "@react-three/drei";
+import { ContactShadows, Float, useTexture } from "@react-three/drei";
 import * as THREE from "three";
-import { ORB_ENVIRONMENT_HDR, ORB_FACE_IMAGES } from "@/lib/landingFeatures";
+import { ORB_FACE_IMAGES } from "@/lib/landingFeatures";
 
 const FACE_COUNT = 6;
 const FACE_ANGLE = (Math.PI * 2) / FACE_COUNT;
@@ -73,9 +73,8 @@ export function ProductOrbScene({ scrollProgress, activeSection }: ProductOrbSce
         (_, i) =>
           new THREE.MeshStandardMaterial({
             map: textures[i],
-            roughness: 0.2,
-            metalness: 0.04,
-            envMapIntensity: 0.72,
+            roughness: 0.22,
+            metalness: 0,
             side: THREE.FrontSide,
           })
       ),
@@ -91,10 +90,9 @@ export function ProductOrbScene({ scrollProgress, activeSection }: ProductOrbSce
         transparent: true,
         opacity: 0.52,
         roughness: 0.12,
-        metalness: 0.02,
+        metalness: 0,
         transmission: 0.18,
         clearcoat: 0.65,
-        envMapIntensity: 0.75,
       }),
     []
   );
@@ -114,8 +112,8 @@ export function ProductOrbScene({ scrollProgress, activeSection }: ProductOrbSce
   useLayoutEffect(() => {
     materials.forEach((mat, i) => {
       const isActive = i === activeSection;
-      mat.emissive.set(isActive ? "#6D66F0" : "#f2f0eb");
-      mat.emissiveIntensity = isActive ? 0.08 : 0.025;
+      mat.emissive.set(isActive ? "#6D66F0" : "#faf8f4");
+      mat.emissiveIntensity = isActive ? 0.1 : 0.04;
       mat.color.set(isActive ? "#ffffff" : "#f6f4ef");
       mat.transparent = false;
       mat.opacity = 1;
@@ -139,8 +137,6 @@ export function ProductOrbScene({ scrollProgress, activeSection }: ProductOrbSce
 
   return (
     <>
-      <Environment files={ORB_ENVIRONMENT_HDR} environmentIntensity={0.58} />
-
       <Float speed={1.1} rotationIntensity={0.02} floatIntensity={0.15}>
         <group ref={groupRef}>
           {/* Six square planes — perfect 1:1 texture mapping, flush hex faces */}

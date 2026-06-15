@@ -126,9 +126,6 @@ export const ORB_FACE_IMAGES = [
   "/images/marketing/orb-faces/06-launch-orchestration.webp",
 ] as const;
 
-/** Self-hosted studio HDRI for orb IBL (CSP-safe; do not use drei CDN presets). */
-export const ORB_ENVIRONMENT_HDR = "/images/marketing/hdri/studio_small_03_1k.hdr";
-
 /** Fallback poster when WebGL is unavailable */
 export const CORE_FALLBACK_POSTER = "/images/marketing/orb-faces/orb-fallback.webp";
 
