@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import io
 import logging
+import re
 from typing import Any
 
 from stoa_core.integrations.base import BaseConnector, ProviderInfo, SyncResult
@@ -20,38 +21,86 @@ logger = logging.getLogger(__name__)
 
 SOURCE = "csv_structured"
 
-FIELD_ALIASES: dict[str, list[str]] = {
-    "email": ["email", "contact_email", "e-mail"],
-    "name": ["name", "contact_name", "full_name", "contact"],
-    "title": ["title", "job_title", "role", "position"],
-    "company": ["company", "account", "account_name", "organization"],
-    "domain": ["domain", "website", "company_domain"],
-    "industry": ["industry", "sector"],
-    "deal_name": ["deal_name", "deal", "opportunity", "opportunity_name"],
-    "deal_amount": ["deal_amount", "amount", "value", "revenue"],
-    "deal_stage": ["deal_stage", "stage", "pipeline_stage"],
-    "won": ["won", "is_won", "win", "closed_won"],
-    "loss_reason": ["loss_reason", "lost_reason", "reason_lost"],
-    "transcript": ["transcript", "call_transcript", "conversation", "body"],
-    "review": ["review", "review_text", "feedback"],
-}
+CSV_FIELD_DEFINITIONS: list[dict[str, Any]] = [
+    {"key": "email", "label": "Email address", "group": "Contact", "aliases": ["email", "contact_email", "e_mail", "work_email"]},
+    {"key": "name", "label": "Contact name", "group": "Contact", "aliases": ["name", "contact_name", "full_name", "contact"]},
+    {"key": "title", "label": "Job title", "group": "Contact", "aliases": ["title", "job_title", "position", "job_role"]},
+    {"key": "company", "label": "Company name", "group": "Company", "aliases": ["company", "account", "account_name", "organization", "company_name"]},
+    {"key": "domain", "label": "Company domain", "group": "Company", "aliases": ["domain", "website", "company_domain", "company_website"]},
+    {"key": "industry", "label": "Industry", "group": "Company", "aliases": ["industry", "sector", "vertical"]},
+    {"key": "deal_name", "label": "Deal name", "group": "Deal", "aliases": ["deal_name", "deal", "opportunity", "opportunity_name"]},
+    {"key": "deal_amount", "label": "Deal amount", "group": "Deal", "aliases": ["deal_amount", "amount", "value", "revenue", "deal_value"]},
+    {"key": "deal_stage", "label": "Deal stage", "group": "Deal", "aliases": ["deal_stage", "stage", "pipeline_stage", "sales_stage"]},
+    {"key": "won", "label": "Won / lost", "group": "Deal", "aliases": ["won", "is_won", "win", "closed_won", "deal_status"]},
+    {"key": "loss_reason", "label": "Loss reason", "group": "Deal", "aliases": ["loss_reason", "lost_reason", "reason_lost", "closed_lost_reason"]},
+    {"key": "transcript", "label": "Call transcript", "group": "Content", "aliases": ["transcript", "call_transcript", "conversation", "call_notes"]},
+    {"key": "review", "label": "Customer review", "group": "Content", "aliases": ["review", "review_text", "feedback", "customer_review"]},
+]
+
+FIELD_ALIASES: dict[str, list[str]] = {row["key"]: row["aliases"] for row in CSV_FIELD_DEFINITIONS}
+
+
+def _normalize_header(header: str) -> str:
+    normalized = header.strip().lower()
+    normalized = re.sub(r"[^a-z0-9]+", "_", normalized)
+    return normalized.strip("_")
+
+
+def _header_tokens(norm_header: str) -> list[str]:
+    return [token for token in norm_header.split("_") if token]
+
+
+def _match_score(norm_header: str, alias: str) -> int:
+    norm_alias = _normalize_header(alias)
+    if not norm_header or not norm_alias:
+        return 0
+    if norm_header == norm_alias:
+        return 100
+    tokens = _header_tokens(norm_header)
+    if norm_alias in tokens:
+        return 85
+    if len(norm_alias) >= 5 and norm_header.endswith(f"_{norm_alias}"):
+        return 70
+    if len(norm_alias) >= 5 and norm_header.startswith(f"{norm_alias}_"):
+        return 65
+    return 0
 
 
 def detect_columns(headers: list[str]) -> dict[str, str | None]:
-    normalized = {h: h.strip().lower().replace(" ", "_") for h in headers}
-    mapping: dict[str, str | None] = {}
-    for field, aliases in FIELD_ALIASES.items():
-        mapping[field] = None
-        for header, norm in normalized.items():
-            if norm in aliases:
-                mapping[field] = header
-                break
+    mapping: dict[str, str | None] = {field: None for field in FIELD_ALIASES}
+    if not headers:
+        return mapping
+
+    assignments: list[tuple[int, str, str]] = []
+    for header in headers:
+        norm = _normalize_header(header)
+        if not norm:
+            continue
+        for field, aliases in FIELD_ALIASES.items():
+            for alias in aliases:
+                score = _match_score(norm, alias)
+                if score > 0:
+                    assignments.append((score, field, header))
+
+    assignments.sort(key=lambda item: (-item[0], item[1], item[2]))
+    used_fields: set[str] = set()
+    used_headers: set[str] = set()
+
+    for score, field, header in assignments:
+        if score < 65:
+            continue
+        if field in used_fields or header in used_headers:
+            continue
+        mapping[field] = header
+        used_fields.add(field)
+        used_headers.add(header)
+
     return mapping
 
 
 def parse_csv_content(content: str, column_mapping: dict[str, str | None] | None = None) -> tuple[list[str], dict[str, str | None]]:
     reader = csv.DictReader(io.StringIO(content))
-    headers = reader.fieldnames or []
+    headers = [h for h in (reader.fieldnames or []) if h and h.strip()]
     mapping = column_mapping or detect_columns(headers)
     return headers, mapping
 

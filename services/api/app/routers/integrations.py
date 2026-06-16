@@ -164,10 +164,14 @@ def detect_csv_columns(
     scope: OrgScope = Depends(require_onboarded_scope),
 ) -> dict[str, Any]:
     require_permission(scope, "data_sources:read")
-    from stoa_core.integrations.csv_structured import detect_columns, parse_csv_content
+    from stoa_core.integrations.csv_structured import CSV_FIELD_DEFINITIONS, detect_columns, parse_csv_content
 
     headers, mapping = parse_csv_content(body.content)
-    return {"headers": headers, "suggested_mapping": mapping}
+    return {
+        "headers": headers,
+        "suggested_mapping": mapping,
+        "fields": CSV_FIELD_DEFINITIONS,
+    }
 
 
 @router.post("/csv/import")
@@ -179,9 +183,23 @@ def import_structured_csv(
     check_rate_limit(scope.user_id, get_settings().rate_limit_per_minute, scope="integrations")
     from stoa_core.integrations.csv_structured import detect_columns
 
+    from app.services.document_ingestion import queue_text_document
+
     mapping = body.column_mapping or detect_columns(
         __import__("csv").DictReader(__import__("io").StringIO(body.content)).fieldnames or []
     )
+    try:
+        doc, _job = queue_text_document(
+            org_id=scope.org_id,
+            user_id=scope.user_id,
+            title=body.title,
+            content=body.content,
+            doc_type="crm_export",
+            feature_origin="integrations",
+        )
+    except ValueError as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
+
     conn = create_connection(
         scope.org_id,
         "csv_structured",
@@ -191,10 +209,13 @@ def import_structured_csv(
             "csv_content": body.content,
             "column_mapping": mapping,
         },
+        provider_metadata={"document_id": doc["id"] if doc else None},
     )
     write_audit(scope.org_id, scope.user_id, "integration.csv_import", "integration_connection", conn["id"])
+    if doc:
+        write_audit(scope.org_id, scope.user_id, "document.csv_imported", "document", doc["id"])
     sync_integration_source.delay(conn["id"], scope.org_id, full_backfill=True)
-    return {"connection": conn, "column_mapping": mapping}
+    return {"connection": conn, "document": doc, "column_mapping": mapping}
 
 
 @router.get("/sources/{connection_id}/events")

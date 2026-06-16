@@ -29,6 +29,15 @@ def test_detect_csv_columns():
     assert mapping.get("email") == "email"
     assert mapping.get("company") == "company"
     assert mapping.get("deal_amount") == "deal_amount"
+    assert mapping.get("deal_stage") == "stage"
+
+
+def test_detect_csv_columns_ignores_loose_role_matches():
+    content = "Role Based Access,Email Address,Account Name\nuser@acme.com,Acme Corp,Admin\n"
+    headers, mapping = parse_csv_content(content)
+    assert mapping.get("email") == "Email Address"
+    assert mapping.get("company") == "Account Name"
+    assert mapping.get("title") is None
 
 
 def test_registry_lists_providers():
