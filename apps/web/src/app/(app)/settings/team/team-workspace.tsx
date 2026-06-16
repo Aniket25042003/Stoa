@@ -2,6 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
+import {
+  ProductButton,
+  ProductCard,
+  ProductInput,
+  ProductPageHeader,
+  ProductSelect,
+} from "@/components/product";
 
 type Role = {
   id: string;
@@ -29,6 +36,8 @@ type Invite = {
   revoked_at?: string | null;
   org_roles?: { name?: string; role_key?: string };
 };
+
+const labelClass = "font-dm-sans text-[9px] font-bold uppercase tracking-[0.18em] text-mkt-muted";
 
 export function TeamWorkspace() {
   const [members, setMembers] = useState<Member[]>([]);
@@ -88,7 +97,7 @@ export function TeamWorkspace() {
     setMessage(
       body.invite_url
         ? "Invite created. Share the link below if email delivery is delayed."
-        : "Invite created. Supabase will email the teammate when SMTP is configured.",
+        : "Invite created. Supabase will email the teammate when SMTP is configured."
     );
     await load();
     event.currentTarget.reset();
@@ -109,86 +118,89 @@ export function TeamWorkspace() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-[2rem] bg-slate-deep p-7 text-white shadow-card md:p-10">
-        <p className="eyebrow text-inverse-primary">Team</p>
-        <h1 className="mt-4 font-display text-4xl font-extrabold tracking-[-0.045em] md:text-5xl">Manage organization access</h1>
-        <p className="mt-4 max-w-2xl text-sm leading-7 text-white/68">
-          Invite teammates into the active organization and assign system or custom roles.
-        </p>
-      </div>
+      <ProductPageHeader
+        eyebrow="Organization"
+        title="Team"
+        lead="Invite teammates into the active organization and assign system or custom roles."
+      />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_1.2fr]">
-        <form onSubmit={(event) => void invite(event)} className="rounded-3xl p-6 card-glass space-y-4">
-          <h2 className="font-display text-xl font-bold">Invite teammate</h2>
-          <div>
-            <label className="text-sm font-medium">Work email</label>
-            <input name="email" type="email" required className="mt-1 w-full rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-sm" placeholder="teammate@company.com" />
-          </div>
-          <div>
-            <label className="text-sm font-medium">Role</label>
-            <select name="role_id" defaultValue={defaultRoleId} className="mt-1 w-full rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-sm">
-              {roles.map((role) => (
-                <option key={role.id} value={role.id}>
-                  {role.name} {role.is_system ? "" : "(custom)"}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="text-sm font-medium">Profile hint: job title (optional)</label>
-            <input name="job_title" className="mt-1 w-full rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-sm" />
-          </div>
-          <div>
-            <label className="text-sm font-medium">Profile hint: role type (optional)</label>
-            <input name="role_type" className="mt-1 w-full rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-sm" placeholder="marketer" />
-          </div>
-          <div>
-            <label className="text-sm font-medium">Profile hint: department (optional)</label>
-            <input name="department" className="mt-1 w-full rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-sm" />
-          </div>
-          <button disabled={loading} className="btn-primary px-5 py-3 text-sm disabled:opacity-50">
-            {loading ? "Creating..." : "Create invite"}
-          </button>
-          {message ? <p className="text-sm text-on-surface-variant">{message}</p> : null}
-          {inviteUrl ? <p className="break-all text-xs text-on-surface-variant">Fallback link: {inviteUrl}</p> : null}
-        </form>
+        <ProductCard>
+          <form onSubmit={(event) => void invite(event)} className="space-y-4">
+            <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">Invite teammate</h2>
+            <div>
+              <label className={labelClass}>Work email</label>
+              <ProductInput name="email" type="email" required placeholder="teammate@company.com" className="mt-1.5" />
+            </div>
+            <div>
+              <label className={labelClass}>Role</label>
+              <ProductSelect name="role_id" defaultValue={defaultRoleId} className="mt-1.5">
+                {roles.map((role) => (
+                  <option key={role.id} value={role.id}>
+                    {role.name} {role.is_system ? "" : "(custom)"}
+                  </option>
+                ))}
+              </ProductSelect>
+            </div>
+            <div>
+              <label className={labelClass}>Job title (optional)</label>
+              <ProductInput name="job_title" className="mt-1.5" />
+            </div>
+            <div>
+              <label className={labelClass}>Role type (optional)</label>
+              <ProductInput name="role_type" placeholder="marketer" className="mt-1.5" />
+            </div>
+            <div>
+              <label className={labelClass}>Department (optional)</label>
+              <ProductInput name="department" className="mt-1.5" />
+            </div>
+            <ProductButton type="submit" disabled={loading}>
+              {loading ? "Creating..." : "Create invite"}
+            </ProductButton>
+            {message ? <p className="font-dm-sans text-sm text-mkt-muted">{message}</p> : null}
+            {inviteUrl ? <p className="break-all font-dm-sans text-xs text-mkt-muted">Fallback link: {inviteUrl}</p> : null}
+          </form>
+        </ProductCard>
 
         <div className="space-y-6">
-          <div className="rounded-3xl p-6 card-glass">
-            <h2 className="font-display text-xl font-bold">Members</h2>
+          <ProductCard>
+            <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">Members</h2>
             <div className="mt-4 space-y-3">
               {members.map((member) => (
-                <div key={member.id} className="rounded-xl bg-surface-container-low p-4 text-sm space-y-2">
-                  <p className="font-semibold text-on-surface">{member.profile?.full_name || member.profile?.email || member.user_id}</p>
-                  <p className="text-on-surface-variant">{member.profile?.email || "No profile email"}</p>
-                  <select
+                <div key={member.id} className="rounded-sm border border-mkt-ink/[0.06] bg-mkt-ink/[0.02] p-4 space-y-2">
+                  <p className="font-dm-sans text-sm font-semibold text-mkt-ink">
+                    {member.profile?.full_name || member.profile?.email || member.user_id}
+                  </p>
+                  <p className="font-dm-sans text-sm text-mkt-muted">{member.profile?.email || "No profile email"}</p>
+                  <ProductSelect
                     value={member.role_id ?? ""}
                     onChange={(e) => void changeMemberRole(member.id, e.target.value)}
-                    className="w-full rounded-lg border border-outline-variant/60 bg-surface px-3 py-2 text-sm"
                   >
                     {roles.map((role) => (
                       <option key={role.id} value={role.id}>
                         {role.name}
                       </option>
                     ))}
-                  </select>
+                  </ProductSelect>
                 </div>
               ))}
             </div>
-          </div>
-          <div className="rounded-3xl p-6 card-glass">
-            <h2 className="font-display text-xl font-bold">Pending invites</h2>
+          </ProductCard>
+          <ProductCard>
+            <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">Pending invites</h2>
             <div className="mt-4 space-y-3">
-              {invites.filter((invite) => !invite.accepted_at && !invite.revoked_at).map((invite) => (
-                <div key={invite.id} className="rounded-xl bg-surface-container-low p-4 text-sm">
-                  <p className="font-semibold text-on-surface">{invite.email}</p>
-                  <p className="text-on-surface-variant">
-                    {(invite.org_roles?.name ?? invite.role)} · expires {new Date(invite.expires_at).toLocaleDateString()}
-                  </p>
-                </div>
-              ))}
+              {invites
+                .filter((invite) => !invite.accepted_at && !invite.revoked_at)
+                .map((invite) => (
+                  <div key={invite.id} className="rounded-sm border border-mkt-ink/[0.06] bg-mkt-ink/[0.02] p-4">
+                    <p className="font-dm-sans text-sm font-semibold text-mkt-ink">{invite.email}</p>
+                    <p className="font-dm-sans text-sm text-mkt-muted">
+                      {(invite.org_roles?.name ?? invite.role)} · expires {new Date(invite.expires_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                ))}
             </div>
-          </div>
+          </ProductCard>
         </div>
       </div>
     </div>
