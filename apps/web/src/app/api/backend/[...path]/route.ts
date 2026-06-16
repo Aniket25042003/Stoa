@@ -49,7 +49,13 @@ async function proxy(request: NextRequest, pathSegments: string[]) {
     init.duplex = "half";
   }
 
-  const upstream = await fetch(target, init);
+  let upstream: Response;
+  try {
+    upstream = await fetch(target, init);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Upstream API unreachable";
+    return NextResponse.json({ detail: message }, { status: 503 });
+  }
 
   if (accept?.includes("text/event-stream") && upstream.body) {
     return new NextResponse(upstream.body, {
