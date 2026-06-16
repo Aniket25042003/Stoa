@@ -2,10 +2,18 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { CompleteDataPrompt } from "@/components/app-shell/CompleteDataPrompt";
+import { ProductBadge, ProductCard, ProductPageHeader } from "@/components/product";
 import { apiFetch } from "@/lib/api";
 
 type Competitor = { id: string; name: string; website_url?: string | null; last_scanned_at?: string | null };
 type Alert = { id: string; summary: string; severity: string; created_at: string; competitors?: { name: string } };
+
+function severityVariant(severity: string): "warm" | "accent" | "default" {
+  const s = severity.toLowerCase();
+  if (s.includes("high") || s.includes("critical")) return "warm";
+  if (s.includes("medium") || s.includes("med")) return "accent";
+  return "default";
+}
 
 export function CompetitiveWorkspace() {
   const [competitors, setCompetitors] = useState<Competitor[]>([]);
@@ -26,13 +34,11 @@ export function CompetitiveWorkspace() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-[2rem] bg-slate-deep p-7 text-white shadow-card md:p-10">
-        <p className="eyebrow text-inverse-primary">Competitive Intelligence</p>
-        <h1 className="mt-4 font-display text-4xl font-extrabold tracking-[-0.045em]">Monitor the market</h1>
-        <p className="mt-4 max-w-2xl text-sm leading-7 text-white/68">
-          Alerts and competitor snapshots from data you added in the Data hub.
-        </p>
-      </div>
+      <ProductPageHeader
+        eyebrow="Competitive intelligence"
+        title="Monitor the market"
+        lead="Alerts and competitor snapshots from data you added in the Data hub."
+      />
 
       {competitors.length === 0 ? (
         <CompleteDataPrompt
@@ -43,32 +49,47 @@ export function CompetitiveWorkspace() {
       ) : null}
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-3xl p-6 card-glass">
-          <h2 className="font-display text-xl font-bold">Competitors ({competitors.length})</h2>
-          <ul className="mt-4 space-y-3 text-sm">
+        <ProductCard>
+          <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">
+            Competitors ({competitors.length})
+          </h2>
+          <ul className="mt-4 space-y-3 font-dm-sans text-sm">
             {competitors.map((c) => (
-              <li key={c.id} className="rounded-xl bg-surface-container-low p-4">
-                <p className="font-semibold text-on-surface">{c.name}</p>
-                <p className="text-on-surface-variant">{c.website_url ?? "No URL"}</p>
+              <li key={c.id} className="rounded-sm border border-mkt-ink/[0.06] bg-mkt-ink/[0.02] p-4">
+                <p className="font-semibold text-mkt-ink">{c.name}</p>
+                <p className="text-mkt-muted">{c.website_url ?? "No URL"}</p>
                 {c.last_scanned_at ? (
-                  <p className="mt-1 text-xs text-on-surface-variant">Last scanned: {c.last_scanned_at}</p>
+                  <p className="mt-1 text-xs text-mkt-muted">
+                    Last scanned: {new Date(c.last_scanned_at).toLocaleString()}
+                  </p>
                 ) : null}
               </li>
             ))}
           </ul>
-        </div>
-        <div className="rounded-3xl p-6 card-glass">
-          <h2 className="font-display text-xl font-bold">Alerts ({alerts.length})</h2>
-          <ul className="mt-4 space-y-3 text-sm">
-            {alerts.map((a) => (
-              <li key={a.id} className="rounded-xl bg-surface-container-low p-4">
-                <p className="font-mono text-xs text-primary">{a.severity}</p>
-                <p className="mt-1 text-on-surface">{a.summary}</p>
-                <p className="mt-1 text-on-surface-variant">{a.competitors?.name}</p>
-              </li>
-            ))}
+        </ProductCard>
+
+        <ProductCard>
+          <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">
+            Alerts ({alerts.length})
+          </h2>
+          <ul className="mt-4 space-y-3 font-dm-sans text-sm">
+            {alerts.length === 0 ? (
+              <p className="text-mkt-muted">No alerts yet. Scans run after competitors are added.</p>
+            ) : (
+              alerts.map((a) => (
+                <li
+                  key={a.id}
+                  className="rounded-sm border border-mkt-ink/[0.06] bg-mkt-ink/[0.02] p-4"
+                >
+                  <ProductBadge variant={severityVariant(a.severity)}>{a.severity}</ProductBadge>
+                  <p className="mt-2 font-medium text-mkt-ink">{a.summary}</p>
+                  {a.competitors?.name ? <p className="mt-1 text-mkt-muted">{a.competitors.name}</p> : null}
+                  <p className="mt-1 text-xs text-mkt-muted">{new Date(a.created_at).toLocaleString()}</p>
+                </li>
+              ))
+            )}
           </ul>
-        </div>
+        </ProductCard>
       </div>
     </div>
   );
