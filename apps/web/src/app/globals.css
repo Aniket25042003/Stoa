@@ -486,6 +486,18 @@ html.dark {
   font-family: var(--font-dm-sans), var(--font-sans), sans-serif;
 }
 
+/* Product V2 — authenticated app surfaces */
+.product-v2 {
+  background-color: var(--mkt-surface);
+  color: var(--mkt-ink);
+  font-family: var(--font-dm-sans), var(--font-sans), sans-serif;
+}
+
+.product-v2 ::selection {
+  background: rgb(79 70 229 / 18%);
+  color: var(--mkt-ink);
+}
+
 /* Lenis Smooth Scroll Rules */
 html.lenis, html.lenis body {
   height: auto;
