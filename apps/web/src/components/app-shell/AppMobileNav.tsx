@@ -15,7 +15,7 @@ import { cn } from "@/lib/cn";
 import { ProductButton } from "@/components/product";
 
 type AppMobileNavProps = {
-  permissions: string[];
+  permissions: string[] | null;
   permissionsLoaded: boolean;
 };
 

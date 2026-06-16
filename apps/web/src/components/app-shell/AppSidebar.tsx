@@ -16,7 +16,7 @@ import { cn } from "@/lib/cn";
 import { useSidebarCollapsed } from "./useSidebarCollapsed";
 
 type AppSidebarProps = {
-  permissions: string[];
+  permissions: string[] | null;
   permissionsLoaded: boolean;
 };
 
@@ -58,7 +58,7 @@ function NavGroupSection({
 }: {
   group: NavGroup;
   collapsed: boolean;
-  permissions: string[];
+  permissions: string[] | null;
   permissionsLoaded: boolean;
   pathname: string;
   expanded: boolean;

@@ -14,7 +14,7 @@ export function SectionSubnav({
   ariaLabel,
 }: {
   items: NavItem[];
-  permissions: string[];
+  permissions: string[] | null;
   permissionsLoaded: boolean;
   ariaLabel: string;
 }) {
