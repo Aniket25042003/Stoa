@@ -57,7 +57,7 @@ export function CompetitorsList({
   onError: (message: string) => void;
 }) {
   const { permissions, loaded } = useAppPermissions();
-  const canManage = loaded && permissions.includes("competitive:manage");
+  const canManage = loaded && permissions != null && permissions.includes("competitive:manage");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<EditDraft>({ name: "", website_url: "" });
   const [savingId, setSavingId] = useState<string | null>(null);

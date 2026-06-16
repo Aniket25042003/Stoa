@@ -5,16 +5,14 @@ import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { OrgSwitcher } from "@/components/app-shell/OrgSwitcher";
 import { ProductButton } from "@/components/product";
-import { getAuthEntryPath } from "@/lib/auth-entry";
+import { signOutClient } from "@/lib/auth-client";
 import { BRAND_LOGO_LETTER, BRAND_NAME } from "@/lib/brand";
 
 export function AppTopBar({ email }: { email: string }) {
   const router = useRouter();
 
   async function signOut() {
-    await fetch("/api/auth/signout", { method: "POST" });
-    router.push(getAuthEntryPath());
-    router.refresh();
+    await signOutClient(router);
   }
 
   return (

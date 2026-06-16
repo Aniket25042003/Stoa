@@ -7,9 +7,8 @@ export async function apiFetch(path: string, init: RequestInit = {}) {
   const normalizedPath = path.startsWith("/") ? path.slice(1) : path;
   try {
     return await fetch(`/api/backend/${normalizedPath}`, { ...init, headers });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to fetch";
-    return new Response(JSON.stringify({ detail: message }), {
+  } catch {
+    return new Response(JSON.stringify({ detail: "Failed to fetch" }), {
       status: 503,
       headers: { "Content-Type": "application/json" },
     });

@@ -10,7 +10,7 @@ import {
   isNavItemActive,
 } from "@/lib/app-navigation";
 import { canReadNav } from "@/lib/auth-workflow";
-import { getAuthEntryPath } from "@/lib/auth-entry";
+import { signOutClient } from "@/lib/auth-client";
 import { cn } from "@/lib/cn";
 import { ProductButton } from "@/components/product";
 
@@ -36,9 +36,7 @@ export function AppMobileNav({ permissions, permissionsLoaded }: AppMobileNavPro
   const intelGroup = APP_NAVIGATION.find((e) => e.type === "group" && e.group.id === "intelligence");
 
   async function signOut() {
-    await fetch("/api/auth/signout", { method: "POST" });
-    router.push(getAuthEntryPath());
-    router.refresh();
+    await signOutClient(router);
   }
 
   return (

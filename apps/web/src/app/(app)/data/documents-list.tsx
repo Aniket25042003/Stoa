@@ -215,8 +215,8 @@ export function DocumentsList({
   onError: (message: string) => void;
 }) {
   const { permissions, loaded } = useAppPermissions();
-  const canDelete = loaded && permissions.includes("documents:delete");
-  const canEdit = loaded && permissions.includes("documents:write");
+  const canDelete = loaded && permissions != null && permissions.includes("documents:delete");
+  const canEdit = loaded && permissions != null && permissions.includes("documents:write");
   const [viewing, setViewing] = useState<DocumentDetail | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
