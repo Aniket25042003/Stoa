@@ -4,12 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { getAuthEntryPath } from "@/lib/auth-entry";
+import { getAuthEntryPath, getMarketingCta, isLoginEnabled } from "@/lib/auth-entry";
 import { BRAND_LOGO_LETTER, BRAND_NAME } from "@/lib/brand";
 import { cn } from "@/lib/cn";
 import { isMarketingV2Page } from "@/lib/marketing-v2";
 
 const authEntry = getAuthEntryPath();
+const marketingCta = getMarketingCta();
+const loginEnabled = isLoginEnabled();
 
 const nav = [
   { href: "/see-it-in-action", label: "See it in action" },
@@ -69,14 +71,16 @@ export function Navbar() {
           </nav>
 
           <div className="flex shrink-0 items-center gap-3">
-            <span className="hidden rounded-full border border-mkt-accent-warm/25 bg-mkt-accent-warm/[0.07] px-2.5 py-1 font-dm-sans text-[8px] font-bold uppercase tracking-[0.18em] text-mkt-accent-warm lg:inline-flex">
-              Early access
-            </span>
+            {!loginEnabled && (
+              <span className="hidden rounded-full border border-mkt-accent-warm/25 bg-mkt-accent-warm/[0.07] px-2.5 py-1 font-dm-sans text-[8px] font-bold uppercase tracking-[0.18em] text-mkt-accent-warm lg:inline-flex">
+                Early access
+              </span>
+            )}
             <Link
-              href="/waitlist"
+              href={marketingCta.href}
               className="group inline-flex items-center gap-1.5 rounded-sm bg-mkt-accent px-4 py-2.5 font-dm-sans text-[10px] font-bold uppercase tracking-widest text-mkt-dark-ink shadow-[0_6px_20px_rgba(79,70,229,0.18)] transition-all hover:bg-[#4338CA] active:scale-[0.97]"
             >
-              Request access
+              {marketingCta.navLabel}
               <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
             </Link>
           </div>
