@@ -34,7 +34,9 @@ def aggregate_crm_stats(org_id: str) -> dict[str, Any]:
     contacts = contacts_res.data or []
 
     industries = Counter(a.get("industry") for a in accounts if a.get("industry"))
-    sizes = Counter(a.get("employee_count_range") for a in accounts if a.get("employee_count_range"))
+    sizes = Counter(
+        a.get("employee_count_range") for a in accounts if a.get("employee_count_range")
+    )
     titles = Counter(c.get("title") for c in contacts if c.get("title"))
 
     account_industry = {a.get("id"): a.get("industry") for a in accounts if a.get("id")}
@@ -65,5 +67,7 @@ def aggregate_crm_stats(org_id: str) -> dict[str, Any]:
         "top_company_sizes": [{"range": k, "count": v} for k, v in sizes.most_common(5)],
         "top_titles": [{"title": k, "count": v} for k, v in titles.most_common(8)],
         "top_loss_reasons": [{"reason": k, "count": v} for k, v in loss_reasons.most_common(5)],
-        "deals_by_industry": [{"industry": k, "count": v} for k, v in deal_industries.most_common(5)],
+        "deals_by_industry": [
+            {"industry": k, "count": v} for k, v in deal_industries.most_common(5)
+        ],
     }

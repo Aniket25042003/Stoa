@@ -3,3 +3,5 @@ packages:
 allowBuilds:
   sharp: true
   unrs-resolver: true
+overrides:
+  ws: ">=8.21.0"

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from stoa_core.integrations.crypto import decrypt_credentials, encrypt_credentials
-from stoa_core.integrations.csv_structured import detect_columns, parse_csv_content
+from stoa_core.integrations.csv_structured import parse_csv_content
 from stoa_core.integrations.registry import get_connector, list_providers
 
 

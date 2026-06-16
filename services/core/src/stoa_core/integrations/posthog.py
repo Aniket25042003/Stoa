@@ -7,7 +7,6 @@ from typing import Any
 
 import httpx
 
-from stoa_core.config import get_settings
 from stoa_core.integrations.base import BaseConnector, ProviderInfo, SyncResult
 from stoa_core.integrations.registry import register_connector
 from stoa_core.rag.ingest import ingest_knowledge
