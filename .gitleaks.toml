@@ -1,0 +1,10 @@
+title = "Stoa gitleaks config"
+
+[allowlist]
+description = "Allow known test fixtures and placeholder env examples"
+paths = [
+  '''services/core/tests/test_pii\.py''',
+  '''services/api/\.env\.example''',
+  '''apps/web/\.env\.example''',
+  '''legacy/services/api/\.env\.example''',
+]
