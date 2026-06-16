@@ -23,7 +23,7 @@ def list_providers() -> list[ProviderInfo]:
 
 
 # Import connectors to register them (side-effect: @register_connector)
-from stoa_core.integrations import (  # noqa: E402, F401
+from stoa_core.integrations import (  # noqa: E402, F401, I001
     csv_structured as _csv_structured,
     ga4 as _ga4,
     gong as _gong,

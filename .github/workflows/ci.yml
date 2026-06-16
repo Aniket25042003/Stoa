@@ -63,9 +63,10 @@ jobs:
           fetch-depth: 0
       - name: Install gitleaks
         run: |
-          curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.24.2/gitleaks_8.24.2_linux_x64.tar.gz
-          tar -xzf gitleaks_8.24.2_linux_x64.tar.gz
+          curl -sSfL -o gitleaks.tar.gz https://github.com/gitleaks/gitleaks/releases/download/v8.24.2/gitleaks_8.24.2_linux_x64.tar.gz
+          tar -xzf gitleaks.tar.gz gitleaks
           sudo mv gitleaks /usr/local/bin/gitleaks
+          gitleaks version
       - name: Scan for secrets
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
