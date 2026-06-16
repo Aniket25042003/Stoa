@@ -103,13 +103,21 @@ cp .env.example .env
 uvicorn app.main:app --reload --port 8000
 ```
 
-In a **second terminal** (same venv):
+In a **second terminal** (from `services/api`, using the API venv — not repo root):
 
 ```bash
 cd services/api
 source .venv/bin/activate
 celery -A app.celery_app worker -l info
 ```
+
+Or from the **repo root** (uses `services/api/.venv` automatically):
+
+```bash
+pnpm dev:worker
+```
+
+> **Note:** Running `celery -A app.celery_app` from the monorepo root fails with `No module named 'app'` because the Python package lives under `services/api/`. Always use the API venv (`.venv/bin/celery`), not a global/conda install.
 
 On macOS, if the worker misbehaves with prefork:
 
