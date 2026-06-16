@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api";
 import { routeForSessionState, type SessionState } from "@/lib/auth-workflow";
 import { getAuthEntryPath } from "@/lib/auth-entry";
-import { BRAND_NAME } from "@/lib/brand";
+import { AuthBrandMark, AuthCard, AuthCardHeader, AuthPageShell } from "@/components/product";
 
 export default function InvitePage() {
   const params = useParams<{ token: string }>();
@@ -54,22 +54,29 @@ export default function InvitePage() {
   }, [params.token, router]);
 
   return (
-    <div className="relative min-h-screen overflow-hidden px-4 py-10 md:px-6">
-      <div className="absolute inset-0 -z-10 grid-bg dark:starfield" />
-      <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-xl items-center">
-        <div className="w-full rounded-3xl p-7 card-glass md:p-8">
-          <Link href="/" className="inline-flex items-center gap-3">
-            <span className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-violet-pulse shadow-glow" />
-            <span className="font-display text-xl font-extrabold tracking-[-0.03em] text-on-surface">{BRAND_NAME}</span>
-          </Link>
-          <div className="mt-8 rounded-2xl bg-slate-deep p-5 text-white shadow-card">
-            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-inverse-primary">Team invite</p>
-            <h1 className="mt-2 font-display text-2xl font-bold tracking-[-0.03em]">{message}</h1>
-            <p className="mt-2 text-sm leading-6 text-white/68">You will be linked to the inviting company after sign-in and verification.</p>
-          </div>
-          {error ? <p className="mt-5 text-sm text-error">{error}</p> : null}
+    <AuthPageShell
+      lead={
+        <div>
+          <AuthBrandMark />
+          <p className="mt-8 max-w-md font-dm-sans text-sm leading-relaxed text-mkt-muted">
+            Accepting your team invite and linking you to the inviting organization.
+          </p>
         </div>
-      </div>
-    </div>
+      }
+    >
+      <AuthCard>
+        <AuthCardHeader
+          eyebrow="Team invite"
+          title={message}
+          description="You will be linked to the inviting organization after sign-in and verification."
+        />
+        {error ? <p className="font-dm-sans text-sm text-mkt-accent-warm">{error}</p> : null}
+        <p className="mt-7 text-center font-dm-sans text-sm">
+          <Link href="/dashboard" className="font-semibold text-mkt-accent underline-offset-4 hover:underline">
+            Go to dashboard
+          </Link>
+        </p>
+      </AuthCard>
+    </AuthPageShell>
   );
 }

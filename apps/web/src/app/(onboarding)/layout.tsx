@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BRAND_NAME } from "@/lib/brand";
+import { ProductButton, ProductShellFrame } from "@/components/product";
+import { BRAND_LOGO_LETTER, BRAND_NAME } from "@/lib/brand";
 import { createClient } from "@/lib/supabase/server";
 import { getServerApiBase } from "@/lib/server-api";
 import { getServerActiveOrgId } from "@/lib/active-org-server";
@@ -38,22 +39,25 @@ export default async function OnboardingLayout({ children }: { children: React.R
   }
 
   return (
-    <div className="min-h-screen bg-surface text-on-surface">
-      <div className="pointer-events-none fixed inset-0 -z-10 grid-bg dark:starfield" />
-      <header className="border-b border-outline-variant/70 bg-surface-container-low/80 backdrop-blur-xl">
+    <ProductShellFrame>
+      <header className="border-b border-mkt-ink/[0.06] bg-mkt-surface/85 backdrop-blur-xl">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4 md:px-6">
           <Link href="/" className="inline-flex items-center gap-3">
-            <span className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-secondary shadow-glow" />
-            <span className="font-display text-lg font-extrabold tracking-[-0.03em]">{BRAND_NAME}</span>
+            <span className="flex h-9 w-9 items-center justify-center rounded-sm border border-mkt-accent/35 bg-mkt-accent/[0.08] font-mono text-sm font-black text-mkt-accent">
+              {BRAND_LOGO_LETTER}
+            </span>
+            <span className="font-syne text-lg font-extrabold uppercase tracking-[0.1em] text-mkt-ink">
+              {BRAND_NAME}
+            </span>
           </Link>
           <form action="/api/auth/signout" method="post">
-            <button type="submit" className="btn-secondary px-4 py-2 text-sm">
+            <ProductButton variant="secondary" type="submit">
               Sign out
-            </button>
+            </ProductButton>
           </form>
         </div>
       </header>
       <main className="mx-auto max-w-3xl px-4 py-8 md:px-6 md:py-12">{children}</main>
-    </div>
+    </ProductShellFrame>
   );
 }

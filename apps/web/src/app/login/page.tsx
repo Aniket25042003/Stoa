@@ -5,8 +5,15 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { routeForSessionState, safeNextPath, type SessionState } from "@/lib/auth-workflow";
-import { ActivityTickerTeaser } from "@/components/marketing/ActivityTickerTeaser";
 import { BRAND_NAME, BRAND_SUBHEAD, BRAND_TAGLINE } from "@/lib/brand";
+import {
+  AuthBrandMark,
+  AuthCard,
+  AuthCardHeader,
+  AuthPageShell,
+  ProductButton,
+  ProductInput,
+} from "@/components/product";
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -18,6 +25,8 @@ function GoogleIcon({ className }: { className?: string }) {
     </svg>
   );
 }
+
+const labelClass = "font-dm-sans text-[9px] font-bold uppercase tracking-[0.18em] text-mkt-muted";
 
 function LoginForm() {
   const searchParams = useSearchParams();
@@ -42,20 +51,17 @@ function LoginForm() {
   async function signInWithProvider(provider: "google" | "azure") {
     setMsg(null);
     setLoading(true);
-
     const res = await fetch("/api/auth/oauth", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ provider, next }),
     });
     const body = (await res.json().catch(() => null)) as { url?: string; detail?: string } | null;
-
     if (!res.ok || !body?.url) {
       setLoading(false);
       setMsg(body?.detail || `Could not start ${provider === "azure" ? "Microsoft" : "Google"} sign-in. Try again.`);
       return;
     }
-
     window.location.assign(body.url);
   }
 
@@ -89,12 +95,8 @@ function LoginForm() {
           body: JSON.stringify({ email, password, full_name: fullName, next }),
         });
         const body = (await res.json().catch(() => null)) as { detail?: string; status?: string } | null;
-        if (!res.ok) {
-          throw new Error(body?.detail || "Could not create account. Try again.");
-        }
-        if (body?.status === "created_email_pending" && body.detail) {
-          setMsg(body.detail);
-        }
+        if (!res.ok) throw new Error(body?.detail || "Could not create account. Try again.");
+        if (body?.status === "created_email_pending" && body.detail) setMsg(body.detail);
         window.location.assign(`/verify-email?email=${encodeURIComponent(email)}&next=${encodeURIComponent(next)}`);
         return;
       }
@@ -123,112 +125,111 @@ function LoginForm() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden px-4 py-10 md:px-6">
-      <div className="absolute inset-0 -z-10 grid-bg dark:starfield" />
-      <div className="absolute left-1/2 top-0 -z-10 h-[520px] w-[min(760px,92vw)] -translate-x-1/2 rounded-full bg-gradient-to-r from-primary/20 via-violet-pulse/18 to-transparent blur-3xl" />
-      <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-7xl flex-col gap-10 lg:flex-row lg:items-center lg:gap-16">
-        <div className="flex-1 space-y-7 lg:max-w-lg">
-          <Link href="/" className="inline-flex items-center gap-3">
-            <span className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-violet-pulse shadow-glow" />
-            <span className="font-display text-xl font-extrabold tracking-[-0.03em] text-on-surface">{BRAND_NAME}</span>
-          </Link>
-          <div>
-            <p className="eyebrow">Secure workspace</p>
-            <h1 className="mt-4 font-display text-4xl font-extrabold leading-tight tracking-[-0.045em] text-on-surface md:text-5xl">
+    <AuthPageShell
+      lead={
+        <>
+          <AuthBrandMark />
+          <div className="mt-8">
+            <p className="font-dm-sans text-[9px] font-bold uppercase tracking-[0.22em] text-mkt-accent">
+              Secure workspace
+            </p>
+            <h1 className="mt-4 font-syne text-4xl font-extrabold uppercase leading-tight tracking-tight text-mkt-ink md:text-5xl">
               {BRAND_TAGLINE}
             </h1>
-            <p className="mt-5 text-base leading-8 text-on-surface-variant">{BRAND_SUBHEAD}</p>
-            <p className="mt-4 text-sm leading-7 text-on-surface-variant">Sign in with Google, Microsoft, or your work email to open your marketing intelligence workspace.</p>
-          </div>
-          <div className="hidden lg:block">
-            <ActivityTickerTeaser />
-          </div>
-        </div>
-
-        <div className="flex flex-1 justify-center lg:justify-end">
-          <motion.div
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35 }}
-            className="w-full max-w-md rounded-3xl p-7 card-glass md:p-8"
-          >
-            <div className="mb-8 rounded-2xl bg-slate-deep p-5 text-white shadow-card">
-              <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-inverse-primary">Authentication</p>
-              <h2 className="mt-2 font-display text-2xl font-bold tracking-[-0.03em]">Continue to dashboard</h2>
-              <p className="mt-2 text-sm leading-6 text-white/62">Use SSO or email/password. Email accounts verify through Supabase Auth emails delivered by Brevo SMTP.</p>
-            </div>
-            <motion.button
-              type="button"
-              onClick={() => void signInWithProvider("google")}
-              disabled={loading}
-              className="btn-secondary flex w-full gap-3 px-5 py-3 text-sm disabled:opacity-50"
-              whileTap={{ scale: 0.98 }}
-            >
-              <GoogleIcon className="h-5 w-5 shrink-0" />
-              {loading ? "Redirecting..." : "Continue with Google"}
-            </motion.button>
-            <motion.button
-              type="button"
-              onClick={() => void signInWithProvider("azure")}
-              disabled={loading}
-              className="btn-secondary mt-3 flex w-full gap-3 px-5 py-3 text-sm disabled:opacity-50"
-              whileTap={{ scale: 0.98 }}
-            >
-              <span className="grid h-5 w-5 shrink-0 grid-cols-2 gap-0.5" aria-hidden>
-                <span className="bg-[#f25022]" />
-                <span className="bg-[#7fba00]" />
-                <span className="bg-[#00a4ef]" />
-                <span className="bg-[#ffb900]" />
-              </span>
-              {loading ? "Redirecting..." : "Continue with Microsoft"}
-            </motion.button>
-            <div className="my-6 flex items-center gap-3 text-xs uppercase tracking-[0.16em] text-on-surface-variant">
-              <span className="h-px flex-1 bg-outline-variant/60" />
-              Work email
-              <span className="h-px flex-1 bg-outline-variant/60" />
-            </div>
-            <form onSubmit={(event) => void submitEmail(event)} className="space-y-4">
-              {mode === "signup" ? (
-                <div>
-                  <label className="text-sm font-medium">Full name</label>
-                  <input name="full_name" type="text" required autoComplete="name" className="mt-1 w-full rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-sm" placeholder="Aniket Patel" />
-                </div>
-              ) : null}
-              <div>
-                <label className="text-sm font-medium">Email</label>
-                <input name="email" type="email" required className="mt-1 w-full rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-sm" placeholder="you@company.com" />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Password</label>
-                <input name="password" type="password" required minLength={8} className="mt-1 w-full rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-sm" placeholder="At least 8 characters" />
-              </div>
-              <button type="submit" disabled={loading} className="btn-primary w-full px-5 py-3 text-sm disabled:opacity-50">
-                {loading ? "Working..." : mode === "signin" ? "Sign in with email" : "Create account"}
-              </button>
-            </form>
-            <button type="button" onClick={() => setMode(mode === "signin" ? "signup" : "signin")} className="mt-4 w-full text-center text-sm font-semibold text-primary underline-offset-4 hover:underline">
-              {mode === "signin" ? "Need an account? Sign up" : "Already have an account? Sign in"}
-            </button>
-            {msg ? (
-              <motion.p initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="mt-4 text-sm text-error">
-                {msg}
-              </motion.p>
-            ) : null}
-            <p className="mt-7 text-center text-sm">
-              <Link href="/" className="font-bold text-primary underline-offset-4 hover:underline">
-                Back home
-              </Link>
+            <p className="mt-5 font-dm-sans text-base leading-relaxed text-mkt-muted">{BRAND_SUBHEAD}</p>
+            <p className="mt-4 font-dm-sans text-sm leading-relaxed text-mkt-muted">
+              Sign in with Google, Microsoft, or your work email to open your {BRAND_NAME} workspace.
             </p>
-          </motion.div>
-        </div>
-      </div>
-    </div>
+          </div>
+        </>
+      }
+    >
+      <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
+        <AuthCard>
+          <AuthCardHeader
+            eyebrow="Authentication"
+            title="Continue to dashboard"
+            description="Use SSO or email/password. Email accounts verify through your inbox before first sign-in."
+          />
+          <ProductButton
+            variant="secondary"
+            className="w-full"
+            disabled={loading}
+            onClick={() => void signInWithProvider("google")}
+          >
+            <GoogleIcon className="h-5 w-5 shrink-0" />
+            {loading ? "Redirecting..." : "Continue with Google"}
+          </ProductButton>
+          <ProductButton
+            variant="secondary"
+            className="mt-3 w-full"
+            disabled={loading}
+            onClick={() => void signInWithProvider("azure")}
+          >
+            <span className="grid h-5 w-5 shrink-0 grid-cols-2 gap-0.5" aria-hidden>
+              <span className="bg-[#f25022]" />
+              <span className="bg-[#7fba00]" />
+              <span className="bg-[#00a4ef]" />
+              <span className="bg-[#ffb900]" />
+            </span>
+            {loading ? "Redirecting..." : "Continue with Microsoft"}
+          </ProductButton>
+          <div className="my-6 flex items-center gap-3 font-dm-sans text-[9px] font-bold uppercase tracking-[0.16em] text-mkt-muted">
+            <span className="h-px flex-1 bg-mkt-ink/10" />
+            Work email
+            <span className="h-px flex-1 bg-mkt-ink/10" />
+          </div>
+          <form onSubmit={(event) => void submitEmail(event)} className="space-y-4">
+            {mode === "signup" ? (
+              <div>
+                <label className={labelClass}>Full name</label>
+                <ProductInput name="full_name" type="text" required autoComplete="name" placeholder="Jane Doe" className="mt-1.5" />
+              </div>
+            ) : null}
+            <div>
+              <label className={labelClass}>Email</label>
+              <ProductInput name="email" type="email" required placeholder="you@company.com" className="mt-1.5" />
+            </div>
+            <div>
+              <label className={labelClass}>Password</label>
+              <ProductInput name="password" type="password" required minLength={8} placeholder="At least 8 characters" className="mt-1.5" />
+            </div>
+            <ProductButton type="submit" className="w-full" disabled={loading}>
+              {loading ? "Working..." : mode === "signin" ? "Sign in with email" : "Create account"}
+            </ProductButton>
+          </form>
+          <button
+            type="button"
+            onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+            className="mt-4 w-full text-center font-dm-sans text-sm font-semibold text-mkt-accent underline-offset-4 hover:underline"
+          >
+            {mode === "signin" ? "Need an account? Sign up" : "Already have an account? Sign in"}
+          </button>
+          {msg ? (
+            <motion.p initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="mt-4 font-dm-sans text-sm text-mkt-accent-warm">
+              {msg}
+            </motion.p>
+          ) : null}
+          <p className="mt-7 text-center font-dm-sans text-sm">
+            <Link href="/" className="font-semibold text-mkt-accent underline-offset-4 hover:underline">
+              Back home
+            </Link>
+          </p>
+        </AuthCard>
+      </motion.div>
+    </AuthPageShell>
   );
 }
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center px-4 text-sm text-on-surface-variant">Loading sign-in...</div>}>
+    <Suspense
+      fallback={
+        <div className="product-v2 flex min-h-screen items-center justify-center px-4 font-dm-sans text-sm text-mkt-muted">
+          Loading sign-in...
+        </div>
+      }
+    >
       <LoginForm />
     </Suspense>
   );

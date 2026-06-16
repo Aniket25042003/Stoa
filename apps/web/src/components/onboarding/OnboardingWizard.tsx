@@ -4,6 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { apiFetch } from "@/lib/api";
 import { BRAND_NAME } from "@/lib/brand";
+import {
+  ProductButton,
+  ProductCard,
+  ProductInput,
+  ProductSelect,
+  ProductTextarea,
+} from "@/components/product";
 
 type Context = {
   mode: string;
@@ -131,33 +138,33 @@ export function OnboardingWizard() {
   }
 
   if (!context) {
-    return <p className="text-sm text-on-surface-variant">Loading setup...</p>;
+    return <p className="font-dm-sans text-sm text-mkt-muted">Loading setup...</p>;
   }
 
   return (
     <div className="space-y-8">
-      <div className="rounded-[2rem] bg-slate-deep p-7 text-white shadow-card md:p-10">
-        <p className="eyebrow text-inverse-primary">Workspace setup</p>
-        <h1 className="mt-4 font-display text-4xl font-extrabold tracking-[-0.045em] md:text-5xl">
+      <ProductCard className="bg-mkt-dark-band text-mkt-dark-ink">
+        <p className="font-dm-sans text-[9px] font-bold uppercase tracking-[0.22em] text-mkt-accent">Workspace setup</p>
+        <h1 className="mt-4 font-syne text-3xl font-extrabold uppercase leading-tight tracking-tight md:text-4xl">
           Tell {BRAND_NAME} about {context.mode === "invitee_profile" ? "you" : "your company"}.
         </h1>
-        <p className="mt-4 text-sm leading-7 text-white/68">
+        <p className="mt-4 font-dm-sans text-sm leading-relaxed text-mkt-dark-ink/70">
           Complete this guided setup before entering the product. Your answers are saved once at the end.
         </p>
         <div className="mt-6">
-          <div className="flex justify-between text-xs text-white/70">
+          <div className="flex justify-between font-dm-sans text-xs text-mkt-dark-ink/70">
             <span>
               Step {stepIndex + 1} of {steps.length}: {STEP_LABELS[currentStep] ?? currentStep}
             </span>
             <span>{progress}%</span>
           </div>
-          <div className="mt-2 h-2 rounded-full bg-white/20">
-            <div className="h-2 rounded-full bg-primary transition-all" style={{ width: `${progress}%` }} />
+          <div className="mt-2 h-2 rounded-sm bg-mkt-dark-ink/15">
+            <div className="h-2 rounded-sm bg-mkt-accent transition-all" style={{ width: `${progress}%` }} />
           </div>
         </div>
-      </div>
+      </ProductCard>
 
-      <div className="rounded-3xl p-6 card-glass md:p-8 space-y-5">
+      <ProductCard className="space-y-5">
         {currentStep === "role" || currentStep === "profile" ? (
           <>
             <Field label="What best describes you?" name="role_type" value={draft.role_type ?? "marketer"} onChange={updateField} as="select" options={["founder", "marketer", "sales", "consultant", "student", "other"]} />
@@ -198,7 +205,7 @@ export function OnboardingWizard() {
                 className="mt-1 block w-full text-sm"
                 onChange={(e) => setSeedFile(e.target.files?.[0] ?? null)}
               />
-              <p className="mt-1 text-xs text-on-surface-variant">
+              <p className="mt-1 font-dm-sans text-xs text-mkt-muted">
                 Uploaded after setup completes. Stored in your org bucket and embedded into semantic memory.
               </p>
             </div>
@@ -211,22 +218,20 @@ export function OnboardingWizard() {
 
         <div className="flex flex-wrap gap-3 pt-2">
           {stepIndex > 0 ? (
-            <button type="button" className="btn-secondary px-5 py-3 text-sm" onClick={() => setStepIndex((i) => i - 1)}>
+            <ProductButton variant="secondary" onClick={() => setStepIndex((i) => i - 1)}>
               Back
-            </button>
+            </ProductButton>
           ) : null}
           {stepIndex < steps.length - 1 ? (
-            <button type="button" className="btn-primary px-5 py-3 text-sm" onClick={() => setStepIndex((i) => i + 1)}>
-              Continue
-            </button>
+            <ProductButton onClick={() => setStepIndex((i) => i + 1)}>Continue</ProductButton>
           ) : (
-            <button type="button" disabled={submitting} className="btn-primary px-5 py-3 text-sm disabled:opacity-50" onClick={() => void finish()}>
+            <ProductButton disabled={submitting} onClick={() => void finish()}>
               {submitting ? "Saving..." : "Finish setup"}
-            </button>
+            </ProductButton>
           )}
         </div>
-        {message ? <p className="text-sm text-error">{message}</p> : null}
-      </div>
+        {message ? <p className="font-dm-sans text-sm text-mkt-accent-warm">{message}</p> : null}
+      </ProductCard>
     </div>
   );
 }
@@ -252,36 +257,36 @@ function Field({
 }) {
   return (
     <div>
-      <label className="text-sm font-medium">{label}</label>
+      <label className="font-dm-sans text-[9px] font-bold uppercase tracking-[0.18em] text-mkt-muted">{label}</label>
       {as === "select" ? (
-        <select
+        <ProductSelect
           name={name}
           value={value}
           onChange={(e) => onChange(name, e.target.value)}
-          className="mt-1 w-full rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-sm"
+          className="mt-1.5"
         >
           {(options ?? []).map((opt) => (
             <option key={opt} value={opt}>
               {opt}
             </option>
           ))}
-        </select>
+        </ProductSelect>
       ) : multiline ? (
-        <textarea
+        <ProductTextarea
           name={name}
           value={value}
           required={required}
           rows={4}
           onChange={(e) => onChange(name, e.target.value)}
-          className="mt-1 w-full rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-sm"
+          className="mt-1.5"
         />
       ) : (
-        <input
+        <ProductInput
           name={name}
           value={value}
           required={required}
           onChange={(e) => onChange(name, e.target.value)}
-          className="mt-1 w-full rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-sm"
+          className="mt-1.5"
         />
       )}
     </div>

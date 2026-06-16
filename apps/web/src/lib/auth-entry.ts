@@ -29,3 +29,37 @@ export function getAuthEntryPath(options?: AuthEntryOptions): AuthEntryPath {
 export function isLoginEnabled(hostname?: string): boolean {
   return getAuthEntryPath({ hostname }) === "/login";
 }
+
+export type MarketingCta = {
+  href: AuthEntryPath;
+  navLabel: string;
+  buttonLabel: string;
+  heroLabel: string;
+  footerDescription: string;
+  bandTitle: string;
+  bandDescription: string;
+};
+
+/** Primary marketing CTA — login in dev/loopback, waitlist in pre-launch production. */
+export function getMarketingCta(options?: AuthEntryOptions): MarketingCta {
+  if (isLoginEnabled(options?.hostname)) {
+    return {
+      href: "/login",
+      navLabel: "Sign in",
+      buttonLabel: "Sign in",
+      heroLabel: "Sign in",
+      footerDescription: "Sign in to access your marketing intelligence workspace.",
+      bandTitle: "Open the app",
+      bandDescription: "Sign in with your credentials to use the full product locally.",
+    };
+  }
+  return {
+    href: "/waitlist",
+    navLabel: "Request access",
+    buttonLabel: "Join the waitlist",
+    heroLabel: "Request early access",
+    footerDescription: "Join the waitlist for early access to precomputed marketing intelligence.",
+    bandTitle: "Get on the list",
+    bandDescription: "Join the waitlist while we roll out billing and team workspaces.",
+  };
+}
