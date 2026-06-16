@@ -22,19 +22,84 @@ logger = logging.getLogger(__name__)
 SOURCE = "csv_structured"
 
 CSV_FIELD_DEFINITIONS: list[dict[str, Any]] = [
-    {"key": "email", "label": "Email address", "group": "Contact", "aliases": ["email", "contact_email", "e_mail", "work_email"]},
-    {"key": "name", "label": "Contact name", "group": "Contact", "aliases": ["name", "contact_name", "full_name", "contact"]},
-    {"key": "title", "label": "Job title", "group": "Contact", "aliases": ["title", "job_title", "position", "job_role"]},
-    {"key": "company", "label": "Company name", "group": "Company", "aliases": ["company", "account", "account_name", "organization", "company_name"]},
-    {"key": "domain", "label": "Company domain", "group": "Company", "aliases": ["domain", "website", "company_domain", "company_website"]},
-    {"key": "industry", "label": "Industry", "group": "Company", "aliases": ["industry", "sector", "vertical"]},
-    {"key": "deal_name", "label": "Deal name", "group": "Deal", "aliases": ["deal_name", "deal", "opportunity", "opportunity_name"]},
-    {"key": "deal_amount", "label": "Deal amount", "group": "Deal", "aliases": ["deal_amount", "amount", "value", "revenue", "deal_value"]},
-    {"key": "deal_stage", "label": "Deal stage", "group": "Deal", "aliases": ["deal_stage", "stage", "pipeline_stage", "sales_stage"]},
-    {"key": "won", "label": "Won / lost", "group": "Deal", "aliases": ["won", "is_won", "win", "closed_won", "deal_status"]},
-    {"key": "loss_reason", "label": "Loss reason", "group": "Deal", "aliases": ["loss_reason", "lost_reason", "reason_lost", "closed_lost_reason"]},
-    {"key": "transcript", "label": "Call transcript", "group": "Content", "aliases": ["transcript", "call_transcript", "conversation", "call_notes"]},
-    {"key": "review", "label": "Customer review", "group": "Content", "aliases": ["review", "review_text", "feedback", "customer_review"]},
+    {
+        "key": "email",
+        "label": "Email address",
+        "group": "Contact",
+        "aliases": ["email", "contact_email", "e_mail", "work_email"],
+    },
+    {
+        "key": "name",
+        "label": "Contact name",
+        "group": "Contact",
+        "aliases": ["name", "contact_name", "full_name", "contact"],
+    },
+    {
+        "key": "title",
+        "label": "Job title",
+        "group": "Contact",
+        "aliases": ["title", "job_title", "position", "job_role"],
+    },
+    {
+        "key": "company",
+        "label": "Company name",
+        "group": "Company",
+        "aliases": ["company", "account", "account_name", "organization", "company_name"],
+    },
+    {
+        "key": "domain",
+        "label": "Company domain",
+        "group": "Company",
+        "aliases": ["domain", "website", "company_domain", "company_website"],
+    },
+    {
+        "key": "industry",
+        "label": "Industry",
+        "group": "Company",
+        "aliases": ["industry", "sector", "vertical"],
+    },
+    {
+        "key": "deal_name",
+        "label": "Deal name",
+        "group": "Deal",
+        "aliases": ["deal_name", "deal", "opportunity", "opportunity_name"],
+    },
+    {
+        "key": "deal_amount",
+        "label": "Deal amount",
+        "group": "Deal",
+        "aliases": ["deal_amount", "amount", "value", "revenue", "deal_value"],
+    },
+    {
+        "key": "deal_stage",
+        "label": "Deal stage",
+        "group": "Deal",
+        "aliases": ["deal_stage", "stage", "pipeline_stage", "sales_stage"],
+    },
+    {
+        "key": "won",
+        "label": "Won / lost",
+        "group": "Deal",
+        "aliases": ["won", "is_won", "win", "closed_won", "deal_status"],
+    },
+    {
+        "key": "loss_reason",
+        "label": "Loss reason",
+        "group": "Deal",
+        "aliases": ["loss_reason", "lost_reason", "reason_lost", "closed_lost_reason"],
+    },
+    {
+        "key": "transcript",
+        "label": "Call transcript",
+        "group": "Content",
+        "aliases": ["transcript", "call_transcript", "conversation", "call_notes"],
+    },
+    {
+        "key": "review",
+        "label": "Customer review",
+        "group": "Content",
+        "aliases": ["review", "review_text", "feedback", "customer_review"],
+    },
 ]
 
 FIELD_ALIASES: dict[str, list[str]] = {row["key"]: row["aliases"] for row in CSV_FIELD_DEFINITIONS}
@@ -98,7 +163,10 @@ def detect_columns(headers: list[str]) -> dict[str, str | None]:
     return mapping
 
 
-def parse_csv_content(content: str, column_mapping: dict[str, str | None] | None = None) -> tuple[list[str], dict[str, str | None]]:
+def parse_csv_content(
+    content: str,
+    column_mapping: dict[str, str | None] | None = None,
+) -> tuple[list[str], dict[str, str | None]]:
     reader = csv.DictReader(io.StringIO(content))
     headers = [h for h in (reader.fieldnames or []) if h and h.strip()]
     mapping = column_mapping or detect_columns(headers)
@@ -115,7 +183,9 @@ class CsvStructuredConnector(BaseConnector):
             id="csv_structured",
             name="Structured CSV",
             auth_type="upload",
-            description="Import contacts, deals, and transcripts from a CSV file with column mapping.",
+            description=(
+                "Import contacts, deals, and transcripts from a CSV file with column mapping."
+            ),
         )
 
     @classmethod
