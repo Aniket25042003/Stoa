@@ -111,3 +111,87 @@ def _dispatch_job(job: dict[str, Any] | None) -> None:
     from app.tasks.ingestion import process_ingestion_job
 
     process_ingestion_job.delay(job["id"])
+
+
+def get_document_for_org(org_id: str, document_id: str) -> dict[str, Any] | None:
+    sb = get_supabase_admin()
+    res = (
+        sb.table("documents")
+        .select("id, org_id, title, doc_type, status, content, storage_path, created_at, updated_at")
+        .eq("id", document_id)
+        .eq("org_id", org_id)
+        .limit(1)
+        .execute()
+    )
+    return (res.data or [None])[0]
+
+
+def delete_document_for_org(org_id: str, document_id: str) -> bool:
+    doc = get_document_for_org(org_id, document_id)
+    if not doc:
+        return False
+
+    sb = get_supabase_admin()
+    settings = get_settings()
+
+    storage_path = doc.get("storage_path")
+    if storage_path:
+        try:
+            sb.storage.from_(settings.storage_bucket).remove([storage_path])
+        except Exception:
+            pass
+
+    sb.table("knowledge_items").delete().eq("org_id", org_id).eq("uri", f"document:{document_id}").execute()
+    sb.table("intelligence").delete().eq("org_id", org_id).eq("document_id", document_id).execute()
+    sb.table("documents").delete().eq("id", document_id).eq("org_id", org_id).execute()
+    return True
+
+
+def is_pasted_document(doc: dict[str, Any]) -> bool:
+    """Pasted documents have inline content only; uploads retain a storage_path."""
+    return not doc.get("storage_path")
+
+
+def update_pasted_document_for_org(
+    org_id: str,
+    document_id: str,
+    user_id: str,
+    *,
+    title: str | None = None,
+    content: str | None = None,
+    doc_type: str | None = None,
+) -> dict[str, Any]:
+    doc = get_document_for_org(org_id, document_id)
+    if not doc:
+        raise ValueError("Document not found")
+    if not is_pasted_document(doc):
+        raise ValueError("Uploaded files cannot be edited in place")
+
+    updates: dict[str, Any] = {"status": "pending"}
+    if title is not None:
+        title = title.strip()
+        if not title:
+            raise ValueError("Title is required")
+        updates["title"] = title
+    if doc_type is not None:
+        updates["doc_type"] = doc_type
+    if content is not None:
+        if not content.strip():
+            raise ValueError("Content is required")
+        updates["content"] = redact_pii(sanitize_user_content(content))
+    if len(updates) == 1:
+        raise ValueError("No changes provided")
+
+    sb = get_supabase_admin()
+    sb.table("knowledge_items").delete().eq("org_id", org_id).eq("uri", f"document:{document_id}").execute()
+    sb.table("intelligence").delete().eq("org_id", org_id).eq("document_id", document_id).execute()
+    sb.table("document_chunks").delete().eq("org_id", org_id).eq("document_id", document_id).execute()
+
+    res = sb.table("documents").update(updates).eq("id", document_id).eq("org_id", org_id).execute()
+    updated = (res.data or [None])[0]
+    if not updated:
+        raise ValueError("Document not found")
+
+    job = _insert_job(sb, org_id, document_id, user_id)
+    _dispatch_job(job)
+    return updated
