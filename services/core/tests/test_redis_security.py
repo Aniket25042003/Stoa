@@ -72,3 +72,26 @@ def test_development_allows_unauthenticated_local():
         celery_result_backend="",
     )
     validate_redis_security(settings)
+
+
+def test_unset_stoa_env_with_localhost_redis_is_development():
+    settings = Settings(
+        stoa_env="",
+        redis_url="redis://:localdev@localhost:6379/0",
+        celery_broker_url="",
+        celery_result_backend="",
+    )
+    assert settings.is_development is True
+    validate_redis_security(settings)
+
+
+def test_unset_stoa_env_with_remote_redis_stays_strict():
+    settings = Settings(
+        stoa_env="",
+        redis_url="redis://public.example.com:6379/0",
+        celery_broker_url="",
+        celery_result_backend="",
+    )
+    assert settings.is_development is False
+    with pytest.raises(RedisSecurityError, match="password"):
+        validate_redis_security(settings)

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from urllib.parse import urlparse
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -130,7 +131,14 @@ class Settings(BaseSettings):
 
     @property
     def is_development(self) -> bool:
-        return self.stoa_env.strip().lower() in {"development", "dev", "local"}
+        env = self.stoa_env.strip().lower()
+        if env in {"development", "dev", "local"}:
+            return True
+        if env in {"production", "prod", "staging"}:
+            return False
+        # Unset STOA_ENV: treat localhost Redis as local dev; remote brokers stay strict.
+        host = (urlparse(self.broker_url).hostname or "").lower()
+        return host in {"localhost", "127.0.0.1", "::1"}
 
     @property
     def is_production(self) -> bool:
