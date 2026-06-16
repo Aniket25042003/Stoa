@@ -15,7 +15,7 @@ import {
   ProductTextarea,
 } from "@/components/product";
 import { apiFetch } from "@/lib/api";
-import type { Document } from "../data-hub-context";
+import type { Document } from "./data-hub-context";
 
 const DOC_TYPE_LABELS: Record<string, string> = {
   note: "Note",
