@@ -53,4 +53,4 @@ def test_delete_document_for_org_removes_related_records() -> None:
                 settings.return_value.storage_bucket = "intelligence-documents"
                 assert delete_document_for_org("org-1", "doc-1") is True
     sb.storage.from_.return_value.remove.assert_called_once_with(["org-1/doc-1/file.txt"])
-    assert sb.table.return_value.delete.call_count == 3
+    assert sb.table.return_value.delete.call_count == 4

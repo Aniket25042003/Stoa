@@ -143,6 +143,7 @@ def delete_document_for_org(org_id: str, document_id: str) -> bool:
 
     sb.table("knowledge_items").delete().eq("org_id", org_id).eq("uri", f"document:{document_id}").execute()
     sb.table("intelligence").delete().eq("org_id", org_id).eq("document_id", document_id).execute()
+    sb.table("document_chunks").delete().eq("org_id", org_id).eq("document_id", document_id).execute()
     sb.table("documents").delete().eq("id", document_id).eq("org_id", org_id).execute()
     return True
 
