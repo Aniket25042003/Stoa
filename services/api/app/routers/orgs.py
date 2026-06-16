@@ -5,9 +5,10 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
-from app.deps.auth import verify_supabase_jwt
+from app.deps.auth import verify_supabase_jwt, verify_supabase_jwt_payload
 from app.deps.org_scope import require_onboarded_scope
 from app.services.audit import write_audit
+from app.services.auth_state import email_from_claims, filter_memberships_for_display
 from app.services.org_context import (
     OrgScope,
     count_org_owners,
@@ -64,11 +65,30 @@ def _merge_profile(existing: dict[str, Any], update: OrgProfileUpdate | None) ->
 
 
 @router.get("")
-def list_orgs(user_id: str = Depends(verify_supabase_jwt)) -> dict[str, Any]:
+def list_orgs(claims: dict = Depends(verify_supabase_jwt_payload)) -> dict[str, Any]:
+    user_id = str(claims["sub"])
+    email = email_from_claims(claims)
     sb = get_supabase_admin()
-    profile = sb.table("user_profiles").select("last_active_org_id").eq("user_id", user_id).limit(1).execute()
-    active_org_id = (profile.data or [{}])[0].get("last_active_org_id")
-    memberships = list_user_memberships(user_id)
+    profile_row = (
+        sb.table("user_profiles")
+        .select("last_active_org_id, full_name")
+        .eq("user_id", user_id)
+        .limit(1)
+        .execute()
+    )
+    profile = (profile_row.data or [{}])[0]
+    active_org_id = profile.get("last_active_org_id")
+    full_name = profile.get("full_name")
+    memberships = filter_memberships_for_display(
+        list_user_memberships(user_id),
+        full_name=full_name,
+        email=email,
+    )
+    visible_org_ids = {m["org_id"] for m in memberships}
+    if active_org_id and active_org_id not in visible_org_ids:
+        active_org_id = memberships[0]["org_id"] if memberships else None
+        if active_org_id:
+            set_last_active_org(user_id, str(active_org_id))
     return {
         "active_org_id": str(active_org_id) if active_org_id else None,
         "organizations": [

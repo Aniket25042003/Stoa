@@ -12,7 +12,9 @@ from app.deps.auth import verify_supabase_jwt, verify_supabase_jwt_payload
 from app.services.document_ingestion import queue_text_document
 from app.services.audit import write_audit
 from app.services.auth_state import (
+    delete_legacy_stub_orgs_for_user,
     email_from_claims,
+    filter_memberships_for_display,
     get_or_create_user_profile,
     list_memberships,
     onboarding_needed_for_user,
@@ -116,7 +118,11 @@ def get_onboarding_context(claims: dict[str, Any] = Depends(verify_supabase_jwt_
                 "org_name": (m.get("organizations") or {}).get("name"),
                 "onboarding_completed_at": (m.get("organizations") or {}).get("onboarding_completed_at"),
             }
-            for m in memberships
+            for m in filter_memberships_for_display(
+                memberships,
+                full_name=profile.get("full_name"),
+                email=email,
+            )
         ],
         "prefilled": prefilled,
         "required_steps": _required_steps(mode, prefilled),
@@ -171,10 +177,17 @@ def onboarding_status(user_id: str = Depends(verify_supabase_jwt)) -> dict[str, 
 
 
 @router.post("/complete")
-def complete_onboarding(body: OnboardingCompleteBody, user_id: str = Depends(verify_supabase_jwt)) -> dict[str, Any]:
+def complete_onboarding(
+    body: OnboardingCompleteBody,
+    claims: dict[str, Any] = Depends(verify_supabase_jwt_payload),
+) -> dict[str, Any]:
+    user_id = str(claims["sub"])
+    email = email_from_claims(claims)
     sb = get_supabase_admin()
     completed_at = utc_now_iso()
     profile_payload = body.profile or {}
+    profile_row = sb.table("user_profiles").select("full_name").eq("user_id", user_id).limit(1).execute()
+    user_full_name = (profile_row.data or [{}])[0].get("full_name")
 
     user_updates = {
         k: v
@@ -229,6 +242,12 @@ def complete_onboarding(body: OnboardingCompleteBody, user_id: str = Depends(ver
         sb.table("user_profiles").update({"last_active_org_id": org_id}).eq("user_id", user_id).execute()
         write_audit(org_id, user_id, "org.created", "organization", org_id, {"name": body.name})
         write_audit(org_id, user_id, "onboarding.completed", "organization", org_id)
+        delete_legacy_stub_orgs_for_user(
+            user_id,
+            keep_org_id=org_id,
+            full_name=user_full_name,
+            email=email,
+        )
 
         user_profile_context = {
             "role_type": body.role_type,
