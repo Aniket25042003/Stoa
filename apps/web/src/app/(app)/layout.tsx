@@ -1,4 +1,4 @@
-import { AppHeader } from "@/components/app-shell/AppHeader";
+import { AppShell } from "@/components/app-shell/AppShell";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getServerApiBase } from "@/lib/server-api";
@@ -41,11 +41,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     }
   }
 
-  return (
-    <div className="min-h-screen bg-surface text-on-surface">
-      <div className="pointer-events-none fixed inset-0 -z-10 grid-bg dark:starfield" />
-      {user?.email ? <AppHeader email={user.email} /> : null}
-      <div className="mx-auto max-w-7xl px-4 py-8 md:px-6 md:py-10">{children}</div>
-    </div>
+  return user?.email ? (
+    <AppShell email={user.email}>{children}</AppShell>
+  ) : (
+    <div className="product-v2 min-h-screen">{children}</div>
   );
 }

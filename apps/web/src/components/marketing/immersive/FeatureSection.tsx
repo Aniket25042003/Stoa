@@ -4,7 +4,10 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import type { LandingSection } from "@/lib/landingFeatures";
+import { getMarketingCta } from "@/lib/auth-entry";
 import { cn } from "@/lib/cn";
+
+const marketingCta = getMarketingCta();
 
 type FeatureSectionProps = {
   section: LandingSection;
@@ -73,10 +76,10 @@ export function FeatureSection({ section, isActive, className }: FeatureSectionP
         {isHero && (
           <div className="mt-8">
             <Link
-              href="/waitlist"
+              href={marketingCta.href}
               className="group inline-flex items-center gap-2 rounded-sm bg-mkt-accent px-6 py-3.5 font-dm-sans text-[10px] font-bold uppercase tracking-widest text-mkt-dark-ink shadow-[0_10px_25px_rgba(79,70,229,0.15)] transition-all hover:bg-[#4338CA] active:scale-[0.98]"
             >
-              Request early access
+              {marketingCta.heroLabel}
               <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
             </Link>
           </div>
@@ -85,10 +88,10 @@ export function FeatureSection({ section, isActive, className }: FeatureSectionP
         {isCta && (
           <div className="mt-8">
             <Link
-              href="/waitlist"
+              href={marketingCta.href}
               className="rounded-sm bg-mkt-accent px-8 py-4 font-dm-sans text-[10px] font-bold uppercase tracking-widest text-mkt-dark-ink shadow-[0_10px_25px_rgba(79,70,229,0.15)] transition-all hover:bg-[#4338CA] hover:shadow-[0_15px_30px_rgba(79,70,229,0.25)] active:scale-[0.98]"
             >
-              Join the waitlist
+              {marketingCta.buttonLabel}
             </Link>
           </div>
         )}

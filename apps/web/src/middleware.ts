@@ -14,6 +14,7 @@ const PROTECTED_PREFIXES = [
   "/intelligence",
   "/competitive",
   "/campaigns",
+  "/settings",
   "/onboarding",
   "/gtm",
   "/marketing",

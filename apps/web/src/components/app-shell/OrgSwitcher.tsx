@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api";
@@ -50,7 +51,7 @@ export function OrgSwitcher() {
         value={active?.org_id ?? ""}
         onChange={(e) => void switchOrg(e.target.value)}
         disabled={loading || orgs.length === 0}
-        className="max-w-[200px] truncate rounded-full border border-outline-variant/60 bg-surface-container-low/80 px-3 py-2 text-sm"
+        className="max-w-[200px] truncate rounded-sm border border-mkt-ink/10 bg-[#F8F6F2] px-3 py-2 font-dm-sans text-xs text-mkt-ink"
         aria-label="Switch organization"
       >
         {orgs.length === 0 ? <option value="">No organization</option> : null}
@@ -60,9 +61,12 @@ export function OrgSwitcher() {
           </option>
         ))}
       </select>
-      <a href="/onboarding?mode=create" className="btn-secondary px-3 py-2 text-xs whitespace-nowrap">
+      <Link
+        href="/onboarding?mode=create"
+        className="whitespace-nowrap rounded-sm border border-mkt-ink/10 px-3 py-2 font-dm-sans text-[10px] font-bold uppercase tracking-widest text-mkt-muted transition-colors hover:border-mkt-accent/30 hover:text-mkt-accent"
+      >
         Create org
-      </a>
+      </Link>
     </div>
   );
 }

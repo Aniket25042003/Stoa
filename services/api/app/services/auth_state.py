@@ -160,3 +160,70 @@ def suggest_company_from_email(email: str) -> dict[str, str | None]:
         return {"name": None, "website_url": None}
     company = domain.split(".")[0].replace("-", " ").title()
     return {"name": company, "website_url": f"https://{domain}"}
+
+
+def is_legacy_auto_provisioned_org(
+    org: dict[str, Any],
+    *,
+    full_name: str | None,
+    email: str,
+) -> bool:
+    """True for orgs created by the removed handle_new_user_org signup trigger."""
+    if org.get("onboarding_completed_at"):
+        return False
+    name = (org.get("name") or "").strip()
+    if not name:
+        return True
+    if full_name and name.casefold() == str(full_name).strip().casefold():
+        return True
+    local_part = email.split("@")[0] if "@" in email else "workspace"
+    if name == f"{local_part}'s workspace":
+        return True
+    return False
+
+
+def filter_memberships_for_display(
+    memberships: list[dict[str, Any]],
+    *,
+    full_name: str | None,
+    email: str,
+) -> list[dict[str, Any]]:
+    """Hide legacy signup stubs when the user has at least one onboarded org."""
+    has_completed_org = any((m.get("organizations") or {}).get("onboarding_completed_at") for m in memberships)
+    if not has_completed_org:
+        return memberships
+    return [
+        m
+        for m in memberships
+        if not is_legacy_auto_provisioned_org(
+            m.get("organizations") or {},
+            full_name=full_name,
+            email=email,
+        )
+    ]
+
+
+def delete_legacy_stub_orgs_for_user(
+    user_id: str,
+    *,
+    keep_org_id: str,
+    full_name: str | None,
+    email: str,
+) -> None:
+    """Remove abandoned signup stub orgs after the user completes real onboarding."""
+    sb = get_supabase_admin()
+    for membership in list_memberships(user_id):
+        org_id = membership.get("org_id")
+        if not org_id or org_id == keep_org_id:
+            continue
+        org = membership.get("organizations") or {}
+        if not is_legacy_auto_provisioned_org(org, full_name=full_name, email=email):
+            continue
+        if role_key_from_membership(membership) != SYSTEM_ROLE_OWNER:
+            continue
+        member_count = (
+            sb.table("memberships").select("id", count="exact").eq("org_id", org_id).execute().count or 0
+        )
+        if member_count > 1:
+            continue
+        sb.table("organizations").delete().eq("id", org_id).execute()

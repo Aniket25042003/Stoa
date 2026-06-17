@@ -8,7 +8,7 @@ import { PricingCard } from "@/components/marketing/PricingCard";
 import { RevealOnScroll } from "@/components/marketing/RevealOnScroll";
 import { SectionHeader } from "@/components/marketing/SectionHeader";
 import { MarketingPageShell } from "@/components/marketing/immersive/MarketingPageShell";
-import { getAuthEntryPath } from "@/lib/auth-entry";
+import { getAuthEntryPath, getMarketingCta } from "@/lib/auth-entry";
 import { BRAND_SUBHEAD } from "@/lib/brand";
 import { cn } from "@/lib/cn";
 
@@ -95,6 +95,7 @@ function CompareCell({ value }: { value: string }) {
 export default function PricingPage() {
   const [yearly, setYearly] = useState(true);
   const list = tiers(yearly, getAuthEntryPath());
+  const marketingCta = getMarketingCta();
 
   return (
     <MarketingPageShell>
@@ -174,10 +175,10 @@ export default function PricingPage() {
         <MarketingCtaBand
           className="mt-16"
           eyebrow="Early access"
-          title="Get on the list"
-          description="Join the waitlist while we roll out billing and team workspaces."
-          ctaLabel="Join waitlist"
-          ctaHref="/waitlist"
+          title={marketingCta.bandTitle}
+          description={marketingCta.bandDescription}
+          ctaLabel={marketingCta.buttonLabel}
+          ctaHref={marketingCta.href}
         />
       </RevealOnScroll>
     </MarketingPageShell>

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from stoa_core.db.supabase import get_supabase_admin
@@ -146,7 +146,7 @@ def run_sync(connection_id: str, org_id: str, *, full_backfill: bool = False) ->
                 "org_id": org_id,
                 "connection_id": connection_id,
                 "status": "running",
-                "started_at": datetime.now(timezone.utc).isoformat(),
+                "started_at": datetime.now(UTC).isoformat(),
             }
         )
         .execute()
@@ -170,7 +170,7 @@ def run_sync(connection_id: str, org_id: str, *, full_backfill: bool = False) ->
         )
 
         update_payload: dict[str, Any] = {
-            "last_sync_at": datetime.now(timezone.utc).isoformat(),
+            "last_sync_at": datetime.now(UTC).isoformat(),
             "sync_cursor": result.cursor,
             "status": "error" if result.error else "active",
             "last_error": result.error,
@@ -186,7 +186,7 @@ def run_sync(connection_id: str, org_id: str, *, full_backfill: bool = False) ->
                 "records_fetched": result.records_fetched,
                 "records_written": result.records_written,
                 "error": result.error,
-                "finished_at": datetime.now(timezone.utc).isoformat(),
+                "finished_at": datetime.now(UTC).isoformat(),
             }
         ).eq("id", run_id).execute()
 
@@ -214,7 +214,7 @@ def run_sync(connection_id: str, org_id: str, *, full_backfill: bool = False) ->
             {
                 "status": "failed",
                 "error": str(exc),
-                "finished_at": datetime.now(timezone.utc).isoformat(),
+                "finished_at": datetime.now(UTC).isoformat(),
             }
         ).eq("id", run_id).execute()
         sb.table("integration_connections").update(

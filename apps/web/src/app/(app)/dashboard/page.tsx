@@ -32,8 +32,10 @@ export default async function DashboardPage() {
 
   if (loadError) {
     return (
-      <div className="rounded-3xl p-8 card-glass text-center">
-        <p className="text-on-surface-variant">Could not load workspace. Check API connection and try again.</p>
+      <div className="rounded-sm border border-mkt-ink/[0.06] bg-mkt-surface p-8 text-center shadow-sm">
+        <p className="font-dm-sans text-sm text-mkt-muted">
+          Could not load workspace. Check API connection and try again.
+        </p>
       </div>
     );
   }

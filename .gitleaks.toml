@@ -1,0 +1,12 @@
+[allowlist]
+paths = [
+  '''services/core/tests/''',
+  '''services/api/tests/''',
+  '''services/api/\.env\.example''',
+  '''apps/web/\.env\.example''',
+  '''legacy/services/api/\.env\.example''',
+]
+regexes = [
+  '''sk-abcdefghijklmnopqrstuvwxyz123456''',
+  '''eyJhbGciOiJIUzI1NiJ9\.eyJzdWIiOiIxMjM0NTY3ODkwIn0''',
+]

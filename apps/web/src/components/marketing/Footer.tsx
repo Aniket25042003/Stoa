@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowRight } from "lucide-react";
-import { getAuthEntryPath } from "@/lib/auth-entry";
+import { getAuthEntryPath, getMarketingCta } from "@/lib/auth-entry";
 import { BRAND_LOGO_LETTER, BRAND_NAME, BRAND_SUBHEAD, BRAND_TAGLINE } from "@/lib/brand";
 import { isMarketingV2Page } from "@/lib/marketing-v2";
 
 const authEntry = getAuthEntryPath();
+const marketingCta = getMarketingCta();
 
 const productLinks = [
   { href: "/see-it-in-action", label: "See it in action" },
@@ -101,14 +102,14 @@ export function Footer() {
                   Get started
                 </p>
                 <p className="mt-3 font-dm-sans text-sm leading-relaxed text-mkt-dark-ink/65">
-                  Join the waitlist for early access to precomputed marketing intelligence.
+                  {marketingCta.footerDescription}
                 </p>
               </div>
               <Link
-                href="/waitlist"
+                href={marketingCta.href}
                 className="group inline-flex w-fit items-center gap-2 rounded-sm bg-mkt-accent px-5 py-3 font-dm-sans text-[10px] font-bold uppercase tracking-widest text-mkt-dark-ink shadow-[0_8px_24px_rgba(79,70,229,0.35)] transition-all hover:bg-[#4338CA]"
               >
-                Join waitlist
+                {marketingCta.buttonLabel}
                 <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
               </Link>
             </div>

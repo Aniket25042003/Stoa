@@ -64,3 +64,15 @@ export function canRead(permissions: string[] | undefined, perm: string): boolea
   if (!permissions) return true;
   return permissions.includes(perm);
 }
+
+/** Nav-only: hide items until permissions are loaded to avoid flash of unauthorized links. */
+export function canReadNav(
+  permissions: string[] | null | undefined,
+  perm: string,
+  permissionsLoaded: boolean
+): boolean {
+  if (!permissionsLoaded) return false;
+  if (permissions === null) return true;
+  if (!permissions) return false;
+  return permissions.includes(perm);
+}

@@ -2,6 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { CompleteDataPrompt } from "@/components/app-shell/CompleteDataPrompt";
+import {
+  ProductBadge,
+  ProductButton,
+  ProductCard,
+  ProductInput,
+  ProductPageHeader,
+} from "@/components/product";
 import { apiFetch } from "@/lib/api";
 import { consumeSse } from "@/lib/sse";
 
@@ -23,6 +30,15 @@ type CrmStats = {
   top_titles?: { title: string; count: number }[];
   top_loss_reasons?: { reason: string; count: number }[];
 };
+
+function StatCard({ label, value }: { label: string; value: string | number }) {
+  return (
+    <ProductCard className="p-4">
+      <p className="font-dm-sans text-[9px] font-bold uppercase tracking-[0.22em] text-mkt-muted">{label}</p>
+      <p className="mt-1 font-syne text-2xl font-extrabold text-mkt-accent">{value}</p>
+    </ProductCard>
+  );
+}
 
 export function IntelligenceWorkspace() {
   const [signals, setSignals] = useState<Signal[]>([]);
@@ -92,7 +108,9 @@ export function IntelligenceWorkspace() {
     setConversationId(convId);
     const ctrl = new AbortController();
     try {
-      await consumeSse(`/v1/conversations/${convId}/events`, (data) => {
+      await consumeSse(
+        `/v1/conversations/${convId}/events`,
+        (data) => {
           if (data.status === "completed" && typeof data.answer === "string") {
             setAnswer(data.answer);
             setStatus(null);
@@ -129,13 +147,11 @@ export function IntelligenceWorkspace() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-[2rem] bg-slate-deep p-7 text-white shadow-card md:p-10">
-        <p className="eyebrow text-inverse-primary">Customer Intelligence</p>
-        <h1 className="mt-4 font-display text-4xl font-extrabold tracking-[-0.045em]">ICP & Customer Research</h1>
-        <p className="mt-4 max-w-2xl text-sm leading-7 text-white/68">
-          Precomputed answers from your ingested data. Ask follow-up questions with evidence citations.
-        </p>
-      </div>
+      <ProductPageHeader
+        eyebrow="Customer intelligence"
+        title="ICP & customer research"
+        lead="Precomputed answers from your ingested data. Ask follow-up questions with evidence citations."
+      />
 
       {!hasData ? (
         <CompleteDataPrompt
@@ -147,142 +163,184 @@ export function IntelligenceWorkspace() {
 
       {crmStats && (crmStats.total_accounts || crmStats.total_deals) ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-2xl card-glass p-4">
-            <p className="text-xs text-on-surface-variant">Accounts</p>
-            <p className="font-display text-2xl font-bold">{crmStats.total_accounts ?? 0}</p>
-          </div>
-          <div className="rounded-2xl card-glass p-4">
-            <p className="text-xs text-on-surface-variant">Deals</p>
-            <p className="font-display text-2xl font-bold">{crmStats.total_deals ?? 0}</p>
-          </div>
-          <div className="rounded-2xl card-glass p-4">
-            <p className="text-xs text-on-surface-variant">Win rate</p>
-            <p className="font-display text-2xl font-bold">{crmStats.win_rate_percent != null ? `${crmStats.win_rate_percent}%` : "—"}</p>
-          </div>
-          <div className="rounded-2xl card-glass p-4">
-            <p className="text-xs text-on-surface-variant">Top industry</p>
-            <p className="font-display text-lg font-bold">{crmStats.top_industries?.[0]?.name ?? "—"}</p>
-          </div>
+          <StatCard label="Accounts" value={crmStats.total_accounts ?? 0} />
+          <StatCard label="Deals" value={crmStats.total_deals ?? 0} />
+          <StatCard
+            label="Win rate"
+            value={crmStats.win_rate_percent != null ? `${crmStats.win_rate_percent}%` : "—"}
+          />
+          <StatCard label="Top industry" value={crmStats.top_industries?.[0]?.name ?? "—"} />
         </div>
       ) : null}
 
-      {prepared.length > 0 ? (
-        <div className="rounded-3xl p-6 card-glass space-y-4">
-          <div className="flex items-center justify-between gap-4">
-            <h2 className="font-display text-xl font-bold">Answers we prepared for you</h2>
-            <button type="button" onClick={() => void refreshInsights()} className="btn-secondary px-4 py-2 text-sm">
-              Refresh
-            </button>
-          </div>
-          <div className="space-y-3">
-            {prepared.map((item) => (
-              <div key={item.id} className="rounded-xl bg-surface-container-low p-4">
-                <button
-                  type="button"
-                  className="w-full text-left"
-                  onClick={() => setExpanded(expanded === item.id ? null : item.id)}
-                >
-                  <p className="font-semibold text-on-surface">{item.title}</p>
-                </button>
-                {expanded === item.id ? (
-                  <div className="mt-3 text-sm leading-7 text-on-surface-variant">
-                    <p>{item.content?.answer ?? "No answer yet."}</p>
-                    {item.citations?.length ? (
-                      <p className="mt-2 text-xs text-primary">Citations: {item.citations.join(", ")}</p>
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+        <div className="space-y-6">
+          {prepared.length > 0 ? (
+            <ProductCard className="space-y-4">
+              <div className="flex items-center justify-between gap-4">
+                <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">
+                  Prepared answers
+                </h2>
+                <ProductButton variant="secondary" onClick={() => void refreshInsights()}>
+                  Refresh
+                </ProductButton>
+              </div>
+              <div className="space-y-3">
+                {prepared.map((item) => (
+                  <div key={item.id} className="rounded-sm border border-mkt-ink/[0.06] bg-mkt-ink/[0.02] p-4">
+                    <button
+                      type="button"
+                      className="w-full text-left"
+                      onClick={() => setExpanded(expanded === item.id ? null : item.id)}
+                    >
+                      <p className="font-dm-sans text-sm font-semibold text-mkt-ink">{item.title}</p>
+                    </button>
+                    {expanded === item.id ? (
+                      <div className="mt-3 font-dm-sans text-sm leading-relaxed text-mkt-muted">
+                        <p>{item.content?.answer ?? "No answer yet."}</p>
+                        {item.citations?.length ? (
+                          <div className="mt-3 flex flex-wrap gap-1.5">
+                            {item.citations.map((c) => (
+                              <ProductBadge key={c} variant="accent">
+                                {c}
+                              </ProductBadge>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
                     ) : null}
                   </div>
-                ) : null}
+                ))}
               </div>
-            ))}
+            </ProductCard>
+          ) : hasData ? (
+            <p className="font-dm-sans text-sm text-mkt-muted">
+              Prepared answers will appear after documents are processed.
+            </p>
+          ) : null}
+
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-1">
+            <ProductCard>
+              <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">ICP explorer</h2>
+              {profile?.profile ? (
+                <div className="mt-4 space-y-3 font-dm-sans text-sm">
+                  {((profile.profile as { top_segments?: { name: string }[] }).top_segments ?? [])
+                    .slice(0, 5)
+                    .map((s, i) => (
+                      <p key={i} className="font-semibold text-mkt-ink">
+                        {s.name}
+                      </p>
+                    ))}
+                  {((profile.profile as { structured_crm?: CrmStats }).structured_crm?.top_industries ?? []).map(
+                    (ind) => (
+                      <p key={ind.name} className="text-mkt-muted">
+                        {ind.name}: {ind.count} accounts
+                      </p>
+                    )
+                  )}
+                </div>
+              ) : (
+                <p className="mt-4 font-dm-sans text-sm text-mkt-muted">
+                  Connect CRM data to populate ICP segments.
+                </p>
+              )}
+            </ProductCard>
+
+            <ProductCard>
+              <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">
+                Pain points & objections
+              </h2>
+              <ul className="mt-4 space-y-2 font-dm-sans text-sm">
+                {signals
+                  .filter((s) => s.kind === "pain_point")
+                  .slice(0, 5)
+                  .map((s) => (
+                    <li key={s.id} className="text-mkt-muted">
+                      Pain: {s.content}
+                    </li>
+                  ))}
+                {signals
+                  .filter((s) => s.kind === "objection")
+                  .slice(0, 5)
+                  .map((s) => (
+                    <li key={s.id} className="text-mkt-muted">
+                      Objection: {s.content}
+                    </li>
+                  ))}
+              </ul>
+              {crmStats?.top_loss_reasons?.length ? (
+                <div className="mt-4 border-t border-mkt-ink/[0.06] pt-3">
+                  <p className="font-dm-sans text-[9px] font-bold uppercase tracking-[0.22em] text-mkt-muted">
+                    Win/loss — top loss reasons
+                  </p>
+                  {crmStats.top_loss_reasons.map((r) => (
+                    <p key={r.reason} className="mt-1 font-dm-sans text-sm text-mkt-muted">
+                      {r.reason} ({r.count})
+                    </p>
+                  ))}
+                </div>
+              ) : null}
+            </ProductCard>
           </div>
         </div>
-      ) : hasData ? (
-        <p className="text-sm text-on-surface-variant">Prepared answers will appear after documents are processed.</p>
-      ) : null}
 
-      <form onSubmit={handleAsk} className="rounded-3xl p-6 card-glass space-y-4">
-        <h2 className="font-display text-xl font-bold">Ask a follow-up</h2>
-        <input
-          className="w-full rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-sm"
-          placeholder="Who are our highest-converting customers?"
-          value={question}
-          onChange={(e) => setQuestion(e.target.value)}
-          disabled={!hasData}
-        />
-        <button type="submit" disabled={loading || !hasData} className="btn-primary px-5 py-2 text-sm disabled:opacity-50">
-          Ask
-        </button>
-        {answer ? (
-          <div className="rounded-xl bg-surface-container-low p-4 text-sm leading-7 text-on-surface">{answer}</div>
-        ) : null}
-        {conversationId ? <p className="text-xs text-on-surface-variant">Conversation: {conversationId}</p> : null}
-      </form>
+        <div className="space-y-6">
+          <ProductCard className="space-y-4">
+            <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">Ask a follow-up</h2>
+            <form onSubmit={handleAsk} className="space-y-4">
+              <ProductInput
+                placeholder="Who are our highest-converting customers?"
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                disabled={!hasData}
+              />
+              <ProductButton type="submit" disabled={loading || !hasData}>
+                {loading ? "Thinking…" : "Ask"}
+              </ProductButton>
+            </form>
+            {answer ? (
+              <div className="rounded-sm border border-mkt-ink/[0.06] bg-mkt-ink/[0.02] p-4 font-dm-sans text-sm leading-relaxed text-mkt-ink">
+                {answer}
+              </div>
+            ) : null}
+            {conversationId ? (
+              <p className="font-dm-sans text-xs text-mkt-muted">Conversation: {conversationId}</p>
+            ) : null}
+          </ProductCard>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-3xl p-6 card-glass">
-          <h2 className="font-display text-xl font-bold">ICP Explorer</h2>
-          {profile?.profile ? (
-            <div className="mt-4 space-y-3 text-sm">
-              {((profile.profile as { top_segments?: { name: string }[] }).top_segments ?? []).slice(0, 5).map((s, i) => (
-                <p key={i}><span className="font-semibold">{s.name}</span></p>
-              ))}
-              {((profile.profile as { structured_crm?: CrmStats }).structured_crm?.top_industries ?? []).map((ind) => (
-                <p key={ind.name} className="text-on-surface-variant">{ind.name}: {ind.count} accounts</p>
-              ))}
+          <ProductCard>
+            <div className="flex items-center justify-between gap-4">
+              <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">ICP profile</h2>
+              <ProductButton variant="secondary" onClick={() => void rebuildIcp()}>
+                Rebuild ICP
+              </ProductButton>
             </div>
-          ) : (
-            <p className="mt-4 text-sm text-on-surface-variant">Connect CRM data to populate ICP segments.</p>
-          )}
-        </div>
-        <div className="rounded-3xl p-6 card-glass">
-          <h2 className="font-display text-xl font-bold">Pain points & objections</h2>
-          <ul className="mt-4 space-y-2 text-sm">
-            {signals.filter((s) => s.kind === "pain_point").slice(0, 5).map((s) => (
-              <li key={s.id} className="text-on-surface-variant">Pain: {s.content}</li>
-            ))}
-            {signals.filter((s) => s.kind === "objection").slice(0, 5).map((s) => (
-              <li key={s.id} className="text-on-surface-variant">Objection: {s.content}</li>
-            ))}
-          </ul>
-          {crmStats?.top_loss_reasons?.length ? (
-            <div className="mt-4 border-t border-outline-variant/40 pt-3">
-              <p className="text-xs font-semibold text-on-surface-variant">Win/loss — top loss reasons</p>
-              {crmStats.top_loss_reasons.map((r) => (
-                <p key={r.reason} className="text-sm text-on-surface-variant">{r.reason} ({r.count})</p>
+            {profile ? (
+              <pre className="mt-4 max-h-64 overflow-auto rounded-sm border border-mkt-ink/[0.06] bg-mkt-ink/[0.02] p-4 font-mono text-xs text-mkt-ink">
+                {JSON.stringify(profile.profile, null, 2)}
+              </pre>
+            ) : (
+              <p className="mt-4 font-dm-sans text-sm text-mkt-muted">No ICP profile yet.</p>
+            )}
+          </ProductCard>
+
+          <ProductCard>
+            <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">
+              Signals ({signals.length})
+            </h2>
+            <ul className="mt-4 space-y-2 font-dm-sans text-sm">
+              {signals.slice(0, 10).map((s) => (
+                <li key={s.id} className="flex flex-wrap items-baseline gap-2 text-mkt-muted">
+                  <ProductBadge variant="accent">{s.kind}</ProductBadge>
+                  <span>{s.content}</span>
+                </li>
               ))}
-            </div>
-          ) : null}
+            </ul>
+          </ProductCard>
         </div>
       </div>
 
-      <div className="rounded-3xl p-6 card-glass">
-        <div className="flex items-center justify-between gap-4">
-          <h2 className="font-display text-xl font-bold">ICP Profile</h2>
-          <button type="button" onClick={() => void rebuildIcp()} className="btn-secondary px-4 py-2 text-sm">
-            Rebuild ICP
-          </button>
-        </div>
-        {profile ? (
-          <pre className="mt-4 overflow-auto rounded-xl bg-surface-container-low p-4 text-xs text-on-surface">
-            {JSON.stringify(profile.profile, null, 2)}
-          </pre>
-        ) : (
-          <p className="mt-4 text-sm text-on-surface-variant">No ICP profile yet.</p>
-        )}
-      </div>
-
-      <div className="rounded-3xl p-6 card-glass">
-        <h2 className="font-display text-xl font-bold">Signals ({signals.length})</h2>
-        <ul className="mt-4 space-y-2 text-sm">
-          {signals.slice(0, 10).map((s) => (
-            <li key={s.id} className="text-on-surface-variant">
-              <span className="font-mono text-xs text-primary">{s.kind}</span> — {s.content}
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {status ? <p className="text-sm text-on-surface-variant">{status}</p> : null}
+      {status ? <p className="font-dm-sans text-sm text-mkt-muted">{status}</p> : null}
     </div>
   );
 }

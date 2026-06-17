@@ -4,6 +4,9 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { BRAND_SUBHEAD, BRAND_TAGLINE } from "@/lib/brand";
+import { getMarketingCta } from "@/lib/auth-entry";
+
+const marketingCta = getMarketingCta();
 
 const PILLARS = [
   { label: "Customer signals", accent: "indigo" as const },
@@ -75,10 +78,10 @@ export function MarketingHero() {
 
           <div className="mt-10 flex flex-wrap items-center gap-4">
             <Link
-              href="/waitlist"
+              href={marketingCta.href}
               className="group inline-flex items-center gap-2 rounded-sm bg-mkt-accent px-7 py-4 font-dm-sans text-[10px] font-bold uppercase tracking-widest text-mkt-dark-ink shadow-[0_12px_32px_rgba(79,70,229,0.22)] transition-all hover:bg-[#4338CA] hover:shadow-[0_16px_40px_rgba(79,70,229,0.28)] active:scale-[0.98]"
             >
-              Request early access
+              {marketingCta.heroLabel}
               <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
             </Link>
             <Link

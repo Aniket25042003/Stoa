@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ProductButton, ProductCard } from "@/components/product";
 
 export function CompleteDataPrompt({
   title,
@@ -10,17 +11,15 @@ export function CompleteDataPrompt({
   missing?: string[];
 }) {
   return (
-    <div className="rounded-3xl border border-primary/30 bg-primary/5 p-6 card-glass">
-      <h3 className="font-display text-lg font-bold text-on-surface">{title}</h3>
-      <p className="mt-2 text-sm leading-7 text-on-surface-variant">{message}</p>
+    <ProductCard className="border-mkt-accent/20 bg-mkt-accent/[0.04]">
+      <h3 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">{title}</h3>
+      <p className="mt-2 font-dm-sans text-sm leading-relaxed text-mkt-muted">{message}</p>
       {missing && missing.length > 0 ? (
-        <p className="mt-2 text-xs text-on-surface-variant">
-          Missing: {missing.join(", ")}
-        </p>
+        <p className="mt-2 font-dm-sans text-xs text-mkt-muted">Missing: {missing.join(", ")}</p>
       ) : null}
-      <Link href="/data" className="btn-primary mt-4 inline-flex px-4 py-2 text-sm">
-        Go to Data hub
+      <Link href="/data/profile" className="mt-4 inline-block">
+        <ProductButton>Go to Data hub</ProductButton>
       </Link>
-    </div>
+    </ProductCard>
   );
 }

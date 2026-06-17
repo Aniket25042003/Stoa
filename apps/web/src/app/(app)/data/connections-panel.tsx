@@ -3,6 +3,14 @@
 import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { consumeSse } from "@/lib/sse";
+import { INTEGRATION_BENEFITS, groupProvidersByCategory } from "@/lib/integration-catalog";
+import {
+  ProductButton,
+  ProductCard,
+  ProductInput,
+  ProductStatusPill,
+} from "@/components/product";
+import { useDataHub } from "./data-hub-context";
 
 type Provider = {
   id: string;
@@ -21,12 +29,6 @@ type Connection = {
 };
 
 const API_KEY_PROVIDERS: Record<string, { fields: { key: string; label: string; type?: string }[] }> = {
-  gong: {
-    fields: [
-      { key: "access_key", label: "Access Key" },
-      { key: "access_key_secret", label: "Access Key Secret", type: "password" },
-    ],
-  },
   intercom: { fields: [{ key: "access_token", label: "Access Token", type: "password" }] },
   zendesk: {
     fields: [
@@ -67,12 +69,27 @@ const API_KEY_PROVIDERS: Record<string, { fields: { key: string; label: string; 
       { key: "project_id", label: "Project ID" },
     ],
   },
+  reddit: {
+    fields: [
+      { key: "search_query", label: "Brand or product search query" },
+      { key: "subreddits", label: "Subreddits (comma-separated, optional)" },
+    ],
+  },
 };
 
+function benefitFor(provider: Provider): string {
+  return INTEGRATION_BENEFITS[provider.id] ?? provider.description;
+}
+
+function usesCredentialForm(provider: Provider): boolean {
+  if (provider.auth_type === "oauth") return false;
+  return provider.auth_type === "api_key" || Boolean(API_KEY_PROVIDERS[provider.id]);
+}
+
 export function ConnectionsPanel({ onConnected }: { onConnected?: () => void }) {
+  const { showToast } = useDataHub();
   const [providers, setProviders] = useState<Provider[]>([]);
   const [connections, setConnections] = useState<Connection[]>([]);
-  const [status, setStatus] = useState<string | null>(null);
   const [activeProvider, setActiveProvider] = useState<string | null>(null);
   const [credForm, setCredForm] = useState<Record<string, string>>({});
 
@@ -81,7 +98,10 @@ export function ConnectionsPanel({ onConnected }: { onConnected?: () => void }) 
       apiFetch("/v1/integrations/providers"),
       apiFetch("/v1/integrations/sources"),
     ]);
-    if (pRes.ok) setProviders((await pRes.json()).providers ?? []);
+    if (pRes.ok) {
+      const listed = ((await pRes.json()).providers ?? []) as Provider[];
+      setProviders(listed.filter((p) => p.auth_type !== "upload"));
+    }
     if (cRes.ok) setConnections((await cRes.json()).connections ?? []);
   }, []);
 
@@ -89,11 +109,17 @@ export function ConnectionsPanel({ onConnected }: { onConnected?: () => void }) 
     void refresh();
   }, [refresh]);
 
-  async function connectOAuth(provider: string) {
-    setStatus(`Opening ${provider} authorization...`);
-    const res = await apiFetch(`/v1/integrations/connect/${provider}`);
+  const connectionsByProvider = new Map(connections.map((c) => [c.provider, c]));
+  const categories = groupProvidersByCategory(providers);
+
+  function providerLabel(providerId: string) {
+    return providers.find((p) => p.id === providerId)?.name ?? providerId;
+  }
+
+  async function connectOAuth(provider: Provider) {
+    const res = await apiFetch(`/v1/integrations/connect/${provider.id}`);
     if (!res.ok) {
-      setStatus(`Failed to start ${provider} OAuth`);
+      showToast(`Could not connect ${provider.name}`, "error");
       return;
     }
     const body = await res.json();
@@ -102,26 +128,29 @@ export function ConnectionsPanel({ onConnected }: { onConnected?: () => void }) 
     }
   }
 
-  async function connectApiKey(provider: string) {
-    const schema = API_KEY_PROVIDERS[provider];
+  async function connectApiKey(providerId: string) {
+    const schema = API_KEY_PROVIDERS[providerId];
     if (!schema) return;
     const credentials: Record<string, unknown> = { ...credForm };
-    if (provider === "slack" && typeof credentials.channel_ids === "string") {
+    if (providerId === "slack" && typeof credentials.channel_ids === "string") {
       credentials.channel_ids = credentials.channel_ids.split(",").map((s) => s.trim()).filter(Boolean);
     }
-    if (provider === "notion" && typeof credentials.page_ids === "string") {
+    if (providerId === "notion" && typeof credentials.page_ids === "string") {
       credentials.page_ids = credentials.page_ids.split(",").map((s) => s.trim()).filter(Boolean);
     }
-    const res = await apiFetch(`/v1/integrations/sources/${provider}/connect`, {
+    if (providerId === "reddit" && typeof credentials.subreddits === "string") {
+      credentials.subreddits = credentials.subreddits.split(",").map((s) => s.trim()).filter(Boolean);
+    }
+    const res = await apiFetch(`/v1/integrations/sources/${providerId}/connect`, {
       method: "POST",
       body: JSON.stringify({ credentials }),
     });
     if (!res.ok) {
-      setStatus(`Failed to connect ${provider}`);
+      showToast(`Could not connect ${providerLabel(providerId)}`, "error");
       return;
     }
     const body = await res.json();
-    setStatus(`${provider} connected — syncing...`);
+    showToast(`${providerLabel(providerId)} connected`);
     setActiveProvider(null);
     setCredForm({});
     void refresh();
@@ -134,12 +163,12 @@ export function ConnectionsPanel({ onConnected }: { onConnected?: () => void }) 
           `/v1/integrations/sources/${connId}/events`,
           (data) => {
             if (data.status === "completed") {
-              setStatus(`${provider} sync completed (${data.records_written ?? 0} records)`);
+              showToast(`${providerLabel(providerId)} sync complete`);
               ctrl.abort();
               void refresh();
             }
             if (data.status === "failed") {
-              setStatus(`${provider} sync failed`);
+              showToast(`${providerLabel(providerId)} sync failed`, "error");
               ctrl.abort();
             }
           },
@@ -152,97 +181,125 @@ export function ConnectionsPanel({ onConnected }: { onConnected?: () => void }) 
   }
 
   async function syncNow(connectionId: string) {
-    await apiFetch(`/v1/integrations/sources/${connectionId}/sync`, { method: "POST" });
-    setStatus("Sync queued");
+    const res = await apiFetch(`/v1/integrations/sources/${connectionId}/sync`, { method: "POST" });
+    if (!res.ok) {
+      showToast("Could not start sync", "error");
+      return;
+    }
+    showToast("Sync started");
     void refresh();
   }
 
-  async function disconnect(connectionId: string) {
-    await apiFetch(`/v1/integrations/sources/${connectionId}`, { method: "DELETE" });
+  async function disconnect(connection: Connection) {
+    const res = await apiFetch(`/v1/integrations/sources/${connection.id}`, { method: "DELETE" });
+    if (!res.ok) {
+      showToast(`Could not disconnect ${connection.label}`, "error");
+      return;
+    }
+    showToast(`${connection.label} disconnected`);
     void refresh();
   }
 
-  const oauthProviders = providers.filter((p) => p.auth_type === "oauth");
-  const apiProviders = providers.filter((p) => p.auth_type === "api_key" || API_KEY_PROVIDERS[p.id]);
+  function handleConnect(provider: Provider) {
+    if (usesCredentialForm(provider)) {
+      setActiveProvider(activeProvider === provider.id ? null : provider.id);
+      setCredForm({});
+      return;
+    }
+    void connectOAuth(provider);
+  }
 
   return (
-    <div className="rounded-3xl p-6 card-glass space-y-4">
-      <h2 className="font-display text-xl font-bold">Data connections</h2>
-      <p className="text-sm text-on-surface-variant">
-        Connect CRM, call transcripts, support tools, and reviews. Data syncs in the background and feeds Customer Intelligence.
-      </p>
-
-      <div className="flex flex-wrap gap-2">
-        {oauthProviders.map((p) => (
-          <button
-            key={p.id}
-            type="button"
-            className="btn-secondary px-3 py-2 text-sm"
-            onClick={() => void connectOAuth(p.id)}
-          >
-            Connect {p.name}
-          </button>
-        ))}
-        {apiProviders.map((p) => (
-          <button
-            key={p.id}
-            type="button"
-            className="btn-secondary px-3 py-2 text-sm"
-            onClick={() => setActiveProvider(activeProvider === p.id ? null : p.id)}
-          >
-            {p.name}
-          </button>
-        ))}
+    <div className="space-y-6">
+      <div>
+        <p className="font-dm-sans text-[9px] font-bold uppercase tracking-[0.22em] text-mkt-accent">Integrations</p>
+        <p className="mt-2 max-w-2xl font-dm-sans text-sm leading-relaxed text-mkt-muted">
+          Connect your stack by category. Data syncs in the background and feeds Customer Intelligence, competitive
+          monitoring, and campaign generation.
+        </p>
       </div>
 
-      {activeProvider && API_KEY_PROVIDERS[activeProvider] ? (
-        <form
-          className="space-y-3 rounded-xl bg-surface-container-low p-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void connectApiKey(activeProvider);
-          }}
-        >
-          {API_KEY_PROVIDERS[activeProvider].fields.map((f) => (
-            <input
-              key={f.key}
-              className="w-full rounded-xl border border-outline-variant/60 bg-surface px-4 py-2 text-sm"
-              placeholder={f.label}
-              type={f.type ?? "text"}
-              value={credForm[f.key] ?? ""}
-              onChange={(ev) => setCredForm({ ...credForm, [f.key]: ev.target.value })}
-            />
-          ))}
-          <button type="submit" className="btn-primary px-4 py-2 text-sm">
-            Connect
-          </button>
-        </form>
-      ) : null}
+      {categories.map((category) => (
+        <ProductCard key={category.id} className="space-y-4">
+          <div>
+            <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">
+              {category.label}
+            </h2>
+            <p className="mt-1 font-dm-sans text-sm leading-relaxed text-mkt-muted">{category.description}</p>
+          </div>
 
-      <ul className="space-y-2 text-sm">
-        {connections.map((c) => (
-          <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-surface-container-low p-3">
-            <div>
-              <span className="font-semibold">{c.label}</span>
-              <span className="ml-2 text-xs text-on-surface-variant">{c.status}</span>
-              {c.last_sync_at ? (
-                <p className="text-xs text-on-surface-variant">Last sync: {new Date(c.last_sync_at).toLocaleString()}</p>
-              ) : null}
-              {c.last_error ? <p className="text-xs text-red-600">{c.last_error}</p> : null}
-            </div>
-            <div className="flex gap-2">
-              <button type="button" className="text-xs text-primary" onClick={() => void syncNow(c.id)}>
-                Sync now
-              </button>
-              <button type="button" className="text-xs text-on-surface-variant" onClick={() => void disconnect(c.id)}>
-                Disconnect
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
+          <div className="space-y-3">
+            {category.providers.map((provider) => {
+              const connection = connectionsByProvider.get(provider.id);
+              const isConnected = Boolean(connection);
+              const isExpanded = activeProvider === provider.id;
 
-      {status ? <p className="text-sm text-on-surface-variant">{status}</p> : null}
+              return (
+                <div key={provider.id} className="rounded-sm border border-mkt-ink/[0.06] bg-mkt-ink/[0.02]">
+                  <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-dm-sans text-sm font-semibold text-mkt-ink">{provider.name}</h3>
+                        {isConnected ? <ProductStatusPill status={connection!.status} /> : null}
+                      </div>
+                      <p className="mt-1 font-dm-sans text-sm leading-relaxed text-mkt-muted">
+                        {benefitFor(provider)}
+                      </p>
+                      {isConnected && connection?.last_sync_at ? (
+                        <p className="mt-1 font-dm-sans text-xs text-mkt-muted">
+                          Last sync: {new Date(connection.last_sync_at).toLocaleString()}
+                        </p>
+                      ) : null}
+                      {isConnected && connection?.last_error ? (
+                        <p className="mt-1 font-dm-sans text-xs text-mkt-accent-warm">{connection.last_error}</p>
+                      ) : null}
+                    </div>
+
+                    <div className="flex shrink-0 gap-2 sm:pl-4">
+                      {isConnected ? (
+                        <>
+                          <ProductButton variant="secondary" onClick={() => void syncNow(connection!.id)}>
+                            Sync
+                          </ProductButton>
+                          <ProductButton variant="ghost" onClick={() => void disconnect(connection!)}>
+                            Disconnect
+                          </ProductButton>
+                        </>
+                      ) : (
+                        <ProductButton onClick={() => handleConnect(provider)}>
+                          {usesCredentialForm(provider) && isExpanded ? "Cancel" : "Connect"}
+                        </ProductButton>
+                      )}
+                    </div>
+                  </div>
+
+                  {isExpanded && !isConnected && API_KEY_PROVIDERS[provider.id] ? (
+                    <form
+                      className="space-y-3 border-t border-mkt-ink/[0.06] p-4"
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        void connectApiKey(provider.id);
+                      }}
+                    >
+                      {API_KEY_PROVIDERS[provider.id].fields.map((f) => (
+                        <ProductInput
+                          key={f.key}
+                          placeholder={f.label}
+                          type={f.type ?? "text"}
+                          value={credForm[f.key] ?? ""}
+                          onChange={(ev) => setCredForm({ ...credForm, [f.key]: ev.target.value })}
+                        />
+                      ))}
+                      <ProductButton type="submit">Save & connect</ProductButton>
+                    </form>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        </ProductCard>
+      ))}
+
     </div>
   );
 }

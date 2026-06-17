@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import UTC
 from typing import Any
 
 import httpx
@@ -128,8 +129,8 @@ def _ts(created_utc: Any) -> str | None:
     if created_utc is None:
         return None
     try:
-        from datetime import datetime, timezone
+        from datetime import datetime
 
-        return datetime.fromtimestamp(float(created_utc), tz=timezone.utc).isoformat()
+        return datetime.fromtimestamp(float(created_utc), tz=UTC).isoformat()
     except (TypeError, ValueError):
         return None

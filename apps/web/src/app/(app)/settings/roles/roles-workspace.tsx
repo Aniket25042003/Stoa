@@ -2,6 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "@/lib/api";
+import { cn } from "@/lib/cn";
+import {
+  ProductButton,
+  ProductCard,
+  ProductInput,
+  ProductPageHeader,
+} from "@/components/product";
 
 type Role = {
   id: string;
@@ -17,6 +24,8 @@ type CatalogGroup = {
   label: string;
   permissions: { key: string; label: string }[];
 };
+
+const labelClass = "font-dm-sans text-[9px] font-bold uppercase tracking-[0.18em] text-mkt-muted";
 
 export function RolesWorkspace() {
   const [roles, setRoles] = useState<Role[]>([]);
@@ -106,69 +115,81 @@ export function RolesWorkspace() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-[2rem] bg-slate-deep p-7 text-white shadow-card md:p-10">
-        <p className="eyebrow text-inverse-primary">Roles</p>
-        <h1 className="mt-4 font-display text-4xl font-extrabold tracking-[-0.045em] md:text-5xl">IAM-style access</h1>
-        <p className="mt-4 max-w-2xl text-sm leading-7 text-white/68">
-          System roles are immutable defaults. Create custom roles with explicit resource:action permissions.
-        </p>
-      </div>
+      <ProductPageHeader
+        eyebrow="Organization"
+        title="Roles & permissions"
+        lead="System roles are immutable defaults. Create custom roles with explicit resource:action permissions."
+      />
 
       <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
-        <div className="rounded-3xl p-4 card-glass space-y-2">
-          <button type="button" className="btn-primary w-full px-4 py-2 text-sm" onClick={() => resetEditor(null)}>
+        <ProductCard className="space-y-2 !p-4">
+          <ProductButton className="w-full" onClick={() => resetEditor(null)}>
             New custom role
-          </button>
+          </ProductButton>
           {roles.map((role) => (
             <button
               key={role.id}
               type="button"
               onClick={() => resetEditor(role)}
-              className={`w-full rounded-xl px-4 py-3 text-left text-sm ${selectedId === role.id ? "bg-primary/10 text-primary" : "bg-surface-container-low"}`}
+              className={cn(
+                "w-full rounded-sm px-4 py-3 text-left transition-colors",
+                selectedId === role.id
+                  ? "border-l-2 border-mkt-accent bg-mkt-accent/[0.08]"
+                  : "border-l-2 border-transparent bg-mkt-ink/[0.02] hover:bg-mkt-ink/[0.04]"
+              )}
             >
-              <p className="font-semibold">{role.name}</p>
-              <p className="text-xs text-on-surface-variant">
+              <p className="font-dm-sans text-sm font-semibold text-mkt-ink">{role.name}</p>
+              <p className="font-dm-sans text-xs text-mkt-muted">
                 {role.is_system ? "System" : "Custom"} · {role.permissions.length} permissions
               </p>
             </button>
           ))}
-        </div>
+        </ProductCard>
 
-        <div className="rounded-3xl p-6 card-glass space-y-5">
-          <h2 className="font-display text-xl font-bold">{selected?.is_system ? "View role" : selected ? "Edit role" : "Create role"}</h2>
+        <ProductCard className="space-y-5">
+          <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">
+            {selected?.is_system ? "View role" : selected ? "Edit role" : "Create role"}
+          </h2>
           <div>
-            <label className="text-sm font-medium">Name</label>
-            <input
+            <label className={labelClass}>Name</label>
+            <ProductInput
               value={name}
               disabled={selected?.is_system}
               onChange={(e) => setName(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-sm disabled:opacity-60"
+              className="mt-1.5 disabled:opacity-60"
             />
           </div>
           <div>
-            <label className="text-sm font-medium">Description</label>
-            <input
+            <label className={labelClass}>Description</label>
+            <ProductInput
               value={description}
               disabled={selected?.is_system}
               onChange={(e) => setDescription(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-sm disabled:opacity-60"
+              className="mt-1.5 disabled:opacity-60"
             />
           </div>
           <div className="space-y-4">
             {catalog.map((group) => (
               <div key={group.resource}>
-                <p className="text-sm font-semibold">{group.label}</p>
+                <p className="font-dm-sans text-sm font-semibold text-mkt-ink">{group.label}</p>
                 <div className="mt-2 flex flex-wrap gap-3">
                   {group.permissions.map((perm) => {
                     const allowed = grantable.includes(perm.key);
                     const checked = permissions.includes(perm.key);
                     return (
-                      <label key={perm.key} className={`flex items-center gap-2 text-sm ${!allowed ? "opacity-50" : ""}`}>
+                      <label
+                        key={perm.key}
+                        className={cn(
+                          "flex items-center gap-2 font-dm-sans text-sm text-mkt-ink",
+                          !allowed && "opacity-50"
+                        )}
+                      >
                         <input
                           type="checkbox"
                           checked={checked}
                           disabled={selected?.is_system || !allowed}
                           onChange={() => togglePermission(perm.key)}
+                          className="accent-mkt-accent"
                         />
                         {perm.label}
                       </label>
@@ -180,18 +201,21 @@ export function RolesWorkspace() {
           </div>
           <div className="flex flex-wrap gap-3">
             {!selected?.is_system ? (
-              <button type="button" disabled={loading || !name.trim() || permissions.length === 0} className="btn-primary px-5 py-3 text-sm disabled:opacity-50" onClick={() => void saveRole()}>
+              <ProductButton
+                disabled={loading || !name.trim() || permissions.length === 0}
+                onClick={() => void saveRole()}
+              >
                 {loading ? "Saving..." : "Save role"}
-              </button>
+              </ProductButton>
             ) : null}
             {selected && !selected.is_system ? (
-              <button type="button" disabled={loading} className="btn-secondary px-5 py-3 text-sm" onClick={() => void deleteRole(selected)}>
+              <ProductButton variant="secondary" disabled={loading} onClick={() => void deleteRole(selected)}>
                 Delete role
-              </button>
+              </ProductButton>
             ) : null}
           </div>
-          {message ? <p className="text-sm text-on-surface-variant">{message}</p> : null}
-        </div>
+          {message ? <p className="font-dm-sans text-sm text-mkt-muted">{message}</p> : null}
+        </ProductCard>
       </div>
     </div>
   );

@@ -8,7 +8,10 @@ import {
   type WalkthroughStep,
 } from "@/components/marketing/SeeItInActionWalkthrough";
 import { MarketingPageShell } from "@/components/marketing/immersive/MarketingPageShell";
+import { getMarketingCta } from "@/lib/auth-entry";
 import { BRAND_SUBHEAD, BRAND_TAGLINE } from "@/lib/brand";
+
+const marketingCta = getMarketingCta();
 
 const steps: WalkthroughStep[] = [
   {
@@ -142,8 +145,8 @@ export default function SeeItInActionPage() {
           eyebrow="Ready to deploy"
           title="Try it now"
           description={BRAND_SUBHEAD}
-          ctaLabel="Join the waitlist"
-          ctaHref="/waitlist"
+          ctaLabel={marketingCta.buttonLabel}
+          ctaHref={marketingCta.href}
         />
       </RevealOnScroll>
     </MarketingPageShell>

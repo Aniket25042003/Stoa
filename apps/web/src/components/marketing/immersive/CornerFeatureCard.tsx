@@ -5,7 +5,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import type { LandingSection, TextAnchor } from "@/lib/landingFeatures";
 import { TEXT_ANCHOR_CLASSES } from "@/lib/landingFeatures";
+import { getMarketingCta } from "@/lib/auth-entry";
 import { cn } from "@/lib/cn";
+
+const marketingCta = getMarketingCta();
 
 type CornerFeatureCardProps = {
   section: LandingSection;
@@ -52,10 +55,10 @@ export function CornerFeatureCard({ section, visible, showCta }: CornerFeatureCa
           {showCta && (
             <div className="mt-6">
               <Link
-                href="/waitlist"
+                href={marketingCta.href}
                 className="group inline-flex items-center gap-2 rounded-sm bg-mkt-accent px-5 py-3 font-dm-sans text-[10px] font-bold uppercase tracking-widest text-mkt-dark-ink shadow-[0_10px_25px_rgba(79,70,229,0.15)] transition-all hover:bg-[#4338CA] active:scale-[0.98]"
               >
-                Request early access
+                {marketingCta.heroLabel}
                 <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
               </Link>
             </div>
