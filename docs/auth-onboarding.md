@@ -5,7 +5,7 @@
 Stoa uses Supabase Auth for sessions and JWTs. The app supports:
 
 - Google OAuth
-- Microsoft Azure OAuth
+- Microsoft Azure OAuth (Going to be removed)
 - Email/password with Supabase email confirmation
 
 For Azure, configure the Supabase Azure provider and the Microsoft Entra app with the Supabase callback URL. Request the `email` scope and add the optional `xms_edov` claim in Entra where possible.
@@ -28,8 +28,8 @@ Supabase sends mail from **Supabase cloud IPs**, not your laptop. Allowing your 
 1. Supabase Dashboard -> Authentication -> **Logs** (look for SMTP/mailer errors)
 2. Brevo -> Transactional -> **Email logs** and **Blocked contacts**
 3. Supabase -> Authentication -> **URL configuration**:
-   - Site URL: `http://localhost:3000` (dev)
-   - Redirect URLs: `http://localhost:3000/auth/callback`, `http://localhost:3001/auth/callback` if you use another port
+  - Site URL: `http://localhost:3000` (dev)
+  - Redirect URLs: `http://localhost:3000/auth/callback`, `http://localhost:3001/auth/callback` if you use another port
 4. Supabase -> Authentication -> **Rate limits** (signup emails default to a low hourly cap)
 5. API `.env` must include `SUPABASE_ANON_KEY` (same as web anon key) — resend uses the public Auth API
 
@@ -103,3 +103,4 @@ Draft state lives in React + `sessionStorage` until completion.
 - Owner creates custom role -> member permissions isolated per org
 - Forged `X-Org-Id` for non-member org -> 403
 - Multi-org user without header/cookie -> `409 org_selection_required`
+
