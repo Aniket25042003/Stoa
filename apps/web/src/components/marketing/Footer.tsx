@@ -1,10 +1,17 @@
+/**
+ * @file apps/web/src/components/marketing/Footer.tsx
+ * @layer Frontend Marketing UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies Next.js, React
+ */
 "use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowRight } from "lucide-react";
+import { BrandLogo } from "@/components/product/BrandLogo";
 import { getAuthEntryPath, getMarketingCta } from "@/lib/auth-entry";
-import { BRAND_LOGO_LETTER, BRAND_NAME, BRAND_SUBHEAD, BRAND_TAGLINE } from "@/lib/brand";
+import { BRAND_NAME, BRAND_SUBHEAD, BRAND_TAGLINE } from "@/lib/brand";
 import { isMarketingV2Page } from "@/lib/marketing-v2";
 
 const authEntry = getAuthEntryPath();
@@ -36,6 +43,10 @@ const cols = [
   },
 ];
 
+/**
+ * Handles footer behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function Footer() {
   const pathname = usePathname();
   const isV2 = isMarketingV2Page(pathname);
@@ -57,18 +68,8 @@ export function Footer() {
         <div className="relative z-10 mx-auto max-w-7xl px-4 py-14 md:px-8 md:py-16">
           <div className="grid gap-12 md:grid-cols-[1.4fr_1fr_1fr]">
             <div>
-              <div className="inline-flex items-center gap-3">
-                <span className="flex h-9 w-9 select-none items-center justify-center rounded-sm border border-mkt-accent/40 bg-mkt-accent/10 font-mono text-sm font-black text-mkt-accent shadow-[0_0_20px_rgba(79,70,229,0.25)]">
-                  {BRAND_LOGO_LETTER}
-                </span>
-                <div>
-                  <p className="font-syne text-base font-extrabold uppercase tracking-[0.1em]">
-                    {BRAND_NAME}
-                  </p>
-                  <p className="font-dm-sans text-[9px] font-bold uppercase tracking-[0.2em] text-mkt-dark-ink/50">
-                    Marketing Intelligence
-                  </p>
-                </div>
+              <div className="inline-flex items-center">
+                <BrandLogo variant="icon" size="sm" />
               </div>
               <p className="mt-5 max-w-sm font-syne text-xl font-extrabold uppercase leading-tight tracking-tight text-mkt-dark-ink">
                 {BRAND_TAGLINE}
@@ -135,9 +136,8 @@ export function Footer() {
       <div className="container-page relative z-[1] py-16 md:py-20">
         <div className="grid gap-12 md:grid-cols-4">
           <div className="md:col-span-2">
-            <div className="inline-flex items-center gap-3">
-              <span className="h-8 w-8 border border-primary/50 bg-primary/10 font-mono text-sm font-bold text-primary flex items-center justify-center select-none">S</span>
-              <p className="font-display text-xl font-extrabold tracking-[-0.03em] text-on-surface uppercase">{BRAND_NAME}</p>
+            <div className="inline-flex items-center">
+              <BrandLogo variant="icon" size="sm" />
             </div>
             <p className="mt-4 max-w-md text-sm leading-relaxed text-on-surface-variant/90">{BRAND_TAGLINE}</p>
             <p className="mt-2 max-w-md text-xs leading-relaxed text-on-surface-variant/70 font-mono">{BRAND_SUBHEAD}</p>

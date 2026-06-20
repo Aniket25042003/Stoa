@@ -4,6 +4,8 @@
       "spec_version": "1.0.0",
       "title": "Stoa Loading Mark",
       "output_filename": "loading-brand-mark.webp",
+      "deprecated": true,
+      "replaced_by": "public/images/logos/stoa-icon-80.webp"
       "aspect_ratio": "1:1",
       "resolution": "1K"
     },

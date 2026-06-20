@@ -1,7 +1,13 @@
+/**
+ * @file apps/web/src/app/(onboarding)/layout.tsx
+ * @layer Frontend Onboarding UI
+ * @description Defines shared route layout structure, metadata, and navigation boundaries.
+ * @dependencies Supabase, Next.js, React
+ */
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ProductButton, ProductShellFrame } from "@/components/product";
-import { BRAND_LOGO_LETTER, BRAND_NAME } from "@/lib/brand";
+import { BrandLogo } from "@/components/product/BrandLogo";
 import { createClient } from "@/lib/supabase/server";
 import { getServerApiBase } from "@/lib/server-api";
 import { getServerActiveOrgId } from "@/lib/active-org-server";
@@ -42,13 +48,8 @@ export default async function OnboardingLayout({ children }: { children: React.R
     <ProductShellFrame>
       <header className="border-b border-mkt-ink/[0.06] bg-mkt-surface/85 backdrop-blur-xl">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4 md:px-6">
-          <Link href="/" className="inline-flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-sm border border-mkt-accent/35 bg-mkt-accent/[0.08] font-mono text-sm font-black text-mkt-accent">
-              {BRAND_LOGO_LETTER}
-            </span>
-            <span className="font-syne text-lg font-extrabold uppercase tracking-[0.1em] text-mkt-ink">
-              {BRAND_NAME}
-            </span>
+          <Link href="/" className="inline-flex items-center">
+            <BrandLogo variant="logo" size="md" />
           </Link>
           <form action="/api/auth/signout" method="post">
             <ProductButton variant="secondary" type="submit">

@@ -1,11 +1,18 @@
+/**
+ * @file apps/web/src/components/marketing/Navbar.tsx
+ * @layer Frontend Marketing UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies Next.js, React
+ */
 "use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { BrandLogo } from "@/components/product/BrandLogo";
 import { getAuthEntryPath, getMarketingCta, isLoginEnabled } from "@/lib/auth-entry";
-import { BRAND_LOGO_LETTER, BRAND_NAME } from "@/lib/brand";
+import { BRAND_NAME } from "@/lib/brand";
 import { cn } from "@/lib/cn";
 import { isMarketingV2Page } from "@/lib/marketing-v2";
 
@@ -25,6 +32,10 @@ const fullNav = [
   { href: "/faq", label: "FAQ", index: "03" },
 ];
 
+/**
+ * Handles navbar behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function Navbar() {
   const pathname = usePathname();
   const isV2 = isMarketingV2Page(pathname);
@@ -37,20 +48,10 @@ export function Navbar() {
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3.5 md:px-8">
           <Link
             href="/"
-            className="group inline-flex min-w-0 items-center gap-3"
+            className="group inline-flex min-w-0 items-center"
             aria-label={`${BRAND_NAME} home`}
           >
-            <span className="relative flex h-9 w-9 shrink-0 select-none items-center justify-center rounded-sm border border-mkt-accent/35 bg-gradient-to-br from-mkt-accent/10 to-mkt-accent/[0.03] font-mono text-sm font-black text-mkt-accent shadow-[0_4px_16px_rgba(79,70,229,0.12)] transition-all group-hover:border-mkt-accent/50 group-hover:shadow-[0_6px_20px_rgba(79,70,229,0.18)]">
-              {BRAND_LOGO_LETTER}
-            </span>
-            <div className="flex min-w-0 flex-col">
-              <span className="truncate font-syne text-sm font-extrabold uppercase tracking-[0.12em] text-mkt-ink">
-                {BRAND_NAME}
-              </span>
-              <span className="hidden font-dm-sans text-[8px] font-semibold uppercase tracking-[0.2em] text-mkt-muted sm:block">
-                Marketing Intelligence
-              </span>
-            </div>
+            <BrandLogo variant="logo" size="sm" priority />
           </Link>
 
           <nav className="hidden items-center gap-8 md:flex" aria-label="Primary">
@@ -109,15 +110,10 @@ export function Navbar() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 md:px-6">
         <Link
           href="/"
-          className="group inline-flex min-w-0 items-center gap-3"
+          className="group inline-flex min-w-0 items-center"
           aria-label={`${BRAND_NAME} home`}
         >
-          <span className="relative flex h-8 w-8 shrink-0 items-center justify-center border border-primary/40 bg-primary/10 font-mono text-sm font-black text-primary select-none">
-            {BRAND_LOGO_LETTER}
-          </span>
-          <span className="truncate font-display text-base font-extrabold tracking-[0.05em] text-on-surface uppercase">
-            {BRAND_NAME}
-          </span>
+          <BrandLogo variant="logo" size="sm" priority />
         </Link>
 
         <nav className="hidden items-center justify-center gap-8 md:flex" aria-label="Primary">
