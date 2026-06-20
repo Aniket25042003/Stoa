@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/app/verify-email/page.tsx
+ * @layer Application Source
+ * @description Defines the route entry point and composes the page-level UI for this product surface.
+ * @dependencies Next.js, React
+ */
 "use client";
 
 import Link from "next/link";
@@ -13,6 +19,10 @@ import {
   ProductInput,
 } from "@/components/product";
 
+/**
+ * Handles verify email client behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 function VerifyEmailClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -111,6 +121,10 @@ function VerifyEmailClient() {
   );
 }
 
+/**
+ * Handles verify email page behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export default function VerifyEmailPage() {
   return (
     <Suspense

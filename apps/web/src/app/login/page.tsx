@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/app/login/page.tsx
+ * @layer Application Source
+ * @description Defines the route entry point and composes the page-level UI for this product surface.
+ * @dependencies Next.js, React, Framer Motion
+ */
 "use client";
 
 import Link from "next/link";
@@ -15,6 +21,12 @@ import {
   ProductInput,
 } from "@/components/product";
 
+/**
+ * Handles google icon behavior for this part of the Stoa application.
+ *
+ * @param className - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 function GoogleIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" aria-hidden>
@@ -28,6 +40,10 @@ function GoogleIcon({ className }: { className?: string }) {
 
 const labelClass = "font-dm-sans text-[9px] font-bold uppercase tracking-[0.18em] text-mkt-muted";
 
+/**
+ * Handles login form behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 function LoginForm() {
   const searchParams = useSearchParams();
   const [msg, setMsg] = useState<string | null>(null);
@@ -221,6 +237,10 @@ function LoginForm() {
   );
 }
 
+/**
+ * Handles login page behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export default function LoginPage() {
   return (
     <Suspense

@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/app/invite/[token]/page.tsx
+ * @layer Application Source
+ * @description Defines the route entry point and composes the page-level UI for this product surface.
+ * @dependencies Next.js, React, BFF apiFetch
+ */
 "use client";
 
 import Link from "next/link";
@@ -8,6 +14,10 @@ import { routeForSessionState, type SessionState } from "@/lib/auth-workflow";
 import { getAuthEntryPath } from "@/lib/auth-entry";
 import { AuthBrandMark, AuthCard, AuthCardHeader, AuthPageShell } from "@/components/product";
 
+/**
+ * Handles invite page behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export default function InvitePage() {
   const params = useParams<{ token: string }>();
   const router = useRouter();
