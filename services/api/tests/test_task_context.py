@@ -1,3 +1,10 @@
+"""
+File: services/api/tests/test_task_context.py
+Layer: Test Suite
+Purpose: Covers regression and behavior checks for test task context in the test suite.
+Dependencies: Supabase, Celery
+"""
+
 import uuid
 from unittest.mock import MagicMock, patch
 

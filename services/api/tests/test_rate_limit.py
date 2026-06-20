@@ -1,3 +1,10 @@
+"""
+File: services/api/tests/test_rate_limit.py
+Layer: Test Suite
+Purpose: Covers regression and behavior checks for test rate limit in the test suite.
+Dependencies: FastAPI, Redis
+"""
+
 import pytest
 from fastapi import HTTPException
 from starlette.requests import Request

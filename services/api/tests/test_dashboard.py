@@ -1,3 +1,10 @@
+"""
+File: services/api/tests/test_dashboard.py
+Layer: Test Suite
+Purpose: Covers regression and behavior checks for test dashboard in the test suite.
+Dependencies: FastAPI, Supabase
+"""
+
 from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient

@@ -1,4 +1,9 @@
-import io
+"""
+File: services/api/tests/test_security.py
+Layer: Test Suite
+Purpose: Covers regression and behavior checks for test security in the test suite.
+Dependencies: FastAPI, Supabase, Celery, stoa_core
+"""
 
 import jwt
 import pytest

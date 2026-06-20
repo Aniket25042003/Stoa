@@ -1,3 +1,10 @@
+"""
+File: services/api/tests/test_auth.py
+Layer: Test Suite
+Purpose: Covers regression and behavior checks for test auth in the test suite.
+Dependencies: Supabase
+"""
+
 import jwt
 import pytest
 

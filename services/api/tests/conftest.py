@@ -1,4 +1,10 @@
-"""Shared pytest fixtures."""
+"""
+File: services/api/tests/conftest.py
+Layer: Test Suite
+Purpose: Covers regression and behavior checks for conftest in the test suite.
+Dependencies: Supabase, stoa_core
+"""
+
 
 from __future__ import annotations
 

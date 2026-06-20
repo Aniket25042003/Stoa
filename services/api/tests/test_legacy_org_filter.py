@@ -1,4 +1,10 @@
-"""Tests for legacy auto-provisioned org filtering."""
+"""
+File: services/api/tests/test_legacy_org_filter.py
+Layer: Test Suite
+Purpose: Covers regression and behavior checks for test legacy org filter in the test suite.
+Dependencies: standard library / local modules
+"""
+
 
 from __future__ import annotations
 
