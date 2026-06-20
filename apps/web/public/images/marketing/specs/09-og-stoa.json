@@ -5,7 +5,8 @@
       "title": "Stoa Open Graph Image",
       "campaign": "stoa_signal_studio_v1",
       "brand_name": "Stoa",
-      "output_filename": "og-stoa.webp"
+      "output_filename": "og-stoa.webp",
+      "output_path": "public/images/logos/og-stoa.webp"
     },
     "platform": "twitter_card",
     "dimensions": {"width": 1200, "height": 675, "unit": "px"},
