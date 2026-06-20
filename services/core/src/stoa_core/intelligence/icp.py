@@ -1,4 +1,10 @@
-"""ICP profile synthesis from aggregated intelligence signals."""
+"""
+File: services/core/src/stoa_core/intelligence/icp.py
+Layer: Core Intelligence Pipeline
+Purpose: Implements icp behavior for the core intelligence pipeline.
+Dependencies: stoa_core
+"""
+
 
 from __future__ import annotations
 
@@ -24,6 +30,15 @@ def build_icp_profile(
     *,
     structured_stats: dict[str, Any] | None = None,
 ) -> dict[str, Any] | None:
+    """Handles build icp profile logic for the surrounding Stoa workflow.
+
+    Args:
+        signals (list[dict[str, Any]]): Input value used by this workflow step.
+        structured_stats (dict[str, Any] | None): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any] | None: Result produced for the caller.
+    """
     if not signals and not structured_stats:
         return None
     payload: dict[str, Any] = {

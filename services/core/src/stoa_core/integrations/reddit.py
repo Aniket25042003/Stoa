@@ -1,4 +1,10 @@
-"""Reddit brand mention monitor."""
+"""
+File: services/core/src/stoa_core/integrations/reddit.py
+Layer: Core Integration Connectors
+Purpose: Implements reddit behavior for the core integration connectors.
+Dependencies: stoa_core
+"""
+
 
 from __future__ import annotations
 
@@ -20,10 +26,20 @@ SOURCE = "reddit"
 
 @register_connector
 class RedditConnector(BaseConnector):
+    """Manage RedditConnector behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     provider = "reddit"
 
     @classmethod
     def provider_info(cls) -> ProviderInfo:
+        """Handles provider info logic for the surrounding Stoa workflow.
+
+        Returns:
+            ProviderInfo: Result produced for the caller.
+        """
         return ProviderInfo(
             id="reddit",
             name="Reddit",
@@ -33,6 +49,14 @@ class RedditConnector(BaseConnector):
 
     @classmethod
     def connect_with_credentials(cls, credentials: dict[str, Any]) -> dict[str, Any]:
+        """Handles connect with credentials logic for the surrounding Stoa workflow.
+
+        Args:
+            credentials (dict[str, Any]): Input value used by this workflow step.
+
+        Returns:
+            dict[str, Any]: Result produced for the caller.
+        """
         query = credentials.get("search_query", "").strip()
         subreddits = credentials.get("subreddits") or []
         if not query:
@@ -47,6 +71,11 @@ class RedditConnector(BaseConnector):
 
     @classmethod
     def _reddit_headers(cls) -> dict[str, str]:
+        """Handles  reddit headers logic for the surrounding Stoa workflow.
+
+        Returns:
+            dict[str, str]: Result produced for the caller.
+        """
         s = get_settings()
         return {
             "User-Agent": s.reddit_user_agent or "stoa-intelligence/1.0",
@@ -63,6 +92,18 @@ class RedditConnector(BaseConnector):
         cursor: dict[str, Any],
         full_backfill: bool = False,
     ) -> SyncResult:
+        """Handles sync logic for the surrounding Stoa workflow.
+
+        Args:
+            org_id (str): Input value used by this workflow step.
+            connection (dict[str, Any]): Input value used by this workflow step.
+            credentials (dict[str, Any]): Input value used by this workflow step.
+            cursor (dict[str, Any]): Input value used by this workflow step.
+            full_backfill (bool): Input value used by this workflow step.
+
+        Returns:
+            SyncResult: Result produced for the caller.
+        """
         result = SyncResult()
         metadata = connection.get("provider_metadata") or {}
         query = metadata.get("search_query") or credentials.get("search_query")
@@ -126,6 +167,14 @@ class RedditConnector(BaseConnector):
 
 
 def _ts(created_utc: Any) -> str | None:
+    """Handles  ts logic for the surrounding Stoa workflow.
+
+    Args:
+        created_utc (Any): Input value used by this workflow step.
+
+    Returns:
+        str | None: Result produced for the caller.
+    """
     if created_utc is None:
         return None
     try:

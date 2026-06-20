@@ -1,4 +1,10 @@
-"""Async Redis stream reader for SSE endpoints."""
+"""
+File: services/core/src/stoa_core/redis/sse.py
+Layer: Core Redis Infrastructure
+Purpose: Implements sse behavior for the core redis infrastructure.
+Dependencies: Redis, stoa_core
+"""
+
 
 from __future__ import annotations
 
@@ -18,6 +24,17 @@ async def read_events_since(
     last_id: str | None,
     block_ms: int = 15000,
 ) -> AsyncIterator[tuple[str, dict[str, Any]]]:
+    """Asynchronously handles read events since logic for the surrounding Stoa workflow.
+
+    Args:
+        scope (str): Input value used by this workflow step.
+        entity_id (str): Input value used by this workflow step.
+        last_id (str | None): Input value used by this workflow step.
+        block_ms (int): Input value used by this workflow step.
+
+    Returns:
+        AsyncIterator[tuple[str, dict[str, Any]]]: Result produced for the caller.
+    """
     r = redis_async.from_url(get_settings().redis_url, decode_responses=True)
     key = stream_key(scope, entity_id)
     try:

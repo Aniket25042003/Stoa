@@ -1,4 +1,10 @@
-"""Workspace data completeness scoring."""
+"""
+File: services/core/src/stoa_core/org/completeness.py
+Layer: Application Source
+Purpose: Implements completeness behavior for the application source.
+Dependencies: standard library / local modules
+"""
+
 
 from __future__ import annotations
 
@@ -22,6 +28,18 @@ def compute_completeness(
     integration_count: int = 0,
     canonical_deal_count: int = 0,
 ) -> dict[str, Any]:
+    """Handles compute completeness logic for the surrounding Stoa workflow.
+
+    Args:
+        org (dict[str, Any]): Input value used by this workflow step.
+        document_count (int): Input value used by this workflow step.
+        competitor_count (int): Input value used by this workflow step.
+        integration_count (int): Input value used by this workflow step.
+        canonical_deal_count (int): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     profile = org.get("profile") or {}
     if not isinstance(profile, dict):
         profile = {}

@@ -1,4 +1,10 @@
-"""PII detection and redaction for storage, logs, and exports."""
+"""
+File: services/core/src/stoa_core/security/pii.py
+Layer: Core Security Utilities
+Purpose: Implements pii behavior for the core security utilities.
+Dependencies: standard library / local modules
+"""
+
 
 from __future__ import annotations
 
@@ -58,6 +64,15 @@ _LOG_EXTRA_RULES: tuple[tuple[re.Pattern[str], str], ...] = ((IPV4_RE, "[IP]"),)
 
 
 def _apply_rules(text: str, rules: tuple[tuple[re.Pattern[str], str], ...]) -> str:
+    """Handles  apply rules logic for the surrounding Stoa workflow.
+
+    Args:
+        text (str): Input value used by this workflow step.
+        rules (tuple[tuple[re.Pattern[str], str], ...]): Input value used by this workflow step.
+
+    Returns:
+        str: Result produced for the caller.
+    """
     out = text
     for pattern, replacement in rules:
         out = pattern.sub(replacement, out)

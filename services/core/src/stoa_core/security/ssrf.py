@@ -1,4 +1,10 @@
-"""SSRF guards for server-side HTTP fetches."""
+"""
+File: services/core/src/stoa_core/security/ssrf.py
+Layer: Core Security Utilities
+Purpose: Implements ssrf behavior for the core security utilities.
+Dependencies: standard library / local modules
+"""
+
 
 from __future__ import annotations
 
@@ -26,10 +32,26 @@ _BLOCKED_NETWORKS = (
 
 
 def _ip_blocked(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
+    """Handles  ip blocked logic for the surrounding Stoa workflow.
+
+    Args:
+        ip (ipaddress.IPv4Address | ipaddress.IPv6Address): Input value used by this workflow step.
+
+    Returns:
+        bool: Result produced for the caller.
+    """
     return any(ip in net for net in _BLOCKED_NETWORKS)
 
 
 def _resolve_host_ips(hostname: str) -> list[ipaddress.IPv4Address | ipaddress.IPv6Address]:
+    """Handles  resolve host ips logic for the surrounding Stoa workflow.
+
+    Args:
+        hostname (str): Input value used by this workflow step.
+
+    Returns:
+        list[ipaddress.IPv4Address | ipaddress.IPv6Address]: Result produced for the caller.
+    """
     ips: list[ipaddress.IPv4Address | ipaddress.IPv6Address] = []
     for info in socket.getaddrinfo(hostname, None, type=socket.SOCK_STREAM):
         ips.append(ipaddress.ip_address(info[4][0]))
@@ -38,12 +60,25 @@ def _resolve_host_ips(hostname: str) -> list[ipaddress.IPv4Address | ipaddress.I
 
 @dataclass(frozen=True)
 class SafeHttpsTarget:
+    """Manage SafeHttpsTarget behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     hostname: str
     ip: str
     path_with_query: str
 
 
 def _path_with_query(parsed) -> str:
+    """Handles  path with query logic for the surrounding Stoa workflow.
+
+    Args:
+        parsed (Any): Input value used by this workflow step.
+
+    Returns:
+        str: Result produced for the caller.
+    """
     path = parsed.path or "/"
     if parsed.query:
         path = f"{path}?{parsed.query}"

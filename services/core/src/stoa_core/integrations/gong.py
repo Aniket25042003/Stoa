@@ -1,4 +1,10 @@
-"""Gong call intelligence connector."""
+"""
+File: services/core/src/stoa_core/integrations/gong.py
+Layer: Core Integration Connectors
+Purpose: Implements gong behavior for the core integration connectors.
+Dependencies: stoa_core
+"""
+
 
 from __future__ import annotations
 
@@ -21,10 +27,20 @@ SOURCE = "gong"
 
 @register_connector
 class GongConnector(BaseConnector):
+    """Manage GongConnector behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     provider = "gong"
 
     @classmethod
     def provider_info(cls) -> ProviderInfo:
+        """Handles provider info logic for the surrounding Stoa workflow.
+
+        Returns:
+            ProviderInfo: Result produced for the caller.
+        """
         return ProviderInfo(
             id="gong",
             name="Gong",
@@ -35,6 +51,15 @@ class GongConnector(BaseConnector):
 
     @classmethod
     def oauth_authorize_url(cls, state: str, redirect_uri: str) -> str:
+        """Handles oauth authorize url logic for the surrounding Stoa workflow.
+
+        Args:
+            state (str): Input value used by this workflow step.
+            redirect_uri (str): Input value used by this workflow step.
+
+        Returns:
+            str: Result produced for the caller.
+        """
         s = get_settings()
         params = {
             "client_id": s.gong_client_id,
@@ -46,6 +71,15 @@ class GongConnector(BaseConnector):
 
     @classmethod
     def exchange_oauth_code(cls, code: str, redirect_uri: str) -> dict[str, Any]:
+        """Handles exchange oauth code logic for the surrounding Stoa workflow.
+
+        Args:
+            code (str): Input value used by this workflow step.
+            redirect_uri (str): Input value used by this workflow step.
+
+        Returns:
+            dict[str, Any]: Result produced for the caller.
+        """
         s = get_settings()
         with httpx.Client(timeout=30) as client:
             res = client.post(
@@ -84,6 +118,15 @@ class GongConnector(BaseConnector):
 
     @classmethod
     def _client(cls, credentials: dict[str, Any], metadata: dict[str, Any]) -> tuple[str, dict[str, str] | httpx.BasicAuth]:
+        """Handles  client logic for the surrounding Stoa workflow.
+
+        Args:
+            credentials (dict[str, Any]): Input value used by this workflow step.
+            metadata (dict[str, Any]): Input value used by this workflow step.
+
+        Returns:
+            tuple[str, dict[str, str] | httpx.BasicAuth]: Result produced for the caller.
+        """
         base = metadata.get("api_base_url", "https://api.gong.io").rstrip("/")
         if credentials.get("access_key"):
             return base, httpx.BasicAuth(credentials["access_key"], credentials["access_key_secret"])
@@ -99,6 +142,18 @@ class GongConnector(BaseConnector):
         cursor: dict[str, Any],
         full_backfill: bool = False,
     ) -> SyncResult:
+        """Handles sync logic for the surrounding Stoa workflow.
+
+        Args:
+            org_id (str): Input value used by this workflow step.
+            connection (dict[str, Any]): Input value used by this workflow step.
+            credentials (dict[str, Any]): Input value used by this workflow step.
+            cursor (dict[str, Any]): Input value used by this workflow step.
+            full_backfill (bool): Input value used by this workflow step.
+
+        Returns:
+            SyncResult: Result produced for the caller.
+        """
         result = SyncResult(cursor=dict(cursor))
         metadata = connection.get("provider_metadata") or {}
         base_url, auth = cls._client(credentials, metadata)
@@ -167,6 +222,16 @@ class GongConnector(BaseConnector):
 
     @classmethod
     def _fetch_transcript(cls, base_url: str, auth: Any, call_id: str) -> str:
+        """Handles  fetch transcript logic for the surrounding Stoa workflow.
+
+        Args:
+            base_url (str): Input value used by this workflow step.
+            auth (Any): Input value used by this workflow step.
+            call_id (str): Input value used by this workflow step.
+
+        Returns:
+            str: Result produced for the caller.
+        """
         with httpx.Client(timeout=60) as client:
             res = client.post(
                 f"{base_url}/v2/calls/transcript",

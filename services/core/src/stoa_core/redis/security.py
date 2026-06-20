@@ -1,4 +1,10 @@
-"""Redis connection security validation and TLS helpers."""
+"""
+File: services/core/src/stoa_core/redis/security.py
+Layer: Core Redis Infrastructure
+Purpose: Implements security behavior for the core redis infrastructure.
+Dependencies: Celery, Redis, stoa_core
+"""
+
 
 from __future__ import annotations
 
@@ -15,6 +21,11 @@ class RedisSecurityError(RuntimeError):
 
 @dataclass(frozen=True)
 class RedisConnectionInfo:
+    """Manage RedisConnectionInfo behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     url: str
     scheme: str
     has_password: bool
@@ -22,6 +33,14 @@ class RedisConnectionInfo:
 
 
 def inspect_redis_url(url: str) -> RedisConnectionInfo:
+    """Handles inspect redis url logic for the surrounding Stoa workflow.
+
+    Args:
+        url (str): Input value used by this workflow step.
+
+    Returns:
+        RedisConnectionInfo: Result produced for the caller.
+    """
     parsed = urlparse(url)
     scheme = parsed.scheme or "redis"
     return RedisConnectionInfo(
@@ -40,6 +59,14 @@ def is_render_internal_keyvalue(url: str) -> bool:
 
 
 def _localhost_default(url: str) -> bool:
+    """Handles  localhost default logic for the surrounding Stoa workflow.
+
+    Args:
+        url (str): Input value used by this workflow step.
+
+    Returns:
+        bool: Result produced for the caller.
+    """
     parsed = urlparse(url)
     host = (parsed.hostname or "").lower()
     return host in {"localhost", "127.0.0.1", "::1"}
@@ -90,6 +117,14 @@ def redis_ssl_kwargs(settings: Settings | None = None) -> dict | None:
 
 
 def celery_broker_ssl_config(settings: Settings | None = None) -> dict | None:
+    """Handles celery broker ssl config logic for the surrounding Stoa workflow.
+
+    Args:
+        settings (Settings | None): Input value used by this workflow step.
+
+    Returns:
+        dict | None: Result produced for the caller.
+    """
     ssl_kwargs = redis_ssl_kwargs(settings)
     if not ssl_kwargs:
         return None

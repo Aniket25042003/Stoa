@@ -1,4 +1,10 @@
-"""Google Drive documents connector (KB enrichment)."""
+"""
+File: services/core/src/stoa_core/integrations/google_drive.py
+Layer: Core Integration Connectors
+Purpose: Implements google drive behavior for the core integration connectors.
+Dependencies: stoa_core
+"""
+
 
 from __future__ import annotations
 
@@ -18,10 +24,20 @@ SOURCE = "google_drive"
 
 @register_connector
 class GoogleDriveConnector(BaseConnector):
+    """Manage GoogleDriveConnector behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     provider = "google_drive"
 
     @classmethod
     def provider_info(cls) -> ProviderInfo:
+        """Handles provider info logic for the surrounding Stoa workflow.
+
+        Returns:
+            ProviderInfo: Result produced for the caller.
+        """
         return ProviderInfo(
             id="google_drive",
             name="Google Drive",
@@ -32,6 +48,14 @@ class GoogleDriveConnector(BaseConnector):
 
     @classmethod
     def connect_with_credentials(cls, credentials: dict[str, Any]) -> dict[str, Any]:
+        """Handles connect with credentials logic for the surrounding Stoa workflow.
+
+        Args:
+            credentials (dict[str, Any]): Input value used by this workflow step.
+
+        Returns:
+            dict[str, Any]: Result produced for the caller.
+        """
         token = credentials.get("access_token", "").strip()
         file_ids = credentials.get("file_ids") or []
         if not token:
@@ -51,6 +75,18 @@ class GoogleDriveConnector(BaseConnector):
         cursor: dict[str, Any],
         full_backfill: bool = False,
     ) -> SyncResult:
+        """Handles sync logic for the surrounding Stoa workflow.
+
+        Args:
+            org_id (str): Input value used by this workflow step.
+            connection (dict[str, Any]): Input value used by this workflow step.
+            credentials (dict[str, Any]): Input value used by this workflow step.
+            cursor (dict[str, Any]): Input value used by this workflow step.
+            full_backfill (bool): Input value used by this workflow step.
+
+        Returns:
+            SyncResult: Result produced for the caller.
+        """
         result = SyncResult()
         metadata = connection.get("provider_metadata") or {}
         file_ids = metadata.get("file_ids") or []

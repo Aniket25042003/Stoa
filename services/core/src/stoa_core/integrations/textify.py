@@ -1,4 +1,10 @@
-"""Convert canonical records to markdown for knowledge base ingestion."""
+"""
+File: services/core/src/stoa_core/integrations/textify.py
+Layer: Core Integration Connectors
+Purpose: Implements textify behavior for the core integration connectors.
+Dependencies: standard library / local modules
+"""
+
 
 from __future__ import annotations
 
@@ -6,6 +12,14 @@ from typing import Any
 
 
 def account_to_text(row: dict[str, Any]) -> str:
+    """Handles account to text logic for the surrounding Stoa workflow.
+
+    Args:
+        row (dict[str, Any]): Input value used by this workflow step.
+
+    Returns:
+        str: Result produced for the caller.
+    """
     lines = [f"# Account: {row.get('name') or 'Unknown'}"]
     if row.get("domain"):
         lines.append(f"Domain: {row['domain']}")
@@ -21,6 +35,14 @@ def account_to_text(row: dict[str, Any]) -> str:
 
 
 def contact_to_text(row: dict[str, Any]) -> str:
+    """Handles contact to text logic for the surrounding Stoa workflow.
+
+    Args:
+        row (dict[str, Any]): Input value used by this workflow step.
+
+    Returns:
+        str: Result produced for the caller.
+    """
     lines = [f"# Contact: {row.get('name') or row.get('email') or 'Unknown'}"]
     if row.get("email"):
         lines.append(f"Email: {row['email']}")
@@ -35,6 +57,14 @@ def contact_to_text(row: dict[str, Any]) -> str:
 
 
 def deal_to_text(row: dict[str, Any]) -> str:
+    """Handles deal to text logic for the surrounding Stoa workflow.
+
+    Args:
+        row (dict[str, Any]): Input value used by this workflow step.
+
+    Returns:
+        str: Result produced for the caller.
+    """
     lines = [f"# Deal: {row.get('name') or 'Unknown'}"]
     if row.get("amount") is not None:
         currency = row.get("currency") or "USD"
@@ -55,6 +85,14 @@ def deal_to_text(row: dict[str, Any]) -> str:
 
 
 def interaction_to_text(row: dict[str, Any]) -> str:
+    """Handles interaction to text logic for the surrounding Stoa workflow.
+
+    Args:
+        row (dict[str, Any]): Input value used by this workflow step.
+
+    Returns:
+        str: Result produced for the caller.
+    """
     itype = row.get("interaction_type") or "interaction"
     title = row.get("title") or itype.replace("_", " ").title()
     lines = [f"# {title}", f"Type: {itype}"]

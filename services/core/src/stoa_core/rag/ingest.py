@@ -1,4 +1,10 @@
-"""Generic knowledge base write path."""
+"""
+File: services/core/src/stoa_core/rag/ingest.py
+Layer: Core Retrieval / RAG
+Purpose: Implements ingest behavior for the core retrieval / rag.
+Dependencies: Supabase, stoa_core
+"""
+
 
 from __future__ import annotations
 
@@ -19,6 +25,14 @@ logger = logging.getLogger(__name__)
 
 
 def content_hash(text: str) -> str:
+    """Handles content hash logic for the surrounding Stoa workflow.
+
+    Args:
+        text (str): Input value used by this workflow step.
+
+    Returns:
+        str: Result produced for the caller.
+    """
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
@@ -129,6 +143,17 @@ def _find_existing_item(
     uri: str | None,
     text_hash: str,
 ) -> dict[str, Any] | None:
+    """Handles  find existing item logic for the surrounding Stoa workflow.
+
+    Args:
+        sb (Any): Input value used by this workflow step.
+        org_id (str): Input value used by this workflow step.
+        uri (str | None): Input value used by this workflow step.
+        text_hash (str): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any] | None: Result produced for the caller.
+    """
     if uri:
         res = (
             sb.table("knowledge_items")
@@ -189,4 +214,12 @@ def profile_to_knowledge_text(
 
 
 def json_artifact_to_text(data: dict[str, Any] | list[Any]) -> str:
+    """Handles json artifact to text logic for the surrounding Stoa workflow.
+
+    Args:
+        data (dict[str, Any] | list[Any]): Input value used by this workflow step.
+
+    Returns:
+        str: Result produced for the caller.
+    """
     return json.dumps(data, indent=2, default=str)[:50000]

@@ -1,4 +1,10 @@
-"""Hybrid knowledge retrieval with reranking and token budgeting."""
+"""
+File: services/core/src/stoa_core/rag/retrieve.py
+Layer: Core Retrieval / RAG
+Purpose: Implements retrieve behavior for the core retrieval / rag.
+Dependencies: Supabase, stoa_core
+"""
+
 
 from __future__ import annotations
 
@@ -21,6 +27,14 @@ logger = logging.getLogger(__name__)
 
 
 def _normalize_query(query: str) -> str:
+    """Handles  normalize query logic for the surrounding Stoa workflow.
+
+    Args:
+        query (str): Input value used by this workflow step.
+
+    Returns:
+        str: Result produced for the caller.
+    """
     return re.sub(r"\s+", " ", query.strip().lower())
 
 
@@ -32,6 +46,19 @@ def _match_knowledge_rpc(
     match_count: int,
     rrf_k: int,
 ) -> list[dict[str, Any]]:
+    """Handles  match knowledge rpc logic for the surrounding Stoa workflow.
+
+    Args:
+        org_id (str): Input value used by this workflow step.
+        query_embedding (list[float]): Input value used by this workflow step.
+        query_text (str): Input value used by this workflow step.
+        kinds (list[str] | None): Input value used by this workflow step.
+        match_count (int): Input value used by this workflow step.
+        rrf_k (int): Input value used by this workflow step.
+
+    Returns:
+        list[dict[str, Any]]: Result produced for the caller.
+    """
     sb = get_supabase_admin()
     params: dict[str, Any] = {
         "p_org_id": org_id,
@@ -59,6 +86,15 @@ def _mmr_dedup(
     remaining = list(candidates)
 
     def _sim(a: str, b: str) -> float:
+        """Handles  sim logic for the surrounding Stoa workflow.
+
+        Args:
+            a (str): Input value used by this workflow step.
+            b (str): Input value used by this workflow step.
+
+        Returns:
+            float: Result produced for the caller.
+        """
         aw = set(a.lower().split())
         bw = set(b.lower().split())
         if not aw or not bw:
@@ -88,6 +124,15 @@ def _apply_token_budget(
     candidates: list[dict[str, Any]],
     token_budget: int,
 ) -> list[dict[str, Any]]:
+    """Handles  apply token budget logic for the surrounding Stoa workflow.
+
+    Args:
+        candidates (list[dict[str, Any]]): Input value used by this workflow step.
+        token_budget (int): Input value used by this workflow step.
+
+    Returns:
+        list[dict[str, Any]]: Result produced for the caller.
+    """
     out: list[dict[str, Any]] = []
     used = 0
     for cand in candidates:
@@ -101,6 +146,14 @@ def _apply_token_budget(
 
 
 def _to_context_items(candidates: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Handles  to context items logic for the surrounding Stoa workflow.
+
+    Args:
+        candidates (list[dict[str, Any]]): Input value used by this workflow step.
+
+    Returns:
+        list[dict[str, Any]]: Result produced for the caller.
+    """
     context: list[dict[str, Any]] = []
     for cand in candidates:
         chunk_id = cand.get("chunk_id") or cand.get("id")

@@ -1,4 +1,10 @@
-"""LLM provider abstraction with task-tier routing and auto-failover."""
+"""
+File: services/core/src/stoa_core/llm/router.py
+Layer: Core LLM Routing
+Purpose: Implements router behavior for the core llm routing.
+Dependencies: stoa_core
+"""
+
 
 from __future__ import annotations
 
@@ -33,6 +39,15 @@ TASK_TIER_MAP: dict[str, TaskTier] = {
 
 
 def _truthy(value: str | None, *, default: bool) -> bool:
+    """Handles  truthy logic for the surrounding Stoa workflow.
+
+    Args:
+        value (str | None): Input value used by this workflow step.
+        default (bool): Input value used by this workflow step.
+
+    Returns:
+        bool: Result produced for the caller.
+    """
     if value is None or value == "":
         return default
     return value.strip().lower() in ("1", "true", "yes", "on")
@@ -40,6 +55,11 @@ def _truthy(value: str | None, *, default: bool) -> bool:
 
 @dataclass(frozen=True)
 class LLMConfig:
+    """Manage LLMConfig behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     primary: str = PROVIDER_VERTEX
     auto_failover: bool = True
     vertex_model: str = "gemini-2.5-pro"
@@ -59,6 +79,11 @@ class LLMConfig:
 
     @property
     def fallback_chain(self) -> tuple[str, ...]:
+        """Handles fallback chain logic for the surrounding Stoa workflow.
+
+        Returns:
+            tuple[str, ...]: Result produced for the caller.
+        """
         if self.primary == PROVIDER_VERTEX:
             chain = [PROVIDER_OPENAI, PROVIDER_ANTHROPIC]
         elif self.primary == PROVIDER_OPENAI:
@@ -70,6 +95,15 @@ class LLMConfig:
         return (self.primary,)
 
     def model_for(self, provider: str, task_tier: TaskTier) -> str | None:
+        """Handles model for logic for the surrounding Stoa workflow.
+
+        Args:
+            provider (str): Input value used by this workflow step.
+            task_tier (TaskTier): Input value used by this workflow step.
+
+        Returns:
+            str | None: Result produced for the caller.
+        """
         fast = task_tier in ("cheap", "standard")
         if provider == PROVIDER_VERTEX:
             return (self.vertex_model_fast if fast else self.vertex_model_pro) or self.vertex_model
@@ -85,6 +119,11 @@ BuilderFn = Callable[[LLMConfig, TaskTier], MessageFn | None]
 
 
 def load_config() -> LLMConfig:
+    """Handles load config logic for the surrounding Stoa workflow.
+
+    Returns:
+        LLMConfig: Result produced for the caller.
+    """
     s = get_settings()
     raw = (os.getenv("STOA_LLM_PROVIDER") or s.llm_provider or PROVIDER_VERTEX).strip().lower()
     if raw not in _VALID_PROVIDERS:
@@ -109,6 +148,15 @@ def load_config() -> LLMConfig:
 
 
 def _vertex_invocation(cfg: LLMConfig, task_tier: TaskTier) -> MessageFn | None:
+    """Handles  vertex invocation logic for the surrounding Stoa workflow.
+
+    Args:
+        cfg (LLMConfig): Input value used by this workflow step.
+        task_tier (TaskTier): Input value used by this workflow step.
+
+    Returns:
+        MessageFn | None: Result produced for the caller.
+    """
     try:
         from langchain_google_vertexai import ChatVertexAI
     except Exception as exc:
@@ -130,12 +178,29 @@ def _vertex_invocation(cfg: LLMConfig, task_tier: TaskTier) -> MessageFn | None:
         return None
 
     def _invoke(messages: list[tuple[str, str]]) -> str:
+        """Handles  invoke logic for the surrounding Stoa workflow.
+
+        Args:
+            messages (list[tuple[str, str]]): Input value used by this workflow step.
+
+        Returns:
+            str: Result produced for the caller.
+        """
         return str(getattr(llm.invoke(messages), "content", "") or "")
 
     return _invoke
 
 
 def _openai_invocation(cfg: LLMConfig, task_tier: TaskTier) -> MessageFn | None:
+    """Handles  openai invocation logic for the surrounding Stoa workflow.
+
+    Args:
+        cfg (LLMConfig): Input value used by this workflow step.
+        task_tier (TaskTier): Input value used by this workflow step.
+
+    Returns:
+        MessageFn | None: Result produced for the caller.
+    """
     model = cfg.model_for(PROVIDER_OPENAI, task_tier)
     if not model or not os.getenv("OPENAI_API_KEY"):
         return None
@@ -151,12 +216,29 @@ def _openai_invocation(cfg: LLMConfig, task_tier: TaskTier) -> MessageFn | None:
         return None
 
     def _invoke(messages: list[tuple[str, str]]) -> str:
+        """Handles  invoke logic for the surrounding Stoa workflow.
+
+        Args:
+            messages (list[tuple[str, str]]): Input value used by this workflow step.
+
+        Returns:
+            str: Result produced for the caller.
+        """
         return str(getattr(llm.invoke(messages), "content", "") or "")
 
     return _invoke
 
 
 def _anthropic_invocation(cfg: LLMConfig, task_tier: TaskTier) -> MessageFn | None:
+    """Handles  anthropic invocation logic for the surrounding Stoa workflow.
+
+    Args:
+        cfg (LLMConfig): Input value used by this workflow step.
+        task_tier (TaskTier): Input value used by this workflow step.
+
+    Returns:
+        MessageFn | None: Result produced for the caller.
+    """
     model = cfg.model_for(PROVIDER_ANTHROPIC, task_tier)
     if not model or not os.getenv("ANTHROPIC_API_KEY"):
         return None
@@ -172,6 +254,14 @@ def _anthropic_invocation(cfg: LLMConfig, task_tier: TaskTier) -> MessageFn | No
         return None
 
     def _invoke(messages: list[tuple[str, str]]) -> str:
+        """Handles  invoke logic for the surrounding Stoa workflow.
+
+        Args:
+            messages (list[tuple[str, str]]): Input value used by this workflow step.
+
+        Returns:
+            str: Result produced for the caller.
+        """
         return str(getattr(llm.invoke(messages), "content", "") or "")
 
     return _invoke
@@ -185,6 +275,14 @@ _BUILDERS: dict[str, BuilderFn] = {
 
 
 def _strip_fence(content: str) -> str:
+    """Handles  strip fence logic for the surrounding Stoa workflow.
+
+    Args:
+        content (str): Input value used by this workflow step.
+
+    Returns:
+        str: Result produced for the caller.
+    """
     text = content.strip()
     if text.startswith("```"):
         text = text.strip("`").removeprefix("json").strip()
@@ -197,6 +295,16 @@ def _invoke_chain(
     config: LLMConfig | None = None,
     task_tier: TaskTier = "standard",
 ) -> tuple[str | None, str | None]:
+    """Handles  invoke chain logic for the surrounding Stoa workflow.
+
+    Args:
+        messages (list[tuple[str, str]]): Input value used by this workflow step.
+        config (LLMConfig | None): Input value used by this workflow step.
+        task_tier (TaskTier): Input value used by this workflow step.
+
+    Returns:
+        tuple[str | None, str | None]: Result produced for the caller.
+    """
     cfg = config or load_config()
     for provider in cfg.fallback_chain:
         invoker = _BUILDERS.get(provider)
@@ -220,6 +328,18 @@ def invoke_text(
     task_tier: TaskTier = "standard",
     task_name: str | None = None,
 ) -> tuple[str | None, str | None]:
+    """Handles invoke text logic for the surrounding Stoa workflow.
+
+    Args:
+        system (str): Input value used by this workflow step.
+        user (str): Input value used by this workflow step.
+        config (LLMConfig | None): Input value used by this workflow step.
+        task_tier (TaskTier): Input value used by this workflow step.
+        task_name (str | None): Input value used by this workflow step.
+
+    Returns:
+        tuple[str | None, str | None]: Result produced for the caller.
+    """
     tier = TASK_TIER_MAP.get(task_name or "", task_tier)
     messages = [("system", system), ("human", user)]
     return _invoke_chain(messages, config=config, task_tier=tier)
@@ -234,6 +354,19 @@ def invoke_json(
     task_tier: TaskTier = "standard",
     task_name: str | None = None,
 ) -> tuple[dict[str, Any] | None, str | None]:
+    """Handles invoke json logic for the surrounding Stoa workflow.
+
+    Args:
+        system (str): Input value used by this workflow step.
+        payload (dict[str, Any]): Input value used by this workflow step.
+        max_chars (int): Input value used by this workflow step.
+        config (LLMConfig | None): Input value used by this workflow step.
+        task_tier (TaskTier): Input value used by this workflow step.
+        task_name (str | None): Input value used by this workflow step.
+
+    Returns:
+        tuple[dict[str, Any] | None, str | None]: Result produced for the caller.
+    """
     tier = TASK_TIER_MAP.get(task_name or "", task_tier)
     messages = [
         ("system", system + "\nReturn only valid JSON. Do not wrap in markdown."),

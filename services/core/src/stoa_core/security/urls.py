@@ -1,4 +1,10 @@
-"""URL and filename safety helpers."""
+"""
+File: services/core/src/stoa_core/security/urls.py
+Layer: Core Security Utilities
+Purpose: Implements urls behavior for the core security utilities.
+Dependencies: standard library / local modules
+"""
+
 
 from __future__ import annotations
 

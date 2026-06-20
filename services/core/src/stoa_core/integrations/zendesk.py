@@ -1,4 +1,10 @@
-"""Zendesk support ticket connector."""
+"""
+File: services/core/src/stoa_core/integrations/zendesk.py
+Layer: Core Integration Connectors
+Purpose: Implements zendesk behavior for the core integration connectors.
+Dependencies: stoa_core
+"""
+
 
 from __future__ import annotations
 
@@ -21,10 +27,20 @@ SOURCE = "zendesk"
 
 @register_connector
 class ZendeskConnector(BaseConnector):
+    """Manage ZendeskConnector behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     provider = "zendesk"
 
     @classmethod
     def provider_info(cls) -> ProviderInfo:
+        """Handles provider info logic for the surrounding Stoa workflow.
+
+        Returns:
+            ProviderInfo: Result produced for the caller.
+        """
         return ProviderInfo(
             id="zendesk",
             name="Zendesk",
@@ -35,6 +51,15 @@ class ZendeskConnector(BaseConnector):
 
     @classmethod
     def oauth_authorize_url(cls, state: str, redirect_uri: str) -> str:
+        """Handles oauth authorize url logic for the surrounding Stoa workflow.
+
+        Args:
+            state (str): Input value used by this workflow step.
+            redirect_uri (str): Input value used by this workflow step.
+
+        Returns:
+            str: Result produced for the caller.
+        """
         s = get_settings()
         subdomain = s.zendesk_subdomain or "subdomain"
         params = {
@@ -48,6 +73,15 @@ class ZendeskConnector(BaseConnector):
 
     @classmethod
     def exchange_oauth_code(cls, code: str, redirect_uri: str) -> dict[str, Any]:
+        """Handles exchange oauth code logic for the surrounding Stoa workflow.
+
+        Args:
+            code (str): Input value used by this workflow step.
+            redirect_uri (str): Input value used by this workflow step.
+
+        Returns:
+            dict[str, Any]: Result produced for the caller.
+        """
         s = get_settings()
         subdomain = s.zendesk_subdomain
         if not subdomain:
@@ -74,6 +108,14 @@ class ZendeskConnector(BaseConnector):
 
     @classmethod
     def connect_with_credentials(cls, credentials: dict[str, Any]) -> dict[str, Any]:
+        """Handles connect with credentials logic for the surrounding Stoa workflow.
+
+        Args:
+            credentials (dict[str, Any]): Input value used by this workflow step.
+
+        Returns:
+            dict[str, Any]: Result produced for the caller.
+        """
         subdomain = credentials.get("subdomain", "").strip()
         email = credentials.get("email", "").strip()
         api_token = credentials.get("api_token", "").strip()
@@ -88,6 +130,15 @@ class ZendeskConnector(BaseConnector):
 
     @classmethod
     def _auth(cls, credentials: dict[str, Any], metadata: dict[str, Any]) -> tuple[str, Any]:
+        """Handles  auth logic for the surrounding Stoa workflow.
+
+        Args:
+            credentials (dict[str, Any]): Input value used by this workflow step.
+            metadata (dict[str, Any]): Input value used by this workflow step.
+
+        Returns:
+            tuple[str, Any]: Result produced for the caller.
+        """
         subdomain = metadata.get("subdomain") or credentials.get("subdomain")
         base = f"https://{subdomain}.zendesk.com/api/v2"
         if credentials.get("api_token"):
@@ -104,6 +155,18 @@ class ZendeskConnector(BaseConnector):
         cursor: dict[str, Any],
         full_backfill: bool = False,
     ) -> SyncResult:
+        """Handles sync logic for the surrounding Stoa workflow.
+
+        Args:
+            org_id (str): Input value used by this workflow step.
+            connection (dict[str, Any]): Input value used by this workflow step.
+            credentials (dict[str, Any]): Input value used by this workflow step.
+            cursor (dict[str, Any]): Input value used by this workflow step.
+            full_backfill (bool): Input value used by this workflow step.
+
+        Returns:
+            SyncResult: Result produced for the caller.
+        """
         result = SyncResult(cursor=dict(cursor))
         metadata = connection.get("provider_metadata") or {}
         base, auth = cls._auth(credentials, metadata)
@@ -160,6 +223,16 @@ class ZendeskConnector(BaseConnector):
 
     @classmethod
     def _fetch_comments(cls, base: str, auth: Any, ticket_id: str) -> str:
+        """Handles  fetch comments logic for the surrounding Stoa workflow.
+
+        Args:
+            base (str): Input value used by this workflow step.
+            auth (Any): Input value used by this workflow step.
+            ticket_id (str): Input value used by this workflow step.
+
+        Returns:
+            str: Result produced for the caller.
+        """
         lines: list[str] = []
         url = f"{base}/tickets/{ticket_id}/comments.json"
         with httpx.Client(timeout=30) as client:

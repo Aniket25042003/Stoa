@@ -1,4 +1,10 @@
-"""Campaign asset generation (plain orchestration; LangGraph optional in Phase 3)."""
+"""
+File: services/core/src/stoa_core/campaign/generate.py
+Layer: Core Campaign Generation
+Purpose: Implements generate behavior for the core campaign generation.
+Dependencies: stoa_core
+"""
+
 
 from __future__ import annotations
 
@@ -25,6 +31,18 @@ def generate_campaign_assets(
     brand_voice: str | None = None,
     knowledge_context: str | None = None,
 ) -> dict[str, Any] | None:
+    """Handles generate campaign assets logic for the surrounding Stoa workflow.
+
+    Args:
+        brief (str): Input value used by this workflow step.
+        icp_context (dict[str, Any] | None): Input value used by this workflow step.
+        competitive_context (list[dict[str, Any]] | None): Input value used by this workflow step.
+        brand_voice (str | None): Input value used by this workflow step.
+        knowledge_context (str | None): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any] | None: Result produced for the caller.
+    """
     payload = {
         "brief": brief,
         "icp": icp_context or {},

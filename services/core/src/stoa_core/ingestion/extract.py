@@ -1,4 +1,10 @@
-"""Signal extraction from document chunks using cheap LLM tier."""
+"""
+File: services/core/src/stoa_core/ingestion/extract.py
+Layer: Core Ingestion Pipeline
+Purpose: Implements extract behavior for the core ingestion pipeline.
+Dependencies: stoa_core
+"""
+
 
 from __future__ import annotations
 
@@ -13,6 +19,15 @@ Only include signals clearly supported by the text. Max 8 signals per chunk."""
 
 
 def extract_signals(chunk: str, document_id: str) -> list[dict[str, Any]]:
+    """Handles extract signals logic for the surrounding Stoa workflow.
+
+    Args:
+        chunk (str): Input value used by this workflow step.
+        document_id (str): Input value used by this workflow step.
+
+    Returns:
+        list[dict[str, Any]]: Result produced for the caller.
+    """
     parsed, _provider = invoke_json(
         EXTRACT_SYSTEM,
         {"chunk": chunk[:8000], "document_id": document_id},

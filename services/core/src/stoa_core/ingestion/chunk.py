@@ -1,4 +1,10 @@
-"""Token-aware structure-aware text chunking for embedding."""
+"""
+File: services/core/src/stoa_core/ingestion/chunk.py
+Layer: Core Ingestion Pipeline
+Purpose: Implements chunk behavior for the core ingestion pipeline.
+Dependencies: standard library / local modules
+"""
+
 
 from __future__ import annotations
 
@@ -17,12 +23,25 @@ def estimate_tokens(text: str) -> int:
 
 @dataclass(frozen=True)
 class TextChunk:
+    """Manage TextChunk behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     content: str
     token_count: int
     chunk_index: int
 
 
 def _split_sections(text: str) -> list[str]:
+    """Handles  split sections logic for the surrounding Stoa workflow.
+
+    Args:
+        text (str): Input value used by this workflow step.
+
+    Returns:
+        list[str]: Result produced for the caller.
+    """
     text = text.strip()
     if not text:
         return []
@@ -36,6 +55,14 @@ def _split_sections(text: str) -> list[str]:
 
 
 def _split_paragraphs(section: str) -> list[str]:
+    """Handles  split paragraphs logic for the surrounding Stoa workflow.
+
+    Args:
+        section (str): Input value used by this workflow step.
+
+    Returns:
+        list[str]: Result produced for the caller.
+    """
     paras = [p.strip() for p in re.split(r"\n\s*\n", section) if p.strip()]
     return paras or [section.strip()]
 
@@ -77,6 +104,8 @@ def chunk_text(
     current_tokens = 0
 
     def flush() -> None:
+        """Handles flush logic for the surrounding Stoa workflow.
+        """
         nonlocal current, current_tokens
         if current:
             chunks.append("\n\n".join(current))

@@ -1,4 +1,10 @@
-"""G2/Capterra/TrustRadius reviews via Apify."""
+"""
+File: services/core/src/stoa_core/integrations/reviews.py
+Layer: Core Integration Connectors
+Purpose: Implements reviews behavior for the core integration connectors.
+Dependencies: stoa_core
+"""
+
 
 from __future__ import annotations
 
@@ -20,10 +26,20 @@ APIFY_ACTOR = "zen-studio/software-review-scraper"
 
 @register_connector
 class ReviewsConnector(BaseConnector):
+    """Manage ReviewsConnector behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     provider = "reviews"
 
     @classmethod
     def provider_info(cls) -> ProviderInfo:
+        """Handles provider info logic for the surrounding Stoa workflow.
+
+        Returns:
+            ProviderInfo: Result produced for the caller.
+        """
         return ProviderInfo(
             id="reviews",
             name="Product Reviews",
@@ -33,6 +49,14 @@ class ReviewsConnector(BaseConnector):
 
     @classmethod
     def connect_with_credentials(cls, credentials: dict[str, Any]) -> dict[str, Any]:
+        """Handles connect with credentials logic for the surrounding Stoa workflow.
+
+        Args:
+            credentials (dict[str, Any]): Input value used by this workflow step.
+
+        Returns:
+            dict[str, Any]: Result produced for the caller.
+        """
         query = credentials.get("product_query", "").strip()
         if not query:
             raise ValueError("Product URL or name is required for review import")
@@ -56,6 +80,18 @@ class ReviewsConnector(BaseConnector):
         cursor: dict[str, Any],
         full_backfill: bool = False,
     ) -> SyncResult:
+        """Handles sync logic for the surrounding Stoa workflow.
+
+        Args:
+            org_id (str): Input value used by this workflow step.
+            connection (dict[str, Any]): Input value used by this workflow step.
+            credentials (dict[str, Any]): Input value used by this workflow step.
+            cursor (dict[str, Any]): Input value used by this workflow step.
+            full_backfill (bool): Input value used by this workflow step.
+
+        Returns:
+            SyncResult: Result produced for the caller.
+        """
         result = SyncResult()
         metadata = connection.get("provider_metadata") or {}
         token = get_settings().apify_api_token
