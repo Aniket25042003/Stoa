@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/app/(marketing)/faq/page.tsx
+ * @layer Frontend Marketing UI
+ * @description Defines the route entry point and composes the page-level UI for this product surface.
+ * @dependencies React, Framer Motion
+ */
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
@@ -77,6 +83,10 @@ const faqs: { id: string; cat: Cat; q: string; a: string }[] = [
 
 const categories: Cat[] = ["Product", "Strategy", "Marketing", "Pricing", "Privacy"];
 
+/**
+ * Handles faq page behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export default function FaqPage() {
   const [activeCat, setActiveCat] = useState<Cat>("Product");
   const [openId, setOpenId] = useState<string | null>("p1");

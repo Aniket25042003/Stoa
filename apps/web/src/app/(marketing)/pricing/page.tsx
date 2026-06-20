@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/app/(marketing)/pricing/page.tsx
+ * @layer Frontend Marketing UI
+ * @description Defines the route entry point and composes the page-level UI for this product surface.
+ * @dependencies Next.js, React
+ */
 "use client";
 
 import Link from "next/link";
@@ -63,6 +69,12 @@ const rows = [
   { label: "Export-ready documents", starter: "no", pro: "yes", team: "yes" },
 ];
 
+/**
+ * Handles compare cell behavior for this part of the Stoa application.
+ *
+ * @param value - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 function CompareCell({ value }: { value: string }) {
   const v = value.toLowerCase();
   const tdClass = "px-3 py-3 align-middle sm:px-5 sm:py-4 text-center tabular-nums";
@@ -92,6 +104,10 @@ function CompareCell({ value }: { value: string }) {
   );
 }
 
+/**
+ * Handles pricing page behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export default function PricingPage() {
   const [yearly, setYearly] = useState(true);
   const list = tiers(yearly, getAuthEntryPath());

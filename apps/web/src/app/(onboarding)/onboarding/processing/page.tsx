@@ -1,9 +1,19 @@
+/**
+ * @file apps/web/src/app/(onboarding)/onboarding/processing/page.tsx
+ * @layer Frontend Onboarding UI
+ * @description Defines the route entry point and composes the page-level UI for this product surface.
+ * @dependencies Next.js, React, BFF apiFetch
+ */
 "use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api";
 
+/**
+ * Handles onboarding processing page behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export default function OnboardingProcessingPage() {
   const router = useRouter();
   const [message, setMessage] = useState("Indexing your company profile and seed documents...");
