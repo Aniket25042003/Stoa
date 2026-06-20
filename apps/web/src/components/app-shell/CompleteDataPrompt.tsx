@@ -1,6 +1,16 @@
+/**
+ * @file apps/web/src/components/app-shell/CompleteDataPrompt.tsx
+ * @layer Frontend Product UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies Next.js, React
+ */
 import Link from "next/link";
 import { ProductButton, ProductCard } from "@/components/product";
 
+/**
+ * Handles complete data prompt behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function CompleteDataPrompt({
   title,
   message,

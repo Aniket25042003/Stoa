@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/components/app-shell/AppSidebar.tsx
+ * @layer Frontend Product UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies Next.js, React
+ */
 "use client";
 
 import Link from "next/link";
@@ -20,6 +26,10 @@ type AppSidebarProps = {
   permissionsLoaded: boolean;
 };
 
+/**
+ * Handles nav link behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 function NavLink({
   item,
   collapsed,
@@ -128,6 +138,10 @@ function NavGroupSection({
   );
 }
 
+/**
+ * Handles app sidebar behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function AppSidebar({ permissions, permissionsLoaded }: AppSidebarProps) {
   const pathname = usePathname();
   const { collapsed, toggle, hydrated } = useSidebarCollapsed();

@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/components/motion/ReadinessStepper.tsx
+ * @layer Application Source
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies React
+ */
 "use client";
 
 import { useReducedMotion } from "@/hooks/useReducedMotion";
@@ -9,6 +15,10 @@ const STEPS = [
   { key: "has_marketing_baseline" as const, label: "Creative direction" },
 ];
 
+/**
+ * Handles readiness stepper behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function ReadinessStepper({
   readiness,
   className,

@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/components/onboarding/OnboardingWizard.tsx
+ * @layer Frontend Onboarding UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies Next.js, React, BFF apiFetch
+ */
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -29,6 +35,10 @@ const STEP_LABELS: Record<string, string> = {
 
 const ONBOARDING_STEP_KEY = "stoa-onboarding-step";
 
+/**
+ * Handles onboarding wizard behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function OnboardingWizard() {
   const router = useRouter();
   const searchParams = useSearchParams();

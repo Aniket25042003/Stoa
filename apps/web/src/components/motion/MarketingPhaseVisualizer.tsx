@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/components/motion/MarketingPhaseVisualizer.tsx
+ * @layer Application Source
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies React
+ */
 "use client";
 
 import { Check, X } from "lucide-react";
@@ -8,6 +14,10 @@ import {
 } from "@/lib/marketing-activity-phases";
 import { cn } from "@/lib/cn";
 
+/**
+ * Handles marketing phase visualizer behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function MarketingPhaseVisualizer({
   step,
   className,
@@ -48,6 +58,10 @@ export function MarketingPhaseVisualizer({
   );
 }
 
+/**
+ * Handles step dot behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 function StepDot({
   done,
   active,

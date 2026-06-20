@@ -1,9 +1,19 @@
+/**
+ * @file apps/web/src/components/motion/ProgressRing.tsx
+ * @layer Application Source
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies React
+ */
 "use client";
 
 import { useEffect, useState } from "react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { cn } from "@/lib/cn";
 
+/**
+ * Handles progress ring behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function ProgressRing({
   value,
   size = 56,
