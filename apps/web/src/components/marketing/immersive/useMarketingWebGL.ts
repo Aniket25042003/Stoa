@@ -1,7 +1,17 @@
+/**
+ * @file apps/web/src/components/marketing/immersive/useMarketingWebGL.ts
+ * @layer Frontend Marketing UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies React
+ */
 "use client";
 
 import { useEffect, useState } from "react";
 
+/**
+ * Handles use marketing web gl behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function useMarketingWebGL() {
   const [shouldRenderWebGL, setShouldRenderWebGL] = useState(false);
   const [dpr, setDpr] = useState(1);

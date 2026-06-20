@@ -1,10 +1,10 @@
-"""Live Supabase RLS integration tests.
-
-Run with:
-  RUN_INTEGRATION_TESTS=1 pytest tests/test_rls_integration.py -q
-
-Requires SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_JWT_SECRET.
 """
+File: services/api/tests/test_rls_integration.py
+Layer: Test Suite
+Purpose: Covers regression and behavior checks for test rls integration in the test suite.
+Dependencies: Supabase
+"""
+
 
 from __future__ import annotations
 

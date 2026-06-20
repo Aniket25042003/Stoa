@@ -1,3 +1,10 @@
+"""
+File: services/api/app/routers/competitive.py
+Layer: FastAPI Route Layer
+Purpose: Exposes authenticated REST endpoints and coordinates validation, permissions, and service calls.
+Dependencies: FastAPI, Supabase, Pydantic, stoa_core
+"""
+
 from __future__ import annotations
 
 from typing import Any
@@ -17,18 +24,37 @@ router = APIRouter(prefix="/v1/competitive", tags=["competitive"])
 
 
 class CompetitorCreate(BaseModel):
+    """Manage CompetitorCreate behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     name: str = Field(min_length=1, max_length=200)
     website_url: HttpUrl | None = None
     pricing_url: HttpUrl | None = None
 
 
 class CompetitorUpdate(BaseModel):
+    """Manage CompetitorUpdate behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     name: str | None = Field(default=None, min_length=1, max_length=200)
     website_url: HttpUrl | None = None
     pricing_url: HttpUrl | None = None
 
 
 def _get_competitor_for_org(org_id: str, competitor_id: str) -> dict[str, Any] | None:
+    """Handles  get competitor for org logic for the surrounding Stoa workflow.
+
+    Args:
+        org_id (str): Input value used by this workflow step.
+        competitor_id (str): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any] | None: Result produced for the caller.
+    """
     sb = get_supabase_admin()
     res = (
         sb.table("competitors")
@@ -42,6 +68,8 @@ def _get_competitor_for_org(org_id: str, competitor_id: str) -> dict[str, Any] |
 
 
 def _validate_competitor_urls(*urls: str | None) -> None:
+    """Handles  validate competitor urls logic for the surrounding Stoa workflow.
+    """
     for url in urls:
         if url:
             try:
@@ -52,6 +80,14 @@ def _validate_competitor_urls(*urls: str | None) -> None:
 
 @router.get("/competitors")
 def list_competitors(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    """Handles list competitors logic for the surrounding Stoa workflow.
+
+    Args:
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "competitive:read")
     sb = get_supabase_admin()
     res = (
@@ -66,6 +102,15 @@ def list_competitors(scope: OrgScope = Depends(require_onboarded_scope)) -> dict
 
 @router.post("/competitors")
 def add_competitor(body: CompetitorCreate, scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    """Handles add competitor logic for the surrounding Stoa workflow.
+
+    Args:
+        body (CompetitorCreate): Input value used by this workflow step.
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "competitive:manage")
     check_rate_limit(scope.user_id, limit_per_minute=10, scope="competitor_add")
     website_url = str(body.website_url) if body.website_url else None
@@ -98,6 +143,16 @@ def update_competitor(
     body: CompetitorUpdate,
     scope: OrgScope = Depends(require_onboarded_scope),
 ) -> dict[str, Any]:
+    """Handles update competitor logic for the surrounding Stoa workflow.
+
+    Args:
+        competitor_id (str): Input value used by this workflow step.
+        body (CompetitorUpdate): Input value used by this workflow step.
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "competitive:manage")
     check_rate_limit(scope.user_id, limit_per_minute=10, scope="competitor_update")
     existing = _get_competitor_for_org(scope.org_id, competitor_id)
@@ -132,6 +187,15 @@ def update_competitor(
 
 @router.delete("/competitors/{competitor_id}")
 def delete_competitor(competitor_id: str, scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, str]:
+    """Handles delete competitor logic for the surrounding Stoa workflow.
+
+    Args:
+        competitor_id (str): Input value used by this workflow step.
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, str]: Result produced for the caller.
+    """
     require_permission(scope, "competitive:manage")
     check_rate_limit(scope.user_id, limit_per_minute=10, scope="competitor_delete")
     existing = _get_competitor_for_org(scope.org_id, competitor_id)
@@ -146,6 +210,14 @@ def delete_competitor(competitor_id: str, scope: OrgScope = Depends(require_onbo
 
 @router.get("/alerts")
 def list_alerts(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    """Handles list alerts logic for the surrounding Stoa workflow.
+
+    Args:
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "competitive:read")
     sb = get_supabase_admin()
     res = (
@@ -161,6 +233,15 @@ def list_alerts(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str,
 
 @router.post("/competitors/{competitor_id}/scan")
 def trigger_scan(competitor_id: str, scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, str]:
+    """Handles trigger scan logic for the surrounding Stoa workflow.
+
+    Args:
+        competitor_id (str): Input value used by this workflow step.
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, str]: Result produced for the caller.
+    """
     require_permission(scope, "competitive:scan")
     check_rate_limit(scope.user_id, limit_per_minute=10, scope="competitor_scan")
     sb = get_supabase_admin()

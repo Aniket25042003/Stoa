@@ -1,5 +1,15 @@
+/**
+ * @file apps/web/src/components/product/ProductBadge.tsx
+ * @layer Frontend Design System
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies React
+ */
 import { cn } from "@/lib/cn";
 
+/**
+ * Handles product badge behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function ProductBadge({
   children,
   variant = "default",
@@ -30,6 +40,10 @@ export function ProductBadge({
   );
 }
 
+/**
+ * Handles product status pill behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function ProductStatusPill({
   status,
   className,

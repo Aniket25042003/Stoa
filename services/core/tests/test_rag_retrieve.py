@@ -1,3 +1,10 @@
+"""
+File: services/core/tests/test_rag_retrieve.py
+Layer: Test Suite
+Purpose: Covers regression and behavior checks for test rag retrieve in the test suite.
+Dependencies: stoa_core
+"""
+
 from unittest.mock import patch
 
 from stoa_core.rag.retrieve import (

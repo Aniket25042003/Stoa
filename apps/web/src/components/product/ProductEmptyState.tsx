@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/components/product/ProductEmptyState.tsx
+ * @layer Frontend Design System
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies Next.js, React
+ */
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { ProductButton } from "./ProductButton";
@@ -36,6 +42,10 @@ export function ProductEmptyState({
   );
 }
 
+/**
+ * Handles product table behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function ProductTable({
   children,
   className,
@@ -50,6 +60,12 @@ export function ProductTable({
   );
 }
 
+/**
+ * Handles product table head behavior for this part of the Stoa application.
+ *
+ * @param children - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function ProductTableHead({ children }: { children: ReactNode }) {
   return (
     <thead className="border-b border-mkt-ink/[0.06] bg-mkt-ink/[0.02]">
@@ -58,6 +74,12 @@ export function ProductTableHead({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * Handles product table header cell behavior for this part of the Stoa application.
+ *
+ * @param children - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function ProductTableHeaderCell({ children }: { children: ReactNode }) {
   return (
     <th className="px-4 py-3 font-dm-sans text-[9px] font-bold uppercase tracking-[0.16em] text-mkt-muted">
@@ -66,6 +88,10 @@ export function ProductTableHeaderCell({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * Handles product table cell behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function ProductTableCell({ children, className }: { children: ReactNode; className?: string }) {
   return <td className={`border-t border-mkt-ink/[0.04] px-4 py-3 text-mkt-ink ${className ?? ""}`}>{children}</td>;
 }

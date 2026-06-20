@@ -1,4 +1,10 @@
-"""Tests for competitor update/delete helpers."""
+"""
+File: services/api/tests/test_competitive_competitors.py
+Layer: Test Suite
+Purpose: Covers regression and behavior checks for test competitive competitors in the test suite.
+Dependencies: FastAPI, Supabase
+"""
+
 
 from __future__ import annotations
 

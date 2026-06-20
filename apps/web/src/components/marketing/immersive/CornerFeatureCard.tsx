@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/components/marketing/immersive/CornerFeatureCard.tsx
+ * @layer Frontend Marketing UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies Next.js, React, Framer Motion
+ */
 "use client";
 
 import Link from "next/link";
@@ -16,6 +22,10 @@ type CornerFeatureCardProps = {
   showCta?: boolean;
 };
 
+/**
+ * Handles corner feature card behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function CornerFeatureCard({ section, visible, showCta }: CornerFeatureCardProps) {
   const anchor = section.textAnchor ?? "top-left";
   const isRight = anchor.includes("right");

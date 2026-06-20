@@ -1,3 +1,10 @@
+"""
+File: services/api/app/routers/orgs.py
+Layer: FastAPI Route Layer
+Purpose: Exposes authenticated REST endpoints and coordinates validation, permissions, and service calls.
+Dependencies: FastAPI, Supabase, Pydantic, stoa_core
+"""
+
 from __future__ import annotations
 
 from typing import Any
@@ -26,6 +33,11 @@ router = APIRouter(prefix="/v1/orgs", tags=["organizations"])
 
 
 class OrgProfileUpdate(BaseModel):
+    """Manage OrgProfileUpdate behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     target_customers: str | None = None
     business_model: str | None = None
     stage: str | None = None
@@ -37,6 +49,11 @@ class OrgProfileUpdate(BaseModel):
 
 
 class OrgUpdate(BaseModel):
+    """Manage OrgUpdate behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     name: str | None = None
     website_url: str | None = None
     industry: str | None = None
@@ -44,18 +61,42 @@ class OrgUpdate(BaseModel):
 
 
 class OrgSwitchBody(BaseModel):
+    """Manage OrgSwitchBody behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     org_id: str
 
 
 class TransferOwnershipBody(BaseModel):
+    """Manage TransferOwnershipBody behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     target_user_id: str
 
 
 class OrgDeleteBody(BaseModel):
+    """Manage OrgDeleteBody behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     confirm_name: str
 
 
 def _merge_profile(existing: dict[str, Any], update: OrgProfileUpdate | None) -> dict[str, Any]:
+    """Handles  merge profile logic for the surrounding Stoa workflow.
+
+    Args:
+        existing (dict[str, Any]): Input value used by this workflow step.
+        update (OrgProfileUpdate | None): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     merged = dict(existing or {})
     if update is None:
         return merged
@@ -66,6 +107,14 @@ def _merge_profile(existing: dict[str, Any], update: OrgProfileUpdate | None) ->
 
 @router.get("")
 def list_orgs(claims: dict = Depends(verify_supabase_jwt_payload)) -> dict[str, Any]:
+    """Handles list orgs logic for the surrounding Stoa workflow.
+
+    Args:
+        claims (dict): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     user_id = str(claims["sub"])
     email = email_from_claims(claims)
     sb = get_supabase_admin()
@@ -107,6 +156,15 @@ def list_orgs(claims: dict = Depends(verify_supabase_jwt_payload)) -> dict[str, 
 
 @router.post("/switch")
 def switch_org(body: OrgSwitchBody, user_id: str = Depends(verify_supabase_jwt)) -> dict[str, Any]:
+    """Handles switch org logic for the surrounding Stoa workflow.
+
+    Args:
+        body (OrgSwitchBody): Input value used by this workflow step.
+        user_id (str): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     from app.services.org_context import _load_membership
 
     membership = _load_membership(user_id, body.org_id)
@@ -125,6 +183,14 @@ def switch_org(body: OrgSwitchBody, user_id: str = Depends(verify_supabase_jwt))
 
 @router.get("/me")
 def get_my_org(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    """Handles get my org logic for the surrounding Stoa workflow.
+
+    Args:
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     org = scope.org
     completeness = build_completeness_for_org(org)
     return {
@@ -144,6 +210,14 @@ def get_my_org(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, 
 
 @router.post("/leave")
 def leave_org(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, str]:
+    """Handles leave org logic for the surrounding Stoa workflow.
+
+    Args:
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, str]: Result produced for the caller.
+    """
     require_permission(scope, "org:leave")
     if scope.is_owner and count_org_owners(scope.org_id) <= 1:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Transfer ownership before leaving as the last owner")
@@ -160,6 +234,15 @@ def leave_org(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, s
 
 @router.post("/transfer-ownership")
 def transfer_ownership(body: TransferOwnershipBody, scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, str]:
+    """Handles transfer ownership logic for the surrounding Stoa workflow.
+
+    Args:
+        body (TransferOwnershipBody): Input value used by this workflow step.
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, str]: Result produced for the caller.
+    """
     require_owner(scope)
     sb = get_supabase_admin()
     target = (
@@ -191,6 +274,15 @@ def transfer_ownership(body: TransferOwnershipBody, scope: OrgScope = Depends(re
 
 @router.delete("/me")
 def delete_org(body: OrgDeleteBody, scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, str]:
+    """Handles delete org logic for the surrounding Stoa workflow.
+
+    Args:
+        body (OrgDeleteBody): Input value used by this workflow step.
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, str]: Result produced for the caller.
+    """
     require_owner(scope)
     org_name = scope.org.get("name") or ""
     if body.confirm_name.strip() != org_name:
@@ -206,6 +298,15 @@ def delete_org(body: OrgDeleteBody, scope: OrgScope = Depends(require_onboarded_
 
 @router.patch("/me")
 def update_my_org(body: OrgUpdate, scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    """Handles update my org logic for the surrounding Stoa workflow.
+
+    Args:
+        body (OrgUpdate): Input value used by this workflow step.
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "org:update")
     sb = get_supabase_admin()
     org_id = scope.org_id
@@ -237,6 +338,11 @@ def update_my_org(body: OrgUpdate, scope: OrgScope = Depends(require_onboarded_s
 # Legacy alias — prefer POST /v1/onboarding/complete
 @router.post("/onboarding")
 def legacy_complete_onboarding() -> dict[str, str]:
+    """Handles legacy complete onboarding logic for the surrounding Stoa workflow.
+
+    Returns:
+        dict[str, str]: Result produced for the caller.
+    """
     raise HTTPException(
         status.HTTP_410_GONE,
         "Use POST /v1/onboarding/complete instead.",

@@ -1,3 +1,10 @@
+"""
+File: services/core/tests/test_completeness.py
+Layer: Test Suite
+Purpose: Covers regression and behavior checks for test completeness in the test suite.
+Dependencies: stoa_core
+"""
+
 from stoa_core.org.completeness import compute_completeness
 
 

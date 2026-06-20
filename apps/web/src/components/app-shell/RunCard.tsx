@@ -1,6 +1,16 @@
+/**
+ * @file apps/web/src/components/app-shell/RunCard.tsx
+ * @layer Frontend Product UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies Next.js, React
+ */
 import Link from "next/link";
 import { StatusPill } from "./StatusPill";
 
+/**
+ * Handles run card behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function RunCard({ id, status, createdAt }: { id: string; status: string; createdAt: string }) {
   return (
     <Link href={`/runs/${id}`} className="group relative overflow-hidden rounded-3xl p-5 transition-transform hover:-translate-y-1 card-glass">

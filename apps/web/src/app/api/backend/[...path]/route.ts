@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/app/api/backend/[...path]/route.ts
+ * @layer Frontend BFF / API Routes
+ * @description Handles browser-facing API requests and forwards them through the server-side boundary.
+ * @dependencies Supabase, Next.js
+ */
 import { createClient } from "@/lib/supabase/server";
 import { trustedProxyHeaders } from "@/lib/proxy-headers";
 import { NextRequest, NextResponse } from "next/server";
@@ -8,6 +14,13 @@ const apiBase = () => {
   return value.replace(/\/$/, "");
 };
 
+/**
+ * Handles proxy behavior for this part of the Stoa application.
+ *
+ * @param request - Input value used to render UI or execute the workflow.
+ * @param pathSegments - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 async function proxy(request: NextRequest, pathSegments: string[]) {
   const supabase = await createClient();
   const {
@@ -78,26 +91,61 @@ async function proxy(request: NextRequest, pathSegments: string[]) {
 
 type RouteContext = { params: Promise<{ path: string[] }> };
 
+/**
+ * Handles get behavior for this part of the Stoa application.
+ *
+ * @param request - Input value used to render UI or execute the workflow.
+ * @param context - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export async function GET(request: NextRequest, context: RouteContext) {
   const { path } = await context.params;
   return proxy(request, path);
 }
 
+/**
+ * Handles post behavior for this part of the Stoa application.
+ *
+ * @param request - Input value used to render UI or execute the workflow.
+ * @param context - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export async function POST(request: NextRequest, context: RouteContext) {
   const { path } = await context.params;
   return proxy(request, path);
 }
 
+/**
+ * Handles patch behavior for this part of the Stoa application.
+ *
+ * @param request - Input value used to render UI or execute the workflow.
+ * @param context - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export async function PATCH(request: NextRequest, context: RouteContext) {
   const { path } = await context.params;
   return proxy(request, path);
 }
 
+/**
+ * Handles put behavior for this part of the Stoa application.
+ *
+ * @param request - Input value used to render UI or execute the workflow.
+ * @param context - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export async function PUT(request: NextRequest, context: RouteContext) {
   const { path } = await context.params;
   return proxy(request, path);
 }
 
+/**
+ * Handles delete behavior for this part of the Stoa application.
+ *
+ * @param request - Input value used to render UI or execute the workflow.
+ * @param context - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export async function DELETE(request: NextRequest, context: RouteContext) {
   const { path } = await context.params;
   return proxy(request, path);

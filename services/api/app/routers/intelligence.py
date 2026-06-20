@@ -1,3 +1,10 @@
+"""
+File: services/api/app/routers/intelligence.py
+Layer: FastAPI Route Layer
+Purpose: Exposes authenticated REST endpoints and coordinates validation, permissions, and service calls.
+Dependencies: FastAPI, Supabase, Pydantic, stoa_core
+"""
+
 from __future__ import annotations
 
 from typing import Any
@@ -23,12 +30,25 @@ router = APIRouter(prefix="/v1/intelligence", tags=["intelligence"])
 
 
 class DocumentUpdateBody(BaseModel):
+    """Manage DocumentUpdateBody behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     title: str | None = Field(default=None, min_length=1, max_length=300)
     content: str | None = Field(default=None, min_length=1, max_length=10 * 1024 * 1024)
     doc_type: str | None = Field(default=None, pattern="^(call_transcript|review|crm_export|note)$")
 
 
 def _serialize_document(doc: dict[str, Any]) -> dict[str, Any]:
+    """Handles  serialize document logic for the surrounding Stoa workflow.
+
+    Args:
+        doc (dict[str, Any]): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     pasted = is_pasted_document(doc)
     return {
         "id": doc["id"],
@@ -46,6 +66,14 @@ def _serialize_document(doc: dict[str, Any]) -> dict[str, Any]:
 
 @router.get("/signals")
 def list_signals(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    """Handles list signals logic for the surrounding Stoa workflow.
+
+    Args:
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "intelligence:read")
     sb = get_supabase_admin()
     res = (
@@ -61,6 +89,14 @@ def list_signals(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str
 
 @router.get("/icp")
 def get_icp_profile(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    """Handles get icp profile logic for the surrounding Stoa workflow.
+
+    Args:
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "intelligence:read")
     sb = get_supabase_admin()
     res = (
@@ -77,6 +113,14 @@ def get_icp_profile(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[
 
 @router.post("/icp/rebuild")
 def trigger_icp_rebuild(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, str]:
+    """Handles trigger icp rebuild logic for the surrounding Stoa workflow.
+
+    Args:
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, str]: Result produced for the caller.
+    """
     require_permission(scope, "intelligence:rebuild")
     check_rate_limit(scope.user_id, limit_per_minute=5, scope="icp_rebuild")
     rebuild_icp_profile.delay(scope.org_id)
@@ -85,6 +129,14 @@ def trigger_icp_rebuild(scope: OrgScope = Depends(require_onboarded_scope)) -> d
 
 @router.get("/insights")
 def list_prepared_insights(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    """Handles list prepared insights logic for the surrounding Stoa workflow.
+
+    Args:
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "insights:read")
     sb = get_supabase_admin()
     res = (
@@ -100,6 +152,14 @@ def list_prepared_insights(scope: OrgScope = Depends(require_onboarded_scope)) -
 
 @router.post("/insights/refresh")
 def refresh_prepared_insights(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, str]:
+    """Handles refresh prepared insights logic for the surrounding Stoa workflow.
+
+    Args:
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, str]: Result produced for the caller.
+    """
     require_permission(scope, "insights:refresh")
     check_rate_limit(scope.user_id, limit_per_minute=5, scope="insights_refresh")
     precompute_insights.delay(scope.org_id, force=True)
@@ -108,6 +168,14 @@ def refresh_prepared_insights(scope: OrgScope = Depends(require_onboarded_scope)
 
 @router.get("/documents")
 def list_documents(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    """Handles list documents logic for the surrounding Stoa workflow.
+
+    Args:
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "documents:read")
     sb = get_supabase_admin()
     res = (
@@ -122,6 +190,15 @@ def list_documents(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[s
 
 @router.get("/documents/{document_id}")
 def get_document(document_id: str, scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    """Handles get document logic for the surrounding Stoa workflow.
+
+    Args:
+        document_id (str): Input value used by this workflow step.
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "documents:read")
     doc = get_document_for_org(scope.org_id, document_id)
     if not doc:
@@ -135,6 +212,16 @@ def update_document(
     body: DocumentUpdateBody,
     scope: OrgScope = Depends(require_onboarded_scope),
 ) -> dict[str, Any]:
+    """Handles update document logic for the surrounding Stoa workflow.
+
+    Args:
+        document_id (str): Input value used by this workflow step.
+        body (DocumentUpdateBody): Input value used by this workflow step.
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "documents:write")
     check_rate_limit(scope.user_id, limit_per_minute=30, scope="document_update")
     if body.doc_type is not None:
@@ -159,6 +246,15 @@ def update_document(
 
 @router.delete("/documents/{document_id}")
 def delete_document(document_id: str, scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, str]:
+    """Handles delete document logic for the surrounding Stoa workflow.
+
+    Args:
+        document_id (str): Input value used by this workflow step.
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, str]: Result produced for the caller.
+    """
     require_permission(scope, "documents:delete")
     deleted = delete_document_for_org(scope.org_id, document_id)
     if not deleted:

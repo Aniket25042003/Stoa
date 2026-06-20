@@ -1,3 +1,10 @@
+"""
+File: services/api/app/tasks/competitive.py
+Layer: Celery Task Layer
+Purpose: Runs background work that precomputes intelligence and updates durable job state.
+Dependencies: Supabase, Celery, Redis, stoa_core
+"""
+
 from __future__ import annotations
 
 import logging
@@ -16,6 +23,11 @@ logger = logging.getLogger(__name__)
 
 @celery_app.task(name="competitive.monitor", bind=True, max_retries=2)
 def monitor_competitor(self, competitor_id: str) -> None:
+    """Handles monitor competitor logic for the surrounding Stoa workflow.
+
+    Args:
+        competitor_id (str): Input value used by this workflow step.
+    """
     sb = get_supabase_admin()
     try:
         comp = verify_competitor(competitor_id)

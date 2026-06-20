@@ -1,4 +1,10 @@
-"""Reranker cascade: Cohere -> Vertex batch LLM -> BM25."""
+"""
+File: services/core/src/stoa_core/rag/rerank.py
+Layer: Core Retrieval / RAG
+Purpose: Implements rerank behavior for the core retrieval / rag.
+Dependencies: stoa_core
+"""
+
 
 from __future__ import annotations
 
@@ -55,6 +61,16 @@ def _cohere_rerank(
     *,
     top_k: int,
 ) -> list[dict[str, Any]] | None:
+    """Handles  cohere rerank logic for the surrounding Stoa workflow.
+
+    Args:
+        query (str): Input value used by this workflow step.
+        candidates (list[dict[str, Any]]): Input value used by this workflow step.
+        top_k (int): Input value used by this workflow step.
+
+    Returns:
+        list[dict[str, Any]] | None: Result produced for the caller.
+    """
     settings = get_settings()
     api_key = settings.cohere_api_key
     if not api_key:
@@ -138,6 +154,14 @@ def _vertex_batch_llm_rerank(
 
 
 def _tokenize(text: str) -> list[str]:
+    """Handles  tokenize logic for the surrounding Stoa workflow.
+
+    Args:
+        text (str): Input value used by this workflow step.
+
+    Returns:
+        list[str]: Result produced for the caller.
+    """
     return _TOKEN_RE.findall(text.lower())
 
 
@@ -195,6 +219,16 @@ def _attach_scores(
     method: str,
     scores: list[float] | None,
 ) -> list[dict[str, Any]]:
+    """Handles  attach scores logic for the surrounding Stoa workflow.
+
+    Args:
+        candidates (list[dict[str, Any]]): Input value used by this workflow step.
+        method (str): Input value used by this workflow step.
+        scores (list[float] | None): Input value used by this workflow step.
+
+    Returns:
+        list[dict[str, Any]]: Result produced for the caller.
+    """
     out: list[dict[str, Any]] = []
     for i, cand in enumerate(candidates):
         item = dict(cand)

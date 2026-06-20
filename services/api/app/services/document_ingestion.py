@@ -1,4 +1,10 @@
-"""Shared document create + ingestion job queue (storage, DB, RAG pipeline)."""
+"""
+File: services/api/app/services/document_ingestion.py
+Layer: FastAPI Service Layer
+Purpose: Contains reusable backend business logic shared by routes and workers.
+Dependencies: Supabase, Celery, stoa_core
+"""
+
 
 from __future__ import annotations
 
@@ -13,6 +19,14 @@ from stoa_core.security.urls import safe_storage_filename
 
 
 def document_quota_exceeded(org_id: str) -> bool:
+    """Handles document quota exceeded logic for the surrounding Stoa workflow.
+
+    Args:
+        org_id (str): Input value used by this workflow step.
+
+    Returns:
+        bool: Result produced for the caller.
+    """
     settings = get_settings()
     sb = get_supabase_admin()
     doc_count = sb.table("documents").select("id", count="exact").eq("org_id", org_id).execute()
@@ -97,6 +111,17 @@ def queue_uploaded_document(
 
 
 def _insert_job(sb: Any, org_id: str, doc_id: str, user_id: str) -> dict[str, Any] | None:
+    """Handles  insert job logic for the surrounding Stoa workflow.
+
+    Args:
+        sb (Any): Input value used by this workflow step.
+        org_id (str): Input value used by this workflow step.
+        doc_id (str): Input value used by this workflow step.
+        user_id (str): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any] | None: Result produced for the caller.
+    """
     job_res = (
         sb.table("ingestion_jobs")
         .insert({"org_id": org_id, "document_id": doc_id, "status": "queued", "created_by": user_id})
@@ -106,6 +131,11 @@ def _insert_job(sb: Any, org_id: str, doc_id: str, user_id: str) -> dict[str, An
 
 
 def _dispatch_job(job: dict[str, Any] | None) -> None:
+    """Handles  dispatch job logic for the surrounding Stoa workflow.
+
+    Args:
+        job (dict[str, Any] | None): Input value used by this workflow step.
+    """
     if not job:
         return
     from app.tasks.ingestion import process_ingestion_job
@@ -114,6 +144,15 @@ def _dispatch_job(job: dict[str, Any] | None) -> None:
 
 
 def get_document_for_org(org_id: str, document_id: str) -> dict[str, Any] | None:
+    """Handles get document for org logic for the surrounding Stoa workflow.
+
+    Args:
+        org_id (str): Input value used by this workflow step.
+        document_id (str): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any] | None: Result produced for the caller.
+    """
     sb = get_supabase_admin()
     res = (
         sb.table("documents")
@@ -127,6 +166,15 @@ def get_document_for_org(org_id: str, document_id: str) -> dict[str, Any] | None
 
 
 def delete_document_for_org(org_id: str, document_id: str) -> bool:
+    """Handles delete document for org logic for the surrounding Stoa workflow.
+
+    Args:
+        org_id (str): Input value used by this workflow step.
+        document_id (str): Input value used by this workflow step.
+
+    Returns:
+        bool: Result produced for the caller.
+    """
     doc = get_document_for_org(org_id, document_id)
     if not doc:
         return False
@@ -162,6 +210,19 @@ def update_pasted_document_for_org(
     content: str | None = None,
     doc_type: str | None = None,
 ) -> dict[str, Any]:
+    """Handles update pasted document for org logic for the surrounding Stoa workflow.
+
+    Args:
+        org_id (str): Input value used by this workflow step.
+        document_id (str): Input value used by this workflow step.
+        user_id (str): Input value used by this workflow step.
+        title (str | None): Input value used by this workflow step.
+        content (str | None): Input value used by this workflow step.
+        doc_type (str | None): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     doc = get_document_for_org(org_id, document_id)
     if not doc:
         raise ValueError("Document not found")

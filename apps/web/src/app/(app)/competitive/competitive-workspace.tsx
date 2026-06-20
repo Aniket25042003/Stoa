@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/app/(app)/competitive/competitive-workspace.tsx
+ * @layer Frontend Product UI
+ * @description Implements competitive workspace behavior for the frontend product ui.
+ * @dependencies React, BFF apiFetch
+ */
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
@@ -8,6 +14,12 @@ import { apiFetch } from "@/lib/api";
 type Competitor = { id: string; name: string; website_url?: string | null; last_scanned_at?: string | null };
 type Alert = { id: string; summary: string; severity: string; created_at: string; competitors?: { name: string } };
 
+/**
+ * Handles severity variant behavior for this part of the Stoa application.
+ *
+ * @param severity - Input value used to render UI or execute the workflow.
+ * @returns Result consumed by the caller or rendered by React.
+ */
 function severityVariant(severity: string): "warm" | "accent" | "default" {
   const s = severity.toLowerCase();
   if (s.includes("high") || s.includes("critical")) return "warm";
@@ -15,6 +27,10 @@ function severityVariant(severity: string): "warm" | "accent" | "default" {
   return "default";
 }
 
+/**
+ * Handles competitive workspace behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function CompetitiveWorkspace() {
   const [competitors, setCompetitors] = useState<Competitor[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);

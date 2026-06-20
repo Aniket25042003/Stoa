@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/app/auth/callback/route.ts
+ * @layer Application Source
+ * @description Implements route behavior for the application source.
+ * @dependencies Supabase, Next.js
+ */
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { getAuthEntryPath } from "@/lib/auth-entry";
@@ -5,6 +11,12 @@ import { routeForSessionState, safeNextPath, type SessionState } from "@/lib/aut
 import { getServerApiBase } from "@/lib/server-api";
 import { createClient } from "@/lib/supabase/server";
 
+/**
+ * Handles get behavior for this part of the Stoa application.
+ *
+ * @param request - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const authEntry = getAuthEntryPath({ hostname: url.hostname });

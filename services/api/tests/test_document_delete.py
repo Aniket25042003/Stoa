@@ -1,4 +1,10 @@
-"""Tests for document get/delete helpers."""
+"""
+File: services/api/tests/test_document_delete.py
+Layer: Test Suite
+Purpose: Covers regression and behavior checks for test document delete in the test suite.
+Dependencies: Supabase
+"""
+
 
 from __future__ import annotations
 

@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/components/marketing/SeeItInActionWalkthrough.tsx
+ * @layer Frontend Marketing UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies React, Framer Motion
+ */
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
@@ -18,6 +24,12 @@ export type WalkthroughStep = {
 const STICKY_TOP_PX = 116;
 const STICKY_TOP = "7.25rem";
 
+/**
+ * Handles log tone behavior for this part of the Stoa application.
+ *
+ * @param log - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 function logTone(log: string) {
   if (log.startsWith("STATUS")) return "text-emerald-600";
   if (log.startsWith("SYS")) return "text-mkt-accent-warm";
@@ -34,6 +46,10 @@ function logTone(log: string) {
   return "text-mkt-muted";
 }
 
+/**
+ * Handles detail list behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 function DetailList({ label, items }: { label: string; items: string[] }) {
   return (
     <div>
@@ -52,6 +68,10 @@ function DetailList({ label, items }: { label: string; items: string[] }) {
   );
 }
 
+/**
+ * Handles compiler panel behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 function CompilerPanel({
   step,
   stepIndex,
@@ -173,6 +193,10 @@ function CompilerPanel({
   );
 }
 
+/**
+ * Handles see it in action walkthrough behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function SeeItInActionWalkthrough({
   steps,
   atAGlance,

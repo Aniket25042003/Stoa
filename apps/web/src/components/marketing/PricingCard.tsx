@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/components/marketing/PricingCard.tsx
+ * @layer Frontend Marketing UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies Next.js, React, Framer Motion
+ */
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
@@ -5,6 +11,10 @@ import Link from "next/link";
 import { ArrowRight, Check } from "lucide-react";
 import { cn } from "@/lib/cn";
 
+/**
+ * Handles pricing card behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function PricingCard({
   name,
   price,

@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/components/app-shell/OrgSwitcher.tsx
+ * @layer Frontend Product UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies Next.js, React, BFF apiFetch
+ */
 "use client";
 
 import Link from "next/link";
@@ -12,6 +18,10 @@ type OrgEntry = {
   org?: { id: string; name: string };
 };
 
+/**
+ * Handles org switcher behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function OrgSwitcher() {
   const router = useRouter();
   const [orgs, setOrgs] = useState<OrgEntry[]>([]);

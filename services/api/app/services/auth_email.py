@@ -1,3 +1,10 @@
+"""
+File: services/api/app/services/auth_email.py
+Layer: FastAPI Service Layer
+Purpose: Contains reusable backend business logic shared by routes and workers.
+Dependencies: FastAPI, Supabase, stoa_core
+"""
+
 from __future__ import annotations
 
 import logging
@@ -11,6 +18,14 @@ logger = logging.getLogger(__name__)
 
 
 def _user_friendly_resend_error(message: str) -> str:
+    """Handles  user friendly resend error logic for the surrounding Stoa workflow.
+
+    Args:
+        message (str): Input value used by this workflow step.
+
+    Returns:
+        str: Result produced for the caller.
+    """
     lower = message.lower()
     if "rate" in lower and "limit" in lower:
         return "Too many verification emails requested. Wait a few minutes and try again."

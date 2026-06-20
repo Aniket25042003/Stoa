@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/components/app-shell/SectionSubnav.tsx
+ * @layer Frontend Product UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies Next.js, React
+ */
 "use client";
 
 import Link from "next/link";
@@ -7,6 +13,10 @@ import { canReadNav } from "@/lib/auth-workflow";
 import { cn } from "@/lib/cn";
 import { isNavItemActive } from "@/lib/app-navigation";
 
+/**
+ * Handles section subnav behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function SectionSubnav({
   items,
   permissions,

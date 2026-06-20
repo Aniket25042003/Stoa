@@ -1,4 +1,10 @@
-"""Salesforce CRM connector."""
+"""
+File: services/core/src/stoa_core/integrations/salesforce.py
+Layer: Core Integration Connectors
+Purpose: Implements salesforce behavior for the core integration connectors.
+Dependencies: stoa_core
+"""
+
 
 from __future__ import annotations
 
@@ -20,10 +26,20 @@ SOURCE = "salesforce"
 
 @register_connector
 class SalesforceConnector(BaseConnector):
+    """Manage SalesforceConnector behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     provider = "salesforce"
 
     @classmethod
     def provider_info(cls) -> ProviderInfo:
+        """Handles provider info logic for the surrounding Stoa workflow.
+
+        Returns:
+            ProviderInfo: Result produced for the caller.
+        """
         return ProviderInfo(
             id="salesforce",
             name="Salesforce",
@@ -34,6 +50,15 @@ class SalesforceConnector(BaseConnector):
 
     @classmethod
     def oauth_authorize_url(cls, state: str, redirect_uri: str) -> str:
+        """Handles oauth authorize url logic for the surrounding Stoa workflow.
+
+        Args:
+            state (str): Input value used by this workflow step.
+            redirect_uri (str): Input value used by this workflow step.
+
+        Returns:
+            str: Result produced for the caller.
+        """
         s = get_settings()
         params = {
             "response_type": "code",
@@ -45,6 +70,15 @@ class SalesforceConnector(BaseConnector):
 
     @classmethod
     def exchange_oauth_code(cls, code: str, redirect_uri: str) -> dict[str, Any]:
+        """Handles exchange oauth code logic for the surrounding Stoa workflow.
+
+        Args:
+            code (str): Input value used by this workflow step.
+            redirect_uri (str): Input value used by this workflow step.
+
+        Returns:
+            dict[str, Any]: Result produced for the caller.
+        """
         s = get_settings()
         with httpx.Client(timeout=30) as client:
             res = client.post(
@@ -69,6 +103,16 @@ class SalesforceConnector(BaseConnector):
 
     @classmethod
     def _query(cls, credentials: dict[str, Any], metadata: dict[str, Any], soql: str) -> list[dict[str, Any]]:
+        """Handles  query logic for the surrounding Stoa workflow.
+
+        Args:
+            credentials (dict[str, Any]): Input value used by this workflow step.
+            metadata (dict[str, Any]): Input value used by this workflow step.
+            soql (str): Input value used by this workflow step.
+
+        Returns:
+            list[dict[str, Any]]: Result produced for the caller.
+        """
         instance = metadata.get("instance_url") or credentials.get("instance_url")
         headers = {"Authorization": f"Bearer {credentials['access_token']}"}
         with httpx.Client(timeout=60) as client:
@@ -90,6 +134,18 @@ class SalesforceConnector(BaseConnector):
         cursor: dict[str, Any],
         full_backfill: bool = False,
     ) -> SyncResult:
+        """Handles sync logic for the surrounding Stoa workflow.
+
+        Args:
+            org_id (str): Input value used by this workflow step.
+            connection (dict[str, Any]): Input value used by this workflow step.
+            credentials (dict[str, Any]): Input value used by this workflow step.
+            cursor (dict[str, Any]): Input value used by this workflow step.
+            full_backfill (bool): Input value used by this workflow step.
+
+        Returns:
+            SyncResult: Result produced for the caller.
+        """
         result = SyncResult(cursor=dict(cursor))
         metadata = connection.get("provider_metadata") or {}
         stage = cursor.get("stage") or "accounts"

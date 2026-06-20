@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/components/marketing/AgentHierarchyDiagram.tsx
+ * @layer Frontend Marketing UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies React, Framer Motion
+ */
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
@@ -10,6 +16,12 @@ const layers = [
   { title: "Content creation", sub: "Asset drafts + narrative campaigns" },
 ];
 
+/**
+ * Handles agent hierarchy diagram behavior for this part of the Stoa application.
+ *
+ * @param className - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function AgentHierarchyDiagram({ className }: { className?: string }) {
   const reduce = useReducedMotion();
   return (

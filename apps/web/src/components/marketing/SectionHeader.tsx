@@ -1,7 +1,17 @@
+/**
+ * @file apps/web/src/components/marketing/SectionHeader.tsx
+ * @layer Frontend Marketing UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies React
+ */
 "use client";
 
 import { cn } from "@/lib/cn";
 
+/**
+ * Handles section header behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function SectionHeader({
   eyebrow,
   title,

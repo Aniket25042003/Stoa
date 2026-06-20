@@ -1,3 +1,10 @@
+"""
+File: services/core/tests/test_sanitize.py
+Layer: Test Suite
+Purpose: Covers regression and behavior checks for test sanitize in the test suite.
+Dependencies: stoa_core
+"""
+
 import pytest
 
 from stoa_core.security.sanitize import sanitize_user_content, validate_upload

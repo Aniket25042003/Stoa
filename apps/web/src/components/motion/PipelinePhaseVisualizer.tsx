@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/components/motion/PipelinePhaseVisualizer.tsx
+ * @layer Application Source
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies React
+ */
 "use client";
 
 import { Check } from "lucide-react";
@@ -10,6 +16,10 @@ import {
 import type { ActivityPhase } from "@/lib/activity-messages";
 import { cn } from "@/lib/cn";
 
+/**
+ * Handles pipeline phase visualizer behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function PipelinePhaseVisualizer({
   phase,
   events = [],
@@ -63,6 +73,10 @@ export function PipelinePhaseVisualizer({
   );
 }
 
+/**
+ * Handles step dot behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 function StepDot({
   done,
   active,

@@ -1,3 +1,10 @@
+"""
+File: services/core/tests/test_rerank.py
+Layer: Test Suite
+Purpose: Covers regression and behavior checks for test rerank in the test suite.
+Dependencies: stoa_core
+"""
+
 from unittest.mock import patch
 
 from stoa_core.rag.rerank import _bm25_rerank, rerank_candidates

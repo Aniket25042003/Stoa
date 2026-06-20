@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/app/(app)/layout.tsx
+ * @layer Frontend Product UI
+ * @description Defines shared route layout structure, metadata, and navigation boundaries.
+ * @dependencies Supabase, Next.js, React
+ */
 import { AppShell } from "@/components/app-shell/AppShell";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";

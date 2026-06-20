@@ -1,4 +1,10 @@
-"""Embedding generation (gemini-embedding-001 @ 3072 dims)."""
+"""
+File: services/core/src/stoa_core/ingestion/embed.py
+Layer: Core Ingestion Pipeline
+Purpose: Implements embed behavior for the core ingestion pipeline.
+Dependencies: stoa_core
+"""
+
 
 from __future__ import annotations
 
@@ -15,6 +21,15 @@ def embed_texts(
     *,
     task_type: str | None = None,
 ) -> list[list[float]]:
+    """Handles embed texts logic for the surrounding Stoa workflow.
+
+    Args:
+        texts (list[str]): Input value used by this workflow step.
+        task_type (str | None): Input value used by this workflow step.
+
+    Returns:
+        list[list[float]]: Result produced for the caller.
+    """
     if not texts:
         return []
     settings = get_settings()
@@ -31,12 +46,30 @@ def embed_texts(
 
 
 def embed_query(text: str) -> list[float]:
+    """Handles embed query logic for the surrounding Stoa workflow.
+
+    Args:
+        text (str): Input value used by this workflow step.
+
+    Returns:
+        list[float]: Result produced for the caller.
+    """
     settings = get_settings()
     result = embed_texts([text], task_type=settings.embed_task_query)
     return result[0] if result else _zero_vector(settings.embed_dimensions)
 
 
 def _embed_batch(texts: list[str], *, task_type: str, dimensions: int) -> list[list[float]]:
+    """Handles  embed batch logic for the surrounding Stoa workflow.
+
+    Args:
+        texts (list[str]): Input value used by this workflow step.
+        task_type (str): Input value used by this workflow step.
+        dimensions (int): Input value used by this workflow step.
+
+    Returns:
+        list[list[float]]: Result produced for the caller.
+    """
     vertex = _vertex_embed(texts, task_type=task_type, dimensions=dimensions)
     if vertex is not None:
         return vertex
@@ -48,6 +81,16 @@ def _embed_batch(texts: list[str], *, task_type: str, dimensions: int) -> list[l
 
 
 def _vertex_embed(texts: list[str], *, task_type: str, dimensions: int) -> list[list[float]] | None:
+    """Handles  vertex embed logic for the surrounding Stoa workflow.
+
+    Args:
+        texts (list[str]): Input value used by this workflow step.
+        task_type (str): Input value used by this workflow step.
+        dimensions (int): Input value used by this workflow step.
+
+    Returns:
+        list[list[float]] | None: Result produced for the caller.
+    """
     settings = get_settings()
     try:
         import vertexai
@@ -80,6 +123,15 @@ def _vertex_embed(texts: list[str], *, task_type: str, dimensions: int) -> list[
 
 
 def _openai_embed(texts: list[str], *, dimensions: int) -> list[list[float]] | None:
+    """Handles  openai embed logic for the surrounding Stoa workflow.
+
+    Args:
+        texts (list[str]): Input value used by this workflow step.
+        dimensions (int): Input value used by this workflow step.
+
+    Returns:
+        list[list[float]] | None: Result produced for the caller.
+    """
     import os
 
     if not os.getenv("OPENAI_API_KEY"):
@@ -98,8 +150,25 @@ def _openai_embed(texts: list[str], *, dimensions: int) -> list[list[float]] | N
 
 
 def _zero_vector(dim: int) -> list[float]:
+    """Handles  zero vector logic for the surrounding Stoa workflow.
+
+    Args:
+        dim (int): Input value used by this workflow step.
+
+    Returns:
+        list[float]: Result produced for the caller.
+    """
     return [0.0] * dim
 
 
 def _zero_vectors(n: int, dim: int) -> list[list[float]]:
+    """Handles  zero vectors logic for the surrounding Stoa workflow.
+
+    Args:
+        n (int): Input value used by this workflow step.
+        dim (int): Input value used by this workflow step.
+
+    Returns:
+        list[list[float]]: Result produced for the caller.
+    """
     return [_zero_vector(dim) for _ in range(n)]

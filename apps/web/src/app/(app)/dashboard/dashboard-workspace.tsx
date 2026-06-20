@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/app/(app)/dashboard/dashboard-workspace.tsx
+ * @layer Frontend Product UI
+ * @description Implements dashboard workspace behavior for the frontend product ui.
+ * @dependencies Next.js, React, BFF apiFetch
+ */
 "use client";
 
 import Link from "next/link";
@@ -39,6 +45,10 @@ const readinessLinks = [
   { href: "/data/sources", label: "Upload customer data", key: "ready_for_campaigns" as const },
 ];
 
+/**
+ * Handles dashboard workspace behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function DashboardWorkspace({ email, org, role }: Props) {
   const [summary, setSummary] = useState<Summary | null>(null);
 

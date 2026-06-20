@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/app/(app)/data/connections-panel.tsx
+ * @layer Frontend Product UI
+ * @description Implements connections panel behavior for the frontend product ui.
+ * @dependencies React, BFF apiFetch
+ */
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
@@ -77,10 +83,22 @@ const API_KEY_PROVIDERS: Record<string, { fields: { key: string; label: string; 
   },
 };
 
+/**
+ * Handles benefit for behavior for this part of the Stoa application.
+ *
+ * @param provider - Input value used to render UI or execute the workflow.
+ * @returns Result consumed by the caller or rendered by React.
+ */
 function benefitFor(provider: Provider): string {
   return INTEGRATION_BENEFITS[provider.id] ?? provider.description;
 }
 
+/**
+ * Handles uses credential form behavior for this part of the Stoa application.
+ *
+ * @param provider - Input value used to render UI or execute the workflow.
+ * @returns Result consumed by the caller or rendered by React.
+ */
 function usesCredentialForm(provider: Provider): boolean {
   if (provider.auth_type === "oauth") return false;
   return provider.auth_type === "api_key" || Boolean(API_KEY_PROVIDERS[provider.id]);

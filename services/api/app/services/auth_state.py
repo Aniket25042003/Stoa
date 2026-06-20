@@ -1,4 +1,10 @@
-"""Auth/session workflow helpers."""
+"""
+File: services/api/app/services/auth_state.py
+Layer: FastAPI Service Layer
+Purpose: Contains reusable backend business logic shared by routes and workers.
+Dependencies: Supabase, stoa_core
+"""
+
 
 from __future__ import annotations
 
@@ -11,10 +17,23 @@ from stoa_core.security.permissions import SYSTEM_ROLE_OWNER
 
 
 def utc_now_iso() -> str:
+    """Handles utc now iso logic for the surrounding Stoa workflow.
+
+    Returns:
+        str: Result produced for the caller.
+    """
     return datetime.now(timezone.utc).isoformat()
 
 
 def provider_from_claims(claims: dict[str, Any]) -> str:
+    """Handles provider from claims logic for the surrounding Stoa workflow.
+
+    Args:
+        claims (dict[str, Any]): Input value used by this workflow step.
+
+    Returns:
+        str: Result produced for the caller.
+    """
     app_meta = claims.get("app_metadata") or {}
     provider = app_meta.get("provider")
     if provider:
@@ -26,10 +45,27 @@ def provider_from_claims(claims: dict[str, Any]) -> str:
 
 
 def email_from_claims(claims: dict[str, Any]) -> str:
+    """Handles email from claims logic for the surrounding Stoa workflow.
+
+    Args:
+        claims (dict[str, Any]): Input value used by this workflow step.
+
+    Returns:
+        str: Result produced for the caller.
+    """
     return str(claims.get("email") or "").strip().lower()
 
 
 def user_is_email_verified(user_id: str, claims: dict[str, Any]) -> bool:
+    """Handles user is email verified logic for the surrounding Stoa workflow.
+
+    Args:
+        user_id (str): Input value used by this workflow step.
+        claims (dict[str, Any]): Input value used by this workflow step.
+
+    Returns:
+        bool: Result produced for the caller.
+    """
     provider = provider_from_claims(claims)
     if provider != "email":
         return True
@@ -47,6 +83,15 @@ def user_is_email_verified(user_id: str, claims: dict[str, Any]) -> bool:
 
 
 def get_or_create_user_profile(user_id: str, claims: dict[str, Any]) -> dict[str, Any]:
+    """Handles get or create user profile logic for the surrounding Stoa workflow.
+
+    Args:
+        user_id (str): Input value used by this workflow step.
+        claims (dict[str, Any]): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     sb = get_supabase_admin()
     email = email_from_claims(claims)
     provider = provider_from_claims(claims)
@@ -78,6 +123,14 @@ def get_or_create_user_profile(user_id: str, claims: dict[str, Any]) -> dict[str
 
 
 def list_memberships(user_id: str) -> list[dict[str, Any]]:
+    """Handles list memberships logic for the surrounding Stoa workflow.
+
+    Args:
+        user_id (str): Input value used by this workflow step.
+
+    Returns:
+        list[dict[str, Any]]: Result produced for the caller.
+    """
     sb = get_supabase_admin()
     res = (
         sb.table("memberships")
@@ -94,6 +147,15 @@ def list_memberships(user_id: str) -> list[dict[str, Any]]:
 
 
 def get_membership_optional(user_id: str, org_id: str | None = None) -> dict[str, Any] | None:
+    """Handles get membership optional logic for the surrounding Stoa workflow.
+
+    Args:
+        user_id (str): Input value used by this workflow step.
+        org_id (str | None): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any] | None: Result produced for the caller.
+    """
     memberships = list_memberships(user_id)
     if not memberships:
         return None
@@ -114,6 +176,15 @@ def get_membership_optional(user_id: str, org_id: str | None = None) -> dict[str
 
 
 def onboarding_needed(profile: dict[str, Any], membership: dict[str, Any] | None) -> bool:
+    """Handles onboarding needed logic for the surrounding Stoa workflow.
+
+    Args:
+        profile (dict[str, Any]): Input value used by this workflow step.
+        membership (dict[str, Any] | None): Input value used by this workflow step.
+
+    Returns:
+        bool: Result produced for the caller.
+    """
     return onboarding_needed_for_user(profile.get("user_id", ""), profile=profile, membership=membership)
 
 
@@ -124,6 +195,17 @@ def onboarding_needed_for_user(
     profile: dict[str, Any] | None = None,
     membership: dict[str, Any] | None = None,
 ) -> bool:
+    """Handles onboarding needed for user logic for the surrounding Stoa workflow.
+
+    Args:
+        user_id (str): Input value used by this workflow step.
+        claims (dict[str, Any] | None): Input value used by this workflow step.
+        profile (dict[str, Any] | None): Input value used by this workflow step.
+        membership (dict[str, Any] | None): Input value used by this workflow step.
+
+    Returns:
+        bool: Result produced for the caller.
+    """
     sb = get_supabase_admin()
     if profile is None:
         if claims:
@@ -154,6 +236,14 @@ def onboarding_needed_for_user(
 
 
 def suggest_company_from_email(email: str) -> dict[str, str | None]:
+    """Handles suggest company from email logic for the surrounding Stoa workflow.
+
+    Args:
+        email (str): Input value used by this workflow step.
+
+    Returns:
+        dict[str, str | None]: Result produced for the caller.
+    """
     domain = email.split("@")[-1].lower() if "@" in email else ""
     generic = {"gmail.com", "yahoo.com", "hotmail.com", "outlook.com", "icloud.com", "proton.me", "protonmail.com"}
     if not domain or domain in generic:

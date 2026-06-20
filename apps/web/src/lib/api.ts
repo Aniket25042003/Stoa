@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/lib/api.ts
+ * @layer Frontend Shared Utilities
+ * @description Provides shared client/server utility logic used across the Next.js app.
+ * @dependencies BFF apiFetch
+ */
 /** Client-safe API helper — always routes through the BFF proxy. */
 export async function apiFetch(path: string, init: RequestInit = {}) {
   const headers = new Headers(init.headers);

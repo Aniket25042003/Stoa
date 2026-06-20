@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/components/app-shell/AppMobileNav.tsx
+ * @layer Frontend Product UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies Next.js, React
+ */
 "use client";
 
 import Link from "next/link";
@@ -19,6 +25,10 @@ type AppMobileNavProps = {
   permissionsLoaded: boolean;
 };
 
+/**
+ * Handles app mobile nav behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function AppMobileNav({ permissions, permissionsLoaded }: AppMobileNavProps) {
   const pathname = usePathname();
   const router = useRouter();

@@ -1,4 +1,10 @@
-"""Encrypt/decrypt integration credentials at rest."""
+"""
+File: services/core/src/stoa_core/integrations/crypto.py
+Layer: Core Integration Connectors
+Purpose: Implements crypto behavior for the core integration connectors.
+Dependencies: stoa_core
+"""
+
 
 from __future__ import annotations
 
@@ -11,6 +17,11 @@ from stoa_core.config import get_settings
 
 
 def _fernet() -> Fernet | None:
+    """Handles  fernet logic for the surrounding Stoa workflow.
+
+    Returns:
+        Fernet | None: Result produced for the caller.
+    """
     key = get_settings().integration_credentials_key.strip()
     if not key:
         return None
@@ -18,6 +29,14 @@ def _fernet() -> Fernet | None:
 
 
 def encrypt_credentials(data: dict[str, Any]) -> str:
+    """Handles encrypt credentials logic for the surrounding Stoa workflow.
+
+    Args:
+        data (dict[str, Any]): Input value used by this workflow step.
+
+    Returns:
+        str: Result produced for the caller.
+    """
     f = _fernet()
     payload = json.dumps(data).encode("utf-8")
     if f is None:
@@ -30,6 +49,14 @@ def encrypt_credentials(data: dict[str, Any]) -> str:
 
 
 def decrypt_credentials(blob: str | None) -> dict[str, Any]:
+    """Handles decrypt credentials logic for the surrounding Stoa workflow.
+
+    Args:
+        blob (str | None): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     if not blob:
         return {}
     f = _fernet()

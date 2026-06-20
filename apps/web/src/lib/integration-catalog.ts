@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/lib/integration-catalog.ts
+ * @layer Frontend Shared Utilities
+ * @description Provides shared client/server utility logic used across the Next.js app.
+ * @dependencies standard library / local modules
+ */
 export type IntegrationCategory = {
   id: string;
   label: string;

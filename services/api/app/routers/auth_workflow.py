@@ -1,3 +1,10 @@
+"""
+File: services/api/app/routers/auth_workflow.py
+Layer: FastAPI Route Layer
+Purpose: Exposes authenticated REST endpoints and coordinates validation, permissions, and service calls.
+Dependencies: FastAPI, Supabase, Pydantic, stoa_core
+"""
+
 from __future__ import annotations
 
 import re
@@ -26,6 +33,11 @@ router = APIRouter(prefix="/v1/auth", tags=["auth-workflow"])
 
 
 class SignupBody(BaseModel):
+    """Manage SignupBody behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     email: str = Field(min_length=3, max_length=320)
     password: str = Field(min_length=8, max_length=128)
     full_name: str = Field(min_length=1, max_length=200)
@@ -34,6 +46,14 @@ class SignupBody(BaseModel):
     @field_validator("email")
     @classmethod
     def validate_email(cls, value: str) -> str:
+        """Handles validate email logic for the surrounding Stoa workflow.
+
+        Args:
+            value (str): Input value used by this workflow step.
+
+        Returns:
+            str: Result produced for the caller.
+        """
         email = value.strip().lower()
         if not re.fullmatch(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", email):
             raise ValueError("Enter a valid email address.")
@@ -41,6 +61,14 @@ class SignupBody(BaseModel):
 
 
 def _safe_next_path(raw: str | None) -> str:
+    """Handles  safe next path logic for the surrounding Stoa workflow.
+
+    Args:
+        raw (str | None): Input value used by this workflow step.
+
+    Returns:
+        str: Result produced for the caller.
+    """
     if not raw:
         return "/dashboard"
     if not raw.startswith("/") or raw.startswith("//") or "://" in raw or "\\" in raw:
@@ -51,6 +79,14 @@ def _safe_next_path(raw: str | None) -> str:
 
 
 def _signup_error_message(message: str) -> str:
+    """Handles  signup error message logic for the surrounding Stoa workflow.
+
+    Args:
+        message (str): Input value used by this workflow step.
+
+    Returns:
+        str: Result produced for the caller.
+    """
     lower = message.lower()
     if "password" in lower:
         return message
@@ -101,12 +137,25 @@ def email_signup(body: SignupBody, request: Request) -> dict[str, str]:
 
 
 class ResendVerificationBody(BaseModel):
+    """Manage ResendVerificationBody behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     email: str = Field(min_length=3, max_length=320)
     next: str | None = None
 
     @field_validator("email")
     @classmethod
     def validate_email(cls, value: str) -> str:
+        """Handles validate email logic for the surrounding Stoa workflow.
+
+        Args:
+            value (str): Input value used by this workflow step.
+
+        Returns:
+            str: Result produced for the caller.
+        """
         email = value.strip().lower()
         if not re.fullmatch(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", email):
             raise ValueError("Enter a valid email address.")
@@ -115,6 +164,15 @@ class ResendVerificationBody(BaseModel):
 
 @router.post("/resend-verification")
 def resend_verification(body: ResendVerificationBody, request: Request) -> dict[str, str]:
+    """Handles resend verification logic for the surrounding Stoa workflow.
+
+    Args:
+        body (ResendVerificationBody): Input value used by this workflow step.
+        request (Request): Input value used by this workflow step.
+
+    Returns:
+        dict[str, str]: Result produced for the caller.
+    """
     check_public_rate_limit(
         trusted_client_ip(request),
         email=body.email,
@@ -130,12 +188,25 @@ def resend_verification(body: ResendVerificationBody, request: Request) -> dict[
 
 
 class RateLimitGateBody(BaseModel):
+    """Manage RateLimitGateBody behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     email: str = Field(min_length=3, max_length=320)
     scope: str = Field(pattern="^(auth_signin|auth_signup|auth_resend)$")
 
     @field_validator("email")
     @classmethod
     def validate_email(cls, value: str) -> str:
+        """Handles validate email logic for the surrounding Stoa workflow.
+
+        Args:
+            value (str): Input value used by this workflow step.
+
+        Returns:
+            str: Result produced for the caller.
+        """
         email = value.strip().lower()
         if not re.fullmatch(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", email):
             raise ValueError("Enter a valid email address.")
@@ -155,6 +226,14 @@ def auth_rate_limit_gate(body: RateLimitGateBody, request: Request) -> dict[str,
 
 @router.get("/session-state")
 def get_session_state(claims: dict[str, Any] = Depends(verify_supabase_jwt_payload)) -> dict[str, Any]:
+    """Handles get session state logic for the surrounding Stoa workflow.
+
+    Args:
+        claims (dict[str, Any]): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     user_id = str(claims["sub"])
     profile = get_or_create_user_profile(user_id, claims)
     memberships = list_memberships(user_id)

@@ -1,3 +1,10 @@
+"""
+File: services/core/tests/test_rag_ingest.py
+Layer: Test Suite
+Purpose: Covers regression and behavior checks for test rag ingest in the test suite.
+Dependencies: Supabase, stoa_core
+"""
+
 from unittest.mock import MagicMock, patch
 
 from stoa_core.rag.ingest import content_hash, ingest_knowledge, profile_to_knowledge_text

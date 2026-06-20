@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/hooks/useScrollSpy.ts
+ * @layer Frontend Shared Utilities
+ * @description Provides shared client/server utility logic used across the Next.js app.
+ * @dependencies React
+ */
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -8,6 +14,13 @@ type UseScrollSpyOptions = {
   enabled?: boolean;
 };
 
+/**
+ * Handles use scroll spy behavior for this part of the Stoa application.
+ *
+ * @param itemCount - Input value used to render UI or execute the workflow.
+ * @param options - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function useScrollSpy(itemCount: number, options: UseScrollSpyOptions = {}) {
   const { offsetTop = 116, enabled = true } = options;
   const [activeIndex, setActiveIndex] = useState(0);

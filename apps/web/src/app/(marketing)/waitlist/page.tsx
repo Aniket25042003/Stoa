@@ -1,9 +1,19 @@
+/**
+ * @file apps/web/src/app/(marketing)/waitlist/page.tsx
+ * @layer Frontend Marketing UI
+ * @description Defines the route entry point and composes the page-level UI for this product surface.
+ * @dependencies React, Framer Motion
+ */
 "use client";
 
 import { motion } from "framer-motion";
 import { VideoBackground } from "@/components/marketing/immersive/VideoBackground";
 import { WaitlistForm } from "@/components/marketing/immersive/WaitlistForm";
 
+/**
+ * Handles waitlist page behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export default function WaitlistPage() {
   return (
     <div className="relative flex min-h-[calc(100vh-65px)] flex-col justify-center overflow-hidden px-4 py-12 md:px-6">

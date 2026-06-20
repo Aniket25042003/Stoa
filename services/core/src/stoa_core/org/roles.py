@@ -1,4 +1,10 @@
-"""Organization role seeding and resolution helpers."""
+"""
+File: services/core/src/stoa_core/org/roles.py
+Layer: Application Source
+Purpose: Implements roles behavior for the application source.
+Dependencies: stoa_core
+"""
+
 
 from __future__ import annotations
 
@@ -16,6 +22,11 @@ from stoa_core.security.permissions import (
 
 
 def system_role_definitions() -> list[dict[str, Any]]:
+    """Handles system role definitions logic for the surrounding Stoa workflow.
+
+    Returns:
+        list[dict[str, Any]]: Result produced for the caller.
+    """
     return [
         {
             "name": "Owner",
@@ -76,6 +87,14 @@ def seed_system_roles_for_org(
 
 
 def resolve_permissions(role_row: dict[str, Any] | None) -> set[str]:
+    """Handles resolve permissions logic for the surrounding Stoa workflow.
+
+    Args:
+        role_row (dict[str, Any] | None): Input value used by this workflow step.
+
+    Returns:
+        set[str]: Result produced for the caller.
+    """
     if not role_row:
         return set()
     role_key = role_row.get("role_key")
@@ -86,6 +105,14 @@ def resolve_permissions(role_row: dict[str, Any] | None) -> set[str]:
 
 
 def role_key_from_membership(membership: dict[str, Any]) -> str:
+    """Handles role key from membership logic for the surrounding Stoa workflow.
+
+    Args:
+        membership (dict[str, Any]): Input value used by this workflow step.
+
+    Returns:
+        str: Result produced for the caller.
+    """
     org_roles = membership.get("org_roles") or {}
     if isinstance(org_roles, dict) and org_roles.get("role_key"):
         return str(org_roles["role_key"])

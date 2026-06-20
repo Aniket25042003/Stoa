@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/lib/csp.ts
+ * @layer Frontend Shared Utilities
+ * @description Provides shared client/server utility logic used across the Next.js app.
+ * @dependencies Supabase
+ */
 /** Content-Security-Policy for marketing + app surfaces (Next.js compatible). */
 export function buildContentSecurityPolicy(): string {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";

@@ -1,4 +1,10 @@
-"""Central configuration loaded from environment variables."""
+"""
+File: services/core/src/stoa_core/config.py
+Layer: Application Source
+Purpose: Implements config behavior for the application source.
+Dependencies: Supabase, Celery, Redis, Pydantic
+"""
+
 
 from __future__ import annotations
 
@@ -10,6 +16,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    """Manage Settings behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     # deployment — set explicitly to development or production
@@ -119,18 +130,38 @@ class Settings(BaseSettings):
 
     @property
     def broker_url(self) -> str:
+        """Handles broker url logic for the surrounding Stoa workflow.
+
+        Returns:
+            str: Result produced for the caller.
+        """
         return self.celery_broker_url or self.redis_url
 
     @property
     def result_backend(self) -> str:
+        """Handles result backend logic for the surrounding Stoa workflow.
+
+        Returns:
+            str: Result produced for the caller.
+        """
         return self.celery_result_backend or self.redis_url
 
     @property
     def cors_origin_list(self) -> list[str]:
+        """Handles cors origin list logic for the surrounding Stoa workflow.
+
+        Returns:
+            list[str]: Result produced for the caller.
+        """
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
 
     @property
     def is_development(self) -> bool:
+        """Handles is development logic for the surrounding Stoa workflow.
+
+        Returns:
+            bool: Result produced for the caller.
+        """
         env = self.stoa_env.strip().lower()
         if env in {"development", "dev", "local"}:
             return True
@@ -142,31 +173,66 @@ class Settings(BaseSettings):
 
     @property
     def is_production(self) -> bool:
+        """Handles is production logic for the surrounding Stoa workflow.
+
+        Returns:
+            bool: Result produced for the caller.
+        """
         return self.stoa_env.strip().lower() in {"production", "prod"}
 
     @property
     def redis_require_tls_effective(self) -> bool:
+        """Handles redis require tls effective logic for the surrounding Stoa workflow.
+
+        Returns:
+            bool: Result produced for the caller.
+        """
         if self.redis_require_tls is not None:
             return self.redis_require_tls
         return self.is_production
 
     @property
     def resolved_vertex_project(self) -> str | None:
+        """Handles resolved vertex project logic for the surrounding Stoa workflow.
+
+        Returns:
+            str | None: Result produced for the caller.
+        """
         return self.vertex_project or self.gtm_vertex_project
 
     @property
     def resolved_vertex_location(self) -> str:
+        """Handles resolved vertex location logic for the surrounding Stoa workflow.
+
+        Returns:
+            str: Result produced for the caller.
+        """
         return self.gtm_vertex_location or self.vertex_location
 
     @property
     def resolved_vertex_model(self) -> str:
+        """Handles resolved vertex model logic for the surrounding Stoa workflow.
+
+        Returns:
+            str: Result produced for the caller.
+        """
         return self.gtm_vertex_model or self.vertex_model
 
     @property
     def resolved_vertex_model_fast(self) -> str:
+        """Handles resolved vertex model fast logic for the surrounding Stoa workflow.
+
+        Returns:
+            str: Result produced for the caller.
+        """
         return self.gtm_vertex_model_fast or self.vertex_model_fast
 
 
 @lru_cache
 def get_settings() -> Settings:
+    """Handles get settings logic for the surrounding Stoa workflow.
+
+    Returns:
+        Settings: Result produced for the caller.
+    """
     return Settings()

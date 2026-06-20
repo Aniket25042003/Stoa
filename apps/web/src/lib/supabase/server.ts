@@ -1,6 +1,16 @@
+/**
+ * @file apps/web/src/lib/supabase/server.ts
+ * @layer Frontend Shared Utilities
+ * @description Provides shared client/server utility logic used across the Next.js app.
+ * @dependencies Supabase, Next.js
+ */
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
+/**
+ * Handles create client behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export async function createClient() {
   const cookieStore = await cookies();
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;

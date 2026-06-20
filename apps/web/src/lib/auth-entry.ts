@@ -1,4 +1,10 @@
 /**
+ * @file apps/web/src/lib/auth-entry.ts
+ * @layer Frontend Shared Utilities
+ * @description Provides shared client/server utility logic used across the Next.js app.
+ * @dependencies standard library / local modules
+ */
+/**
  * Auth entry routing:
  * - `next dev` (NODE_ENV=development): /login
  * - Loopback hosts (localhost, 127.0.0.1): /login — for local prod-build smoke tests
@@ -14,6 +20,12 @@ type AuthEntryOptions = {
   hostname?: string;
 };
 
+/**
+ * Handles get auth entry path behavior for this part of the Stoa application.
+ *
+ * @param options - Input value used to render UI or execute the workflow.
+ * @returns Result consumed by the caller or rendered by React.
+ */
 export function getAuthEntryPath(options?: AuthEntryOptions): AuthEntryPath {
   const override = process.env.NEXT_PUBLIC_AUTH_ENTRY;
   if (override === "login") return "/login";
@@ -26,6 +38,12 @@ export function getAuthEntryPath(options?: AuthEntryOptions): AuthEntryPath {
   return "/waitlist";
 }
 
+/**
+ * Handles is login enabled behavior for this part of the Stoa application.
+ *
+ * @param hostname - Input value used to render UI or execute the workflow.
+ * @returns Result consumed by the caller or rendered by React.
+ */
 export function isLoginEnabled(hostname?: string): boolean {
   return getAuthEntryPath({ hostname }) === "/login";
 }

@@ -1,9 +1,19 @@
+/**
+ * @file apps/web/src/components/app-shell/useSidebarCollapsed.ts
+ * @layer Frontend Product UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies React
+ */
 "use client";
 
 import { useEffect, useState } from "react";
 
 const STORAGE_KEY = "stoa-sidebar-collapsed";
 
+/**
+ * Handles use sidebar collapsed behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function useSidebarCollapsed() {
   const [collapsed, setCollapsed] = useState(false);
   const [hydrated, setHydrated] = useState(false);

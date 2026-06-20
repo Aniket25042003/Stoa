@@ -1,4 +1,10 @@
-"""Extraction quality eval thresholds (Phase 1.6)."""
+"""
+File: services/core/tests/test_extract_eval.py
+Layer: Test Suite
+Purpose: Covers regression and behavior checks for test extract eval in the test suite.
+Dependencies: stoa_core
+"""
+
 
 from stoa_core.ingestion.extract import extract_signals
 

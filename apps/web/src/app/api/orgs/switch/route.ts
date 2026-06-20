@@ -1,7 +1,19 @@
+/**
+ * @file apps/web/src/app/api/orgs/switch/route.ts
+ * @layer Frontend BFF / API Routes
+ * @description Handles browser-facing API requests and forwards them through the server-side boundary.
+ * @dependencies Next.js
+ */
 import { NextResponse } from "next/server";
 import { ACTIVE_ORG_COOKIE } from "@/lib/active-org";
 import { proxyJsonResponse } from "@/lib/server-api";
 
+/**
+ * Handles post behavior for this part of the Stoa application.
+ *
+ * @param request - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export async function POST(request: Request) {
   const upstream = await proxyJsonResponse(request, "/v1/orgs/switch");
   const text = await upstream.text();

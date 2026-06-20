@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/lib/auth-workflow.ts
+ * @layer Frontend Shared Utilities
+ * @description Provides shared client/server utility logic used across the Next.js app.
+ * @dependencies standard library / local modules
+ */
 export type SessionState = {
   user?: {
     id: string;
@@ -27,6 +33,12 @@ export type SessionState = {
   needs_onboarding?: boolean;
 };
 
+/**
+ * Handles safe next path behavior for this part of the Stoa application.
+ *
+ * @param raw - Input value used to render UI or execute the workflow.
+ * @returns Result consumed by the caller or rendered by React.
+ */
 export function safeNextPath(raw: string | null | undefined): string {
   if (!raw) return "/dashboard";
   if (!raw.startsWith("/") || raw.startsWith("//") || raw.includes("\\")) {
@@ -46,6 +58,13 @@ export function safeNextPath(raw: string | null | undefined): string {
   return raw;
 }
 
+/**
+ * Handles route for session state behavior for this part of the Stoa application.
+ *
+ * @param state - Input value used to render UI or execute the workflow.
+ * @param next - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function routeForSessionState(state: SessionState, next: string = "/dashboard") {
   const safeNext = safeNextPath(next);
   if (state.needs_email_verification) {
@@ -60,6 +79,13 @@ export function routeForSessionState(state: SessionState, next: string = "/dashb
   return safeNext;
 }
 
+/**
+ * Handles can read behavior for this part of the Stoa application.
+ *
+ * @param permissions - Input value used to render UI or execute the workflow.
+ * @param perm - Input value used to render UI or execute the workflow.
+ * @returns Result consumed by the caller or rendered by React.
+ */
 export function canRead(permissions: string[] | undefined, perm: string): boolean {
   if (!permissions) return true;
   return permissions.includes(perm);

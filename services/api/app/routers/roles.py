@@ -1,4 +1,10 @@
-"""Custom organization roles (IAM-style)."""
+"""
+File: services/api/app/routers/roles.py
+Layer: FastAPI Route Layer
+Purpose: Exposes authenticated REST endpoints and coordinates validation, permissions, and service calls.
+Dependencies: FastAPI, Supabase, Pydantic, stoa_core
+"""
+
 
 from __future__ import annotations
 
@@ -17,22 +23,45 @@ router = APIRouter(prefix="/v1/roles", tags=["roles"])
 
 
 class RoleCreate(BaseModel):
+    """Manage RoleCreate behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     name: str = Field(min_length=1, max_length=100)
     description: str | None = Field(default=None, max_length=500)
     permissions: list[str] = Field(min_length=1)
 
 
 class RoleUpdate(BaseModel):
+    """Manage RoleUpdate behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     name: str | None = Field(default=None, min_length=1, max_length=100)
     description: str | None = Field(default=None, max_length=500)
     permissions: list[str] | None = None
 
 
 class RoleDelete(BaseModel):
+    """Manage RoleDelete behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     reassign_to_role_id: str | None = None
 
 
 def _validate_permissions(perms: list[str]) -> list[str]:
+    """Handles  validate permissions logic for the surrounding Stoa workflow.
+
+    Args:
+        perms (list[str]): Input value used by this workflow step.
+
+    Returns:
+        list[str]: Result produced for the caller.
+    """
     allowed = set(grantable_permissions())
     invalid = [p for p in perms if p not in allowed]
     if invalid:
@@ -47,12 +76,28 @@ def _validate_permissions(perms: list[str]) -> list[str]:
 def get_permission_catalog(
     scope: OrgScope = Depends(org_scope_dep),
 ) -> dict[str, Any]:
+    """Handles get permission catalog logic for the surrounding Stoa workflow.
+
+    Args:
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "team:read")
     return {"groups": catalog_for_ui(), "grantable": grantable_permissions()}
 
 
 @router.get("")
 def list_roles(scope: OrgScope = Depends(org_scope_dep)) -> dict[str, Any]:
+    """Handles list roles logic for the surrounding Stoa workflow.
+
+    Args:
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "team:read")
     sb = get_supabase_admin()
     res = (
@@ -68,6 +113,15 @@ def list_roles(scope: OrgScope = Depends(org_scope_dep)) -> dict[str, Any]:
 
 @router.post("")
 def create_role(body: RoleCreate, scope: OrgScope = Depends(verified_org_scope_dep)) -> dict[str, Any]:
+    """Handles create role logic for the surrounding Stoa workflow.
+
+    Args:
+        body (RoleCreate): Input value used by this workflow step.
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "roles:manage")
     perms = _validate_permissions(body.permissions)
     assert_permission_boundary(scope, set(perms))
@@ -96,6 +150,16 @@ def create_role(body: RoleCreate, scope: OrgScope = Depends(verified_org_scope_d
 
 @router.patch("/{role_id}")
 def update_role(role_id: str, body: RoleUpdate, scope: OrgScope = Depends(verified_org_scope_dep)) -> dict[str, Any]:
+    """Handles update role logic for the surrounding Stoa workflow.
+
+    Args:
+        role_id (str): Input value used by this workflow step.
+        body (RoleUpdate): Input value used by this workflow step.
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "roles:manage")
     sb = get_supabase_admin()
     existing = (
@@ -134,6 +198,16 @@ def delete_role(
     body: RoleDelete | None = None,
     scope: OrgScope = Depends(verified_org_scope_dep),
 ) -> dict[str, Any]:
+    """Handles delete role logic for the surrounding Stoa workflow.
+
+    Args:
+        role_id (str): Input value used by this workflow step.
+        body (RoleDelete | None): Input value used by this workflow step.
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     body = body or RoleDelete()
     require_permission(scope, "roles:manage")
     sb = get_supabase_admin()

@@ -1,9 +1,19 @@
+/**
+ * @file apps/web/src/components/ThemeToggle.tsx
+ * @layer Application Source
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies React, Framer Motion
+ */
 "use client";
 
 import { motion } from "framer-motion";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 
+/**
+ * Handles theme toggle behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
   const isDark = resolvedTheme === "dark";

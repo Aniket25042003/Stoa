@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/app/(app)/campaigns/campaigns-workspace.tsx
+ * @layer Frontend Product UI
+ * @description Implements campaigns workspace behavior for the frontend product ui.
+ * @dependencies React, BFF apiFetch
+ */
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
@@ -22,10 +28,20 @@ type Campaign = {
 
 const ACTIVE_CAMPAIGN_STATUSES = new Set(["queued", "running"]);
 
+/**
+ * Handles campaign needs polling behavior for this part of the Stoa application.
+ *
+ * @param campaigns - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 function campaignNeedsPolling(campaigns: Campaign[]) {
   return campaigns.some((c) => ACTIVE_CAMPAIGN_STATUSES.has(c.status.toLowerCase()));
 }
 
+/**
+ * Handles campaigns workspace behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function CampaignsWorkspace() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [brief, setBrief] = useState("");

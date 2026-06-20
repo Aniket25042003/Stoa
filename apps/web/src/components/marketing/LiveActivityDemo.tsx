@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/components/marketing/LiveActivityDemo.tsx
+ * @layer Frontend Marketing UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies React
+ */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -60,6 +66,12 @@ const STEPS: Step[] = [
   }
 ];
 
+/**
+ * Handles live activity demo behavior for this part of the Stoa application.
+ *
+ * @param className - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function LiveActivityDemo({ className }: { className?: string }) {
   const [stepIdx, setStepIdx] = useState(0);
   const [visibleLogs, setVisibleLogs] = useState<string[]>([]);

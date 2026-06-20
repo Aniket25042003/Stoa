@@ -1,4 +1,10 @@
-"""Per-user rate limiting with Redis when available, in-memory fallback."""
+"""
+File: services/api/app/deps/rate_limit.py
+Layer: FastAPI Dependencies
+Purpose: Implements rate limit behavior for the fastapi dependencies.
+Dependencies: FastAPI, Redis, stoa_core
+"""
+
 
 from __future__ import annotations
 
@@ -16,6 +22,12 @@ SENSITIVE_SCOPES = frozenset({"auth_signup", "auth_resend", "auth_signin", "wait
 
 
 def _memory_check(key: str, limit_per_minute: int) -> None:
+    """Handles  memory check logic for the surrounding Stoa workflow.
+
+    Args:
+        key (str): Input value used by this workflow step.
+        limit_per_minute (int): Input value used by this workflow step.
+    """
     now = time.time()
     window_start = now - 60
     with _lock:
@@ -27,6 +39,12 @@ def _memory_check(key: str, limit_per_minute: int) -> None:
 
 
 def _redis_check(key: str, limit_per_minute: int) -> None:
+    """Handles  redis check logic for the surrounding Stoa workflow.
+
+    Args:
+        key (str): Input value used by this workflow step.
+        limit_per_minute (int): Input value used by this workflow step.
+    """
     from stoa_core.redis.client import get_redis_sync
 
     r = get_redis_sync()
@@ -40,6 +58,11 @@ def _redis_check(key: str, limit_per_minute: int) -> None:
 
 
 def _use_redis() -> bool:
+    """Handles  use redis logic for the surrounding Stoa workflow.
+
+    Returns:
+        bool: Result produced for the caller.
+    """
     global _redis_available
     if _redis_available is not None:
         return _redis_available
@@ -54,10 +77,25 @@ def _use_redis() -> bool:
 
 
 def _fail_closed_for_scope(scope: str) -> bool:
+    """Handles  fail closed for scope logic for the surrounding Stoa workflow.
+
+    Args:
+        scope (str): Input value used by this workflow step.
+
+    Returns:
+        bool: Result produced for the caller.
+    """
     return scope in SENSITIVE_SCOPES or scope.endswith(":email")
 
 
 def check_rate_limit(user_id: str, limit_per_minute: int = 60, *, scope: str = "default") -> None:
+    """Handles check rate limit logic for the surrounding Stoa workflow.
+
+    Args:
+        user_id (str): Input value used by this workflow step.
+        limit_per_minute (int): Input value used by this workflow step.
+        scope (str): Input value used by this workflow step.
+    """
     key = f"{scope}:{user_id}"
     fail_closed = _fail_closed_for_scope(scope)
     if _use_redis():

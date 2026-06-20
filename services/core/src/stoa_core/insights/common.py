@@ -1,4 +1,10 @@
-"""Precomputed proactive insights for common intelligence questions."""
+"""
+File: services/core/src/stoa_core/insights/common.py
+Layer: Application Source
+Purpose: Implements common behavior for the application source.
+Dependencies: stoa_core
+"""
+
 
 from __future__ import annotations
 
@@ -53,6 +59,14 @@ INTELLIGENCE_KINDS = [
 
 
 def precompute_answers(org_id: str) -> list[dict[str, Any]]:
+    """Handles precompute answers logic for the surrounding Stoa workflow.
+
+    Args:
+        org_id (str): Input value used by this workflow step.
+
+    Returns:
+        list[dict[str, Any]]: Result produced for the caller.
+    """
     results: list[dict[str, Any]] = []
     for item in COMMON_QUESTIONS:
         context = retrieve_context(org_id, item["question"], kinds=INTELLIGENCE_KINDS)
@@ -76,6 +90,15 @@ def precompute_answers(org_id: str) -> list[dict[str, Any]]:
 
 
 def build_executive_summary(org_id: str, org_name: str) -> dict[str, Any]:
+    """Handles build executive summary logic for the surrounding Stoa workflow.
+
+    Args:
+        org_id (str): Input value used by this workflow step.
+        org_name (str): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     context = retrieve_context(
         org_id,
         f"Executive summary of marketing intelligence for {org_name}",

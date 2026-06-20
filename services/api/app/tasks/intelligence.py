@@ -1,3 +1,10 @@
+"""
+File: services/api/app/tasks/intelligence.py
+Layer: Celery Task Layer
+Purpose: Runs background work that precomputes intelligence and updates durable job state.
+Dependencies: Supabase, Celery, Redis, stoa_core
+"""
+
 from __future__ import annotations
 
 import logging
@@ -31,12 +38,29 @@ INTELLIGENCE_KINDS = [
 
 
 def _doc_count(org_id: str) -> int:
+    """Handles  doc count logic for the surrounding Stoa workflow.
+
+    Args:
+        org_id (str): Input value used by this workflow step.
+
+    Returns:
+        int: Result produced for the caller.
+    """
     sb = get_supabase_admin()
     res = sb.table("documents").select("id", count="exact").eq("org_id", org_id).execute()
     return res.count or 0
 
 
 def _should_skip_precompute(org_id: str, doc_count: int) -> bool:
+    """Handles  should skip precompute logic for the surrounding Stoa workflow.
+
+    Args:
+        org_id (str): Input value used by this workflow step.
+        doc_count (int): Input value used by this workflow step.
+
+    Returns:
+        bool: Result produced for the caller.
+    """
     if doc_count == 0:
         return True
     sb = get_supabase_admin()
@@ -64,6 +88,17 @@ def _upsert_insight(
     citations: list,
     source_document_count: int,
 ) -> None:
+    """Handles  upsert insight logic for the surrounding Stoa workflow.
+
+    Args:
+        org_id (str): Input value used by this workflow step.
+        scope (str): Input value used by this workflow step.
+        key (str): Input value used by this workflow step.
+        title (str): Input value used by this workflow step.
+        content (dict): Input value used by this workflow step.
+        citations (list): Input value used by this workflow step.
+        source_document_count (int): Input value used by this workflow step.
+    """
     sb = get_supabase_admin()
     sb.table("precomputed_insights").upsert(
         {
@@ -82,6 +117,12 @@ def _upsert_insight(
 
 @celery_app.task(name="intelligence.precompute_insights", bind=True, max_retries=2)
 def precompute_insights(self, org_id: str, *, force: bool = False) -> None:
+    """Handles precompute insights logic for the surrounding Stoa workflow.
+
+    Args:
+        org_id (str): Input value used by this workflow step.
+        force (bool): Input value used by this workflow step.
+    """
     sb = get_supabase_admin()
     try:
         verify_org_exists(org_id)
@@ -126,6 +167,11 @@ def precompute_insights(self, org_id: str, *, force: bool = False) -> None:
 
 @celery_app.task(name="intelligence.rebuild_icp", bind=True, max_retries=2)
 def rebuild_icp_profile(self, org_id: str) -> None:
+    """Handles rebuild icp profile logic for the surrounding Stoa workflow.
+
+    Args:
+        org_id (str): Input value used by this workflow step.
+    """
     sb = get_supabase_admin()
     try:
         verify_org_exists(org_id)
@@ -165,6 +211,13 @@ def rebuild_icp_profile(self, org_id: str) -> None:
 
 @celery_app.task(name="intelligence.answer_question", bind=True, max_retries=2)
 def answer_intelligence_question(self, conversation_id: str, org_id: str, question: str) -> None:
+    """Handles answer intelligence question logic for the surrounding Stoa workflow.
+
+    Args:
+        conversation_id (str): Input value used by this workflow step.
+        org_id (str): Input value used by this workflow step.
+        question (str): Input value used by this workflow step.
+    """
     sb = get_supabase_admin()
     try:
         verify_conversation_org(conversation_id, org_id)

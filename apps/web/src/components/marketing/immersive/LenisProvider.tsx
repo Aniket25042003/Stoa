@@ -1,8 +1,20 @@
+/**
+ * @file apps/web/src/components/marketing/immersive/LenisProvider.tsx
+ * @layer Frontend Marketing UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies React
+ */
 "use client";
 
 import { useEffect } from "react";
 import Lenis from "lenis";
 
+/**
+ * Handles lenis provider behavior for this part of the Stoa application.
+ *
+ * @param children - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function LenisProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (window.innerWidth < 768) return;

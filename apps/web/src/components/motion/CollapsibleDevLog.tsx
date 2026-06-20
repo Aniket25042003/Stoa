@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/components/motion/CollapsibleDevLog.tsx
+ * @layer Application Source
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies React, Framer Motion
+ */
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
@@ -8,6 +14,12 @@ import { cn } from "@/lib/cn";
 const codePanel =
   "rounded-2xl border border-outline-variant/55 bg-slate-deep p-4 font-mono text-xs leading-6 text-white/78";
 
+/**
+ * Handles collapsible dev log behavior for this part of the Stoa application.
+ *
+ * @param title - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function CollapsibleDevLog({
   title = "Technical log",
   lines,

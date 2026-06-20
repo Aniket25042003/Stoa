@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/middleware.ts
+ * @layer Application Source
+ * @description Implements middleware behavior for the application source.
+ * @dependencies Supabase, Next.js
+ */
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { getAuthEntryPath, isLoginEnabled } from "@/lib/auth-entry";
@@ -21,10 +27,22 @@ const PROTECTED_PREFIXES = [
   "/runs",
 ];
 
+/**
+ * Handles is protected path behavior for this part of the Stoa application.
+ *
+ * @param pathname - Input value used to render UI or execute the workflow.
+ * @returns Result consumed by the caller or rendered by React.
+ */
 function isProtectedPath(pathname: string): boolean {
   return PROTECTED_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 
+/**
+ * Handles apply security headers behavior for this part of the Stoa application.
+ *
+ * @param response - Input value used to render UI or execute the workflow.
+ * @returns Result consumed by the caller or rendered by React.
+ */
 function applySecurityHeaders(response: NextResponse): NextResponse {
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("X-Content-Type-Options", "nosniff");
@@ -37,10 +55,22 @@ function applySecurityHeaders(response: NextResponse): NextResponse {
   return response;
 }
 
+/**
+ * Handles prelaunch blocked response behavior for this part of the Stoa application.
+ *
+ * @param request - Input value used to render UI or execute the workflow.
+ * @returns Result consumed by the caller or rendered by React.
+ */
 function prelaunchBlockedResponse(request: NextRequest): NextResponse {
   return applySecurityHeaders(NextResponse.redirect(new URL("/waitlist", request.url)));
 }
 
+/**
+ * Handles middleware behavior for this part of the Stoa application.
+ *
+ * @param request - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export async function middleware(request: NextRequest) {
   const nextUrl = request.nextUrl;
   const hostname = nextUrl.hostname;

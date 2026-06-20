@@ -1,3 +1,10 @@
+"""
+File: services/api/app/main.py
+Layer: Application Source
+Purpose: Implements main behavior for the application source.
+Dependencies: FastAPI, Redis, stoa_core
+"""
+
 from __future__ import annotations
 
 from fastapi import FastAPI, Request
@@ -36,7 +43,21 @@ app = FastAPI(
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """Manage SecurityHeadersMiddleware behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     async def dispatch(self, request: Request, call_next):
+        """Asynchronously handles dispatch logic for the surrounding Stoa workflow.
+
+        Args:
+            request (Request): Input value used by this workflow step.
+            call_next (Any): Input value used by this workflow step.
+
+        Returns:
+            Any: Result produced for the caller.
+        """
         response = await call_next(request)
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
@@ -75,4 +96,13 @@ app.include_router(waitlist.router)
 
 @app.exception_handler(UploadValidationError)
 async def upload_validation_handler(_request: Request, exc: UploadValidationError) -> JSONResponse:
+    """Asynchronously handles upload validation handler logic for the surrounding Stoa workflow.
+
+    Args:
+        _request (Request): Input value used by this workflow step.
+        exc (UploadValidationError): Input value used by this workflow step.
+
+    Returns:
+        JSONResponse: Result produced for the caller.
+    """
     return JSONResponse(status_code=400, content={"detail": str(exc)})

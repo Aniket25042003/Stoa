@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/hooks/useLandingScrollProgress.ts
+ * @layer Frontend Shared Utilities
+ * @description Provides shared client/server utility logic used across the Next.js app.
+ * @dependencies React
+ */
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
@@ -18,10 +24,25 @@ const DEFAULT_STATE: LandingScrollState = {
   activeFace: 0,
 };
 
+/**
+ * Handles clamp behavior for this part of the Stoa application.
+ *
+ * @param value - Input value used to render UI or execute the workflow.
+ * @param min - Input value used to render UI or execute the workflow.
+ * @param max - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
+/**
+ * Handles use landing scroll progress behavior for this part of the Stoa application.
+ *
+ * @param scrollRangeRef - Input value used to render UI or execute the workflow.
+ * @param sectionCount - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function useLandingScrollProgress(
   scrollRangeRef: React.RefObject<HTMLElement | null>,
   sectionCount: number

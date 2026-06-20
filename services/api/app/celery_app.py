@@ -1,3 +1,10 @@
+"""
+File: services/api/app/celery_app.py
+Layer: Application Source
+Purpose: Implements celery app behavior for the application source.
+Dependencies: Celery, Redis, stoa_core
+"""
+
 from __future__ import annotations
 
 import logging
@@ -50,6 +57,12 @@ celery_app.conf.update(**_conf)
 
 @task_prerun.connect
 def _guard_task_execution(task_id: str, task, *args, **kwargs) -> None:  # noqa: ARG001
+    """Handles  guard task execution logic for the surrounding Stoa workflow.
+
+    Args:
+        task_id (str): Input value used by this workflow step.
+        task (Any): Input value used by this workflow step.
+    """
     try:
         assert_allowed_task(task.name)
     except ValueError:

@@ -1,4 +1,10 @@
-"""SQL aggregations on canonical CRM data for ICP enrichment."""
+"""
+File: services/core/src/stoa_core/intelligence/structured.py
+Layer: Core Intelligence Pipeline
+Purpose: Implements structured behavior for the core intelligence pipeline.
+Dependencies: Supabase, stoa_core
+"""
+
 
 from __future__ import annotations
 
@@ -9,6 +15,14 @@ from stoa_core.db.supabase import get_supabase_admin
 
 
 def aggregate_crm_stats(org_id: str) -> dict[str, Any]:
+    """Handles aggregate crm stats logic for the surrounding Stoa workflow.
+
+    Args:
+        org_id (str): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     sb = get_supabase_admin()
 
     accounts_res = (

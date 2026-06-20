@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/components/marketing/HeroDashboardOrbit.tsx
+ * @layer Frontend Marketing UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies React
+ */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -82,6 +88,10 @@ const getLogsForConfig = (model: string, thrust: number): string[] => {
   }
 };
 
+/**
+ * Handles hero dashboard orbit behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function HeroDashboardOrbit() {
   const [model, setModel] = useState("stoa-core-v2");
   const [virality, setVirality] = useState(85);

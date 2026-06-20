@@ -1,3 +1,10 @@
+"""
+File: services/api/app/routers/integrations.py
+Layer: FastAPI Route Layer
+Purpose: Exposes authenticated REST endpoints and coordinates validation, permissions, and service calls.
+Dependencies: FastAPI, Supabase, Redis, Pydantic, stoa_core
+"""
+
 from __future__ import annotations
 
 from typing import Any
@@ -27,11 +34,21 @@ router = APIRouter(prefix="/v1/integrations", tags=["integrations"])
 
 
 class ConnectCredentialsBody(BaseModel):
+    """Manage ConnectCredentialsBody behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     credentials: dict[str, Any] = Field(default_factory=dict)
     label: str | None = None
 
 
 class CsvImportBody(BaseModel):
+    """Manage CsvImportBody behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     title: str = Field(default="CSV import", max_length=300)
     content: str = Field(min_length=1, max_length=10 * 1024 * 1024)
     column_mapping: dict[str, str | None] | None = None
@@ -39,12 +56,28 @@ class CsvImportBody(BaseModel):
 
 @router.get("/providers")
 def get_providers(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    """Handles get providers logic for the surrounding Stoa workflow.
+
+    Args:
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "data_sources:read")
     return {"providers": [p.__dict__ for p in list_providers()]}
 
 
 @router.get("/sources")
 def get_sources(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    """Handles get sources logic for the surrounding Stoa workflow.
+
+    Args:
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "data_sources:read")
     return {"connections": list_connections(scope.org_id)}
 
@@ -54,6 +87,15 @@ def start_oauth(
     provider: str,
     scope: OrgScope = Depends(require_onboarded_scope),
 ) -> dict[str, str]:
+    """Handles start oauth logic for the surrounding Stoa workflow.
+
+    Args:
+        provider (str): Input value used by this workflow step.
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, str]: Result produced for the caller.
+    """
     require_permission(scope, "data_sources:write")
     check_rate_limit(scope.user_id, get_settings().rate_limit_per_minute, scope="integrations")
     connector = get_connector(provider)
@@ -74,6 +116,16 @@ def oauth_callback(
     code: str = Query(...),
     state: str = Query(...),
 ) -> RedirectResponse:
+    """Handles oauth callback logic for the surrounding Stoa workflow.
+
+    Args:
+        provider (str): Input value used by this workflow step.
+        code (str): Input value used by this workflow step.
+        state (str): Input value used by this workflow step.
+
+    Returns:
+        RedirectResponse: Result produced for the caller.
+    """
     oauth_state = consume_oauth_state(state)
     if not oauth_state or oauth_state.get("provider") != provider:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Invalid OAuth state")
@@ -106,6 +158,16 @@ def connect_with_credentials(
     body: ConnectCredentialsBody,
     scope: OrgScope = Depends(require_onboarded_scope),
 ) -> dict[str, Any]:
+    """Handles connect with credentials logic for the surrounding Stoa workflow.
+
+    Args:
+        provider (str): Input value used by this workflow step.
+        body (ConnectCredentialsBody): Input value used by this workflow step.
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "data_sources:write")
     check_rate_limit(scope.user_id, get_settings().rate_limit_per_minute, scope="integrations")
     connector = get_connector(provider)
@@ -132,6 +194,16 @@ def trigger_sync(
     scope: OrgScope = Depends(require_onboarded_scope),
     full: bool = Query(False),
 ) -> dict[str, Any]:
+    """Handles trigger sync logic for the surrounding Stoa workflow.
+
+    Args:
+        connection_id (str): Input value used by this workflow step.
+        scope (OrgScope): Input value used by this workflow step.
+        full (bool): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "data_sources:write")
     check_rate_limit(scope.user_id, get_settings().rate_limit_per_minute, scope="integrations")
     sync_integration_source.delay(connection_id, scope.org_id, full_backfill=full)
@@ -143,6 +215,15 @@ def disconnect(
     connection_id: str,
     scope: OrgScope = Depends(require_onboarded_scope),
 ) -> dict[str, str]:
+    """Handles disconnect logic for the surrounding Stoa workflow.
+
+    Args:
+        connection_id (str): Input value used by this workflow step.
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, str]: Result produced for the caller.
+    """
     require_permission(scope, "data_sources:write")
     revoke_connection(connection_id, scope.org_id)
     write_audit(scope.org_id, scope.user_id, "integration.revoked", "integration_connection", connection_id)
@@ -154,6 +235,15 @@ def get_sync_runs(
     connection_id: str,
     scope: OrgScope = Depends(require_onboarded_scope),
 ) -> dict[str, Any]:
+    """Handles get sync runs logic for the surrounding Stoa workflow.
+
+    Args:
+        connection_id (str): Input value used by this workflow step.
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "data_sources:read")
     return {"runs": list_sync_runs(connection_id, scope.org_id)}
 
@@ -163,8 +253,17 @@ def detect_csv_columns(
     body: CsvImportBody,
     scope: OrgScope = Depends(require_onboarded_scope),
 ) -> dict[str, Any]:
+    """Handles detect csv columns logic for the surrounding Stoa workflow.
+
+    Args:
+        body (CsvImportBody): Input value used by this workflow step.
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "data_sources:read")
-    from stoa_core.integrations.csv_structured import CSV_FIELD_DEFINITIONS, detect_columns, parse_csv_content
+    from stoa_core.integrations.csv_structured import CSV_FIELD_DEFINITIONS, parse_csv_content
 
     headers, mapping = parse_csv_content(body.content)
     return {
@@ -179,6 +278,15 @@ def import_structured_csv(
     body: CsvImportBody,
     scope: OrgScope = Depends(require_onboarded_scope),
 ) -> dict[str, Any]:
+    """Handles import structured csv logic for the surrounding Stoa workflow.
+
+    Args:
+        body (CsvImportBody): Input value used by this workflow step.
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "data_sources:write")
     check_rate_limit(scope.user_id, get_settings().rate_limit_per_minute, scope="integrations")
     from stoa_core.integrations.csv_structured import detect_columns
@@ -224,9 +332,24 @@ async def integration_events(
     request: Request,
     scope: OrgScope = Depends(require_onboarded_scope),
 ) -> StreamingResponse:
+    """Asynchronously handles integration events logic for the surrounding Stoa workflow.
+
+    Args:
+        connection_id (str): Input value used by this workflow step.
+        request (Request): Input value used by this workflow step.
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        StreamingResponse: Result produced for the caller.
+    """
     require_permission(scope, "data_sources:read")
 
     async def _gen():
+        """Asynchronously handles  gen logic for the surrounding Stoa workflow.
+
+        Returns:
+            Any: Result produced for the caller.
+        """
         last_id = request.headers.get("Last-Event-ID", "0-0")
         async for msg_id, data in read_events_since("integration", connection_id, last_id):
             yield f"id: {msg_id}\ndata: {__import__('json').dumps(data)}\n\n"

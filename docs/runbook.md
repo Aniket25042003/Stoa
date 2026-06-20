@@ -3,13 +3,13 @@
 ## Services
 
 
-| Service         | Platform                    | Notes                                                                          |
-| --------------- | --------------------------- | ------------------------------------------------------------------------------ |
-| Web             | Vercel                      | Root directory `apps/web`; set env vars from `apps/web/.env.example`           |
-| API             | Railway                     | Root `services/api`; start `uvicorn app.main:app`                              |
-| Worker          | Railway                     | Same repo, **second service**; start `celery -A app.celery_app worker -l info` |
-| Redis           | Railway (or Docker locally) | `REDIS_URL`, `CELERY_`*                                                        |
-| Database + Auth | Supabase                    | Apply migrations in `supabase/migrations/`                                     |
+| Service         | Platform                   | Notes                                                                          |
+| --------------- | -------------------------- | ------------------------------------------------------------------------------ |
+| Web             | Vercel                     | Root directory `apps/web`; set env vars from `apps/web/.env.example`           |
+| API             | Render                     | Root `services/api`; start `uvicorn app.main:app`                              |
+| Worker          | Render                     | Same repo, **second service**; start `celery -A app.celery_app worker -l info` |
+| Redis           | Render (or Docker locally) | `REDIS_URL`, `CELERY_`*                                                        |
+| Database + Auth | Supabase                   | Apply migrations in `supabase/migrations/`                                     |
 
 
 ## Required environment
@@ -27,7 +27,7 @@
 - `CELERY_BROKER_URL`, `CELERY_RESULT_BACKEND`
 - `CORS_ORIGINS` — include `https://<your-vercel-domain>`
 - **LLM provider (worker + API):** `GTM_LLM_PROVIDER=vertex` (default) or `openai`. Manual switch only — `GTM_LLM_AUTO_FAILOVER=true` (default) automatically falls through to the *other* provider **only when the primary errors**. Vertex needs `GTM_VERTEX_MODEL`, `GTM_VERTEX_PROJECT`, `GTM_VERTEX_LOCATION` and either `GOOGLE_APPLICATION_CREDENTIALS` (service-account JSON path) or workload identity. OpenAI needs `GTM_OPENAI_MODEL` (legacy `GTM_AGENT_MODEL` still honored) and `OPENAI_API_KEY`.
-- Optional LangSmith (worker only): `LANGSMITH_TRACING=true`, `LANGSMITH_API_KEY`, `LANGSMITH_PROJECT` — see [LangGraph observability](https://docs.langchain.com/oss/python/langgraph/observability). Legacy `LANGCHAIN_TRACING_V2` / `LANGCHAIN_API_KEY` / `LANGCHAIN_PROJECT` are still mapped when `LANGSMITH_*` is unset.
+- Optional LangSmith (worker only): `LANGSMITH_TRACING=true`, `LANGSMITH_API_KEY`, `LANGSMITH_PROJECT` — see [LangGraph observability](https://docs.langchain.com/oss/python/langgraph/observability). Legacy `LANGCHAIN_TRACING_V2` / `LANGCHAIN_API_KEY` / `LANGCHAIN_PROJECT` are still mapped when `LANGSMITH_`* is unset.
 - Optional research: `TAVILY_API_KEY`, `JINA_API_KEY`, `SERPAPI_API_KEY`, and crawler envs (`GTM_CRAWLER_*`, `CRAWLEE_STORAGE_DIR`) — see `services/api/.env.example`
 - **Playwright browsers (API + worker):** after `pip install -r requirements.txt`, run `playwright install chromium --with-deps` locally or rely on `services/api/nixpacks.toml` on Railway so the Celery worker can run `PlaywrightCrawler`.
 
@@ -68,3 +68,4 @@ Render’s separate **Background Worker** service is paid. On the **free Web** i
 - Vercel: promote previous deployment or git revert.
 - Railway: redeploy previous image / commit.
 - DB: migrations are forward-only; add new migration to revert schema if needed.
+

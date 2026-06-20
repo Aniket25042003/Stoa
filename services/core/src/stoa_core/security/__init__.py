@@ -1,3 +1,10 @@
+"""
+File: services/core/src/stoa_core/security/__init__.py
+Layer: Core Security Utilities
+Purpose: Implements   init   behavior for the core security utilities.
+Dependencies: stoa_core
+"""
+
 from stoa_core.security.pii import redact_json, redact_pii, redact_pii_for_logs
 from stoa_core.security.sanitize import (
     UploadValidationError,

@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/app/(app)/data/csv-import-panel.tsx
+ * @layer Frontend Product UI
+ * @description Implements csv import panel behavior for the frontend product ui.
+ * @dependencies React, BFF apiFetch
+ */
 "use client";
 
 import { useMemo, useState } from "react";
@@ -29,6 +35,10 @@ const FALLBACK_FIELDS: CsvField[] = [
   { key: "review", label: "Customer review", group: "Content" },
 ];
 
+/**
+ * Handles reset file input behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 function resetFileInput() {
   const input = document.getElementById("csv-import-file") as HTMLInputElement | null;
   if (input) input.value = "";

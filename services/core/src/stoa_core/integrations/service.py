@@ -1,4 +1,10 @@
-"""Run integration sync for a connection."""
+"""
+File: services/core/src/stoa_core/integrations/service.py
+Layer: Core Integration Connectors
+Purpose: Implements service behavior for the core integration connectors.
+Dependencies: Supabase, Redis, stoa_core
+"""
+
 
 from __future__ import annotations
 
@@ -15,6 +21,14 @@ logger = logging.getLogger(__name__)
 
 
 def oauth_redirect_uri_for(provider: str) -> str:
+    """Handles oauth redirect uri for logic for the surrounding Stoa workflow.
+
+    Args:
+        provider (str): Input value used by this workflow step.
+
+    Returns:
+        str: Result produced for the caller.
+    """
     from stoa_core.config import get_settings
 
     base = get_settings().api_base_url.rstrip("/")
@@ -31,6 +45,20 @@ def create_connection(
     provider_metadata: dict[str, Any] | None = None,
     scopes: list[str] | None = None,
 ) -> dict[str, Any]:
+    """Handles create connection logic for the surrounding Stoa workflow.
+
+    Args:
+        org_id (str): Input value used by this workflow step.
+        provider (str): Input value used by this workflow step.
+        user_id (str | None): Input value used by this workflow step.
+        label (str): Input value used by this workflow step.
+        credentials (dict[str, Any]): Input value used by this workflow step.
+        provider_metadata (dict[str, Any] | None): Input value used by this workflow step.
+        scopes (list[str] | None): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     sb = get_supabase_admin()
 
     existing = (
@@ -100,6 +128,15 @@ def create_connection(
 
 
 def get_connection(connection_id: str, org_id: str) -> dict[str, Any] | None:
+    """Handles get connection logic for the surrounding Stoa workflow.
+
+    Args:
+        connection_id (str): Input value used by this workflow step.
+        org_id (str): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any] | None: Result produced for the caller.
+    """
     sb = get_supabase_admin()
     res = (
         sb.table("integration_connections")
@@ -113,6 +150,14 @@ def get_connection(connection_id: str, org_id: str) -> dict[str, Any] | None:
 
 
 def list_connections(org_id: str) -> list[dict[str, Any]]:
+    """Handles list connections logic for the surrounding Stoa workflow.
+
+    Args:
+        org_id (str): Input value used by this workflow step.
+
+    Returns:
+        list[dict[str, Any]]: Result produced for the caller.
+    """
     sb = get_supabase_admin()
     res = (
         sb.table("integration_connections")
@@ -125,6 +170,12 @@ def list_connections(org_id: str) -> list[dict[str, Any]]:
 
 
 def revoke_connection(connection_id: str, org_id: str) -> None:
+    """Handles revoke connection logic for the surrounding Stoa workflow.
+
+    Args:
+        connection_id (str): Input value used by this workflow step.
+        org_id (str): Input value used by this workflow step.
+    """
     sb = get_supabase_admin()
     sb.table("integration_connections").update(
         {"status": "revoked", "credentials_encrypted": None}
@@ -132,6 +183,16 @@ def revoke_connection(connection_id: str, org_id: str) -> None:
 
 
 def run_sync(connection_id: str, org_id: str, *, full_backfill: bool = False) -> dict[str, Any]:
+    """Handles run sync logic for the surrounding Stoa workflow.
+
+    Args:
+        connection_id (str): Input value used by this workflow step.
+        org_id (str): Input value used by this workflow step.
+        full_backfill (bool): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     sb = get_supabase_admin()
     conn = get_connection(connection_id, org_id)
     if not conn:
@@ -225,6 +286,16 @@ def run_sync(connection_id: str, org_id: str, *, full_backfill: bool = False) ->
 
 
 def list_sync_runs(connection_id: str, org_id: str, *, limit: int = 10) -> list[dict[str, Any]]:
+    """Handles list sync runs logic for the surrounding Stoa workflow.
+
+    Args:
+        connection_id (str): Input value used by this workflow step.
+        org_id (str): Input value used by this workflow step.
+        limit (int): Input value used by this workflow step.
+
+    Returns:
+        list[dict[str, Any]]: Result produced for the caller.
+    """
     sb = get_supabase_admin()
     conn = get_connection(connection_id, org_id)
     if not conn:

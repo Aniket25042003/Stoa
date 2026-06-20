@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/components/marketing/immersive/VideoBackground.tsx
+ * @layer Frontend Marketing UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies React
+ */
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -14,6 +20,13 @@ interface VideoBackgroundProps {
   deferUntilReady?: boolean;
 }
 
+/**
+ * Handles resolve poster behavior for this part of the Stoa application.
+ *
+ * @param poster - Input value used to render UI or execute the workflow.
+ * @param posterMobile - Input value used to render UI or execute the workflow.
+ * @returns Result consumed by the caller or rendered by React.
+ */
 function resolvePoster(poster: string, posterMobile?: string): string {
   if (!posterMobile) return poster;
   if (typeof window !== "undefined" && window.innerWidth < 768) {
@@ -22,6 +35,10 @@ function resolvePoster(poster: string, posterMobile?: string): string {
   return poster;
 }
 
+/**
+ * Handles video background behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function VideoBackground({
   src,
   poster,

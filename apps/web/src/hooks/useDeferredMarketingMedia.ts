@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/hooks/useDeferredMarketingMedia.ts
+ * @layer Frontend Shared Utilities
+ * @description Provides shared client/server utility logic used across the Next.js app.
+ * @dependencies React
+ */
 "use client";
 
 import { useEffect, useState } from "react";

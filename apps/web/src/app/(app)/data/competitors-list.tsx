@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/app/(app)/data/competitors-list.tsx
+ * @layer Frontend Product UI
+ * @description Implements competitors list behavior for the frontend product ui.
+ * @dependencies React, BFF apiFetch
+ */
 "use client";
 
 import { useState, type InputHTMLAttributes, type ReactNode } from "react";
@@ -19,6 +25,10 @@ type EditDraft = {
   website_url: string;
 };
 
+/**
+ * Handles inline table input behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 function InlineTableInput({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
@@ -31,12 +41,20 @@ function InlineTableInput({ className, ...props }: InputHTMLAttributes<HTMLInput
   );
 }
 
+/**
+ * Handles cell text behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 function CellText({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <span className={cn("block min-w-0 truncate text-sm leading-5", className)}>{children}</span>
   );
 }
 
+/**
+ * Handles data cell behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 function DataCell({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <ProductTableCell className={cn("max-w-0 overflow-hidden align-middle px-3 py-2.5", className)}>

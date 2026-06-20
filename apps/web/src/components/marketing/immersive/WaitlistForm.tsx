@@ -1,8 +1,18 @@
+/**
+ * @file apps/web/src/components/marketing/immersive/WaitlistForm.tsx
+ * @layer Frontend Marketing UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies React, Framer Motion
+ */
 "use client";
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
+/**
+ * Handles waitlist form behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function WaitlistForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");

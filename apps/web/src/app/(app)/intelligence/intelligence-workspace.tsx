@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/app/(app)/intelligence/intelligence-workspace.tsx
+ * @layer Frontend Product UI
+ * @description Implements intelligence workspace behavior for the frontend product ui.
+ * @dependencies React, BFF apiFetch
+ */
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
@@ -31,6 +37,10 @@ type CrmStats = {
   top_loss_reasons?: { reason: string; count: number }[];
 };
 
+/**
+ * Handles stat card behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 function StatCard({ label, value }: { label: string; value: string | number }) {
   return (
     <ProductCard className="p-4">
@@ -40,6 +50,10 @@ function StatCard({ label, value }: { label: string; value: string | number }) {
   );
 }
 
+/**
+ * Handles intelligence workspace behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function IntelligenceWorkspace() {
   const [signals, setSignals] = useState<Signal[]>([]);
   const [profile, setProfile] = useState<IcpProfile | null>(null);

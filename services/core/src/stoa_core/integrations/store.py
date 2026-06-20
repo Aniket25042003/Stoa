@@ -1,4 +1,10 @@
-"""Persist canonical entities and KB artifacts."""
+"""
+File: services/core/src/stoa_core/integrations/store.py
+Layer: Core Integration Connectors
+Purpose: Implements store behavior for the core integration connectors.
+Dependencies: Supabase, stoa_core
+"""
+
 
 from __future__ import annotations
 
@@ -36,6 +42,15 @@ INTERACTION_KIND_MAP = {
 
 
 def upsert_account(org_id: str, row: dict[str, Any]) -> dict[str, Any] | None:
+    """Handles upsert account logic for the surrounding Stoa workflow.
+
+    Args:
+        org_id (str): Input value used by this workflow step.
+        row (dict[str, Any]): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any] | None: Result produced for the caller.
+    """
     sb = get_supabase_admin()
     payload = {**row, "org_id": org_id}
     res = (
@@ -50,6 +65,15 @@ def upsert_account(org_id: str, row: dict[str, Any]) -> dict[str, Any] | None:
 
 
 def upsert_contact(org_id: str, row: dict[str, Any]) -> dict[str, Any] | None:
+    """Handles upsert contact logic for the surrounding Stoa workflow.
+
+    Args:
+        org_id (str): Input value used by this workflow step.
+        row (dict[str, Any]): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any] | None: Result produced for the caller.
+    """
     sb = get_supabase_admin()
     payload = {**row, "org_id": org_id}
     res = (
@@ -64,6 +88,15 @@ def upsert_contact(org_id: str, row: dict[str, Any]) -> dict[str, Any] | None:
 
 
 def upsert_deal(org_id: str, row: dict[str, Any]) -> dict[str, Any] | None:
+    """Handles upsert deal logic for the surrounding Stoa workflow.
+
+    Args:
+        org_id (str): Input value used by this workflow step.
+        row (dict[str, Any]): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any] | None: Result produced for the caller.
+    """
     sb = get_supabase_admin()
     payload = {**row, "org_id": org_id}
     res = (
@@ -78,6 +111,16 @@ def upsert_deal(org_id: str, row: dict[str, Any]) -> dict[str, Any] | None:
 
 
 def upsert_interaction(org_id: str, row: dict[str, Any], *, extract: bool = True) -> dict[str, Any] | None:
+    """Handles upsert interaction logic for the surrounding Stoa workflow.
+
+    Args:
+        org_id (str): Input value used by this workflow step.
+        row (dict[str, Any]): Input value used by this workflow step.
+        extract (bool): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any] | None: Result produced for the caller.
+    """
     sb = get_supabase_admin()
     payload = {**row, "org_id": org_id}
     res = (
@@ -108,6 +151,14 @@ def upsert_interaction(org_id: str, row: dict[str, Any], *, extract: bool = True
 
 
 def _ingest_canonical(org_id: str, entity: str, saved: dict[str, Any], text: str) -> None:
+    """Handles  ingest canonical logic for the surrounding Stoa workflow.
+
+    Args:
+        org_id (str): Input value used by this workflow step.
+        entity (str): Input value used by this workflow step.
+        saved (dict[str, Any]): Input value used by this workflow step.
+        text (str): Input value used by this workflow step.
+    """
     kind = KB_KIND_MAP.get(entity)
     if not kind:
         return
@@ -125,6 +176,13 @@ def _ingest_canonical(org_id: str, entity: str, saved: dict[str, Any], text: str
 
 
 def _extract_interaction_signals(org_id: str, interaction: dict[str, Any], text: str) -> None:
+    """Handles  extract interaction signals logic for the surrounding Stoa workflow.
+
+    Args:
+        org_id (str): Input value used by this workflow step.
+        interaction (dict[str, Any]): Input value used by this workflow step.
+        text (str): Input value used by this workflow step.
+    """
     sb = get_supabase_admin()
     interaction_id = interaction.get("id")
     source_type = interaction.get("external_source")

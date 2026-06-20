@@ -1,4 +1,10 @@
-"""Content sanitization and upload validation."""
+"""
+File: services/core/src/stoa_core/security/sanitize.py
+Layer: Core Security Utilities
+Purpose: Implements sanitize behavior for the core security utilities.
+Dependencies: standard library / local modules
+"""
+
 
 from __future__ import annotations
 
@@ -43,11 +49,24 @@ class UploadValidationError(ValueError):
 
 
 def validate_doc_type(doc_type: str) -> None:
+    """Handles validate doc type logic for the surrounding Stoa workflow.
+
+    Args:
+        doc_type (str): Input value used by this workflow step.
+    """
     if not DOC_TYPE_PATTERN.match(doc_type):
         raise UploadValidationError(f"Unsupported document type: {doc_type}")
 
 
 def validate_upload(filename: str, content_type: str | None, size: int, max_bytes: int) -> None:
+    """Handles validate upload logic for the surrounding Stoa workflow.
+
+    Args:
+        filename (str): Input value used by this workflow step.
+        content_type (str | None): Input value used by this workflow step.
+        size (int): Input value used by this workflow step.
+        max_bytes (int): Input value used by this workflow step.
+    """
     ext = "." + filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
     if ext not in ALLOWED_EXTENSIONS:
         raise UploadValidationError(f"Unsupported file type: {ext or filename}")
@@ -58,6 +77,14 @@ def validate_upload(filename: str, content_type: str | None, size: int, max_byte
 
 
 def sanitize_user_content(text: str) -> str:
+    """Handles sanitize user content logic for the surrounding Stoa workflow.
+
+    Args:
+        text (str): Input value used by this workflow step.
+
+    Returns:
+        str: Result produced for the caller.
+    """
     cleaned = text.replace("\x00", "")
     cleaned = _DELIMITER_RUN.sub("[filtered]", cleaned)
     for pattern in INJECTION_PATTERNS:
@@ -68,6 +95,15 @@ def sanitize_user_content(text: str) -> str:
 
 
 def read_limited(stream: BinaryIO, max_bytes: int) -> bytes:
+    """Handles read limited logic for the surrounding Stoa workflow.
+
+    Args:
+        stream (BinaryIO): Input value used by this workflow step.
+        max_bytes (int): Input value used by this workflow step.
+
+    Returns:
+        bytes: Result produced for the caller.
+    """
     data = stream.read(max_bytes + 1)
     if len(data) > max_bytes:
         raise UploadValidationError("File too large")

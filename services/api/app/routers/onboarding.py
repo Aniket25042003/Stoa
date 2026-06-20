@@ -1,4 +1,10 @@
-"""Dedicated onboarding workflow API."""
+"""
+File: services/api/app/routers/onboarding.py
+Layer: FastAPI Route Layer
+Purpose: Exposes authenticated REST endpoints and coordinates validation, permissions, and service calls.
+Dependencies: FastAPI, Supabase, Pydantic, stoa_core
+"""
+
 
 from __future__ import annotations
 
@@ -31,6 +37,11 @@ router = APIRouter(prefix="/v1/onboarding", tags=["onboarding"])
 
 
 class ProfileHints(BaseModel):
+    """Manage ProfileHints behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     role_type: str | None = None
     job_title: str | None = None
     department: str | None = None
@@ -38,12 +49,22 @@ class ProfileHints(BaseModel):
 
 
 class TeammateInvite(BaseModel):
+    """Manage TeammateInvite behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     email: str
     role_id: str | None = None
     profile_hints: ProfileHints | None = None
 
 
 class OnboardingCompleteBody(BaseModel):
+    """Manage OnboardingCompleteBody behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     mode: str = Field(pattern="^(owner_setup|invitee_profile)$")
     org_id: str | None = None
     name: str | None = Field(default=None, max_length=200)
@@ -59,6 +80,15 @@ class OnboardingCompleteBody(BaseModel):
 
 
 def _required_steps(mode: str, prefilled: dict[str, Any]) -> list[str]:
+    """Handles  required steps logic for the surrounding Stoa workflow.
+
+    Args:
+        mode (str): Input value used by this workflow step.
+        prefilled (dict[str, Any]): Input value used by this workflow step.
+
+    Returns:
+        list[str]: Result produced for the caller.
+    """
     if mode == "invitee_profile":
         steps = []
         if not prefilled.get("role_type"):
@@ -75,6 +105,16 @@ def _required_steps(mode: str, prefilled: dict[str, Any]) -> list[str]:
 
 
 def _resolve_mode(user_id: str, profile: dict[str, Any], memberships: list[dict[str, Any]]) -> str:
+    """Handles  resolve mode logic for the surrounding Stoa workflow.
+
+    Args:
+        user_id (str): Input value used by this workflow step.
+        profile (dict[str, Any]): Input value used by this workflow step.
+        memberships (list[dict[str, Any]]): Input value used by this workflow step.
+
+    Returns:
+        str: Result produced for the caller.
+    """
     if not memberships:
         return "owner_setup"
     if not profile.get("onboarding_completed_at"):
@@ -95,6 +135,14 @@ def _resolve_mode(user_id: str, profile: dict[str, Any], memberships: list[dict[
 
 @router.get("/context")
 def get_onboarding_context(claims: dict[str, Any] = Depends(verify_supabase_jwt_payload)) -> dict[str, Any]:
+    """Handles get onboarding context logic for the surrounding Stoa workflow.
+
+    Args:
+        claims (dict[str, Any]): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     user_id = str(claims["sub"])
     profile = get_or_create_user_profile(user_id, claims)
     memberships = list_memberships(user_id)
@@ -131,6 +179,14 @@ def get_onboarding_context(claims: dict[str, Any] = Depends(verify_supabase_jwt_
 
 @router.get("/status")
 def onboarding_status(user_id: str = Depends(verify_supabase_jwt)) -> dict[str, Any]:
+    """Handles onboarding status logic for the surrounding Stoa workflow.
+
+    Args:
+        user_id (str): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     sb = get_supabase_admin()
     profile_res = (
         sb.table("user_profiles")
@@ -181,6 +237,15 @@ def complete_onboarding(
     body: OnboardingCompleteBody,
     claims: dict[str, Any] = Depends(verify_supabase_jwt_payload),
 ) -> dict[str, Any]:
+    """Handles complete onboarding logic for the surrounding Stoa workflow.
+
+    Args:
+        body (OnboardingCompleteBody): Input value used by this workflow step.
+        claims (dict[str, Any]): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     user_id = str(claims["sub"])
     email = email_from_claims(claims)
     sb = get_supabase_admin()

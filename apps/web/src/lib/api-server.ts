@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/lib/api-server.ts
+ * @layer Frontend Shared Utilities
+ * @description Provides shared client/server utility logic used across the Next.js app.
+ * @dependencies BFF apiFetch
+ */
 import { getServerActiveOrgId } from "@/lib/active-org-server";
 
 const serverApiBase = () => {

@@ -1,4 +1,10 @@
-"""HubSpot CRM connector."""
+"""
+File: services/core/src/stoa_core/integrations/hubspot.py
+Layer: Core Integration Connectors
+Purpose: Implements hubspot behavior for the core integration connectors.
+Dependencies: Next.js, stoa_core
+"""
+
 
 from __future__ import annotations
 
@@ -31,15 +37,30 @@ PAGE_SIZE = 100
 
 
 def _settings() -> Any:
+    """Handles  settings logic for the surrounding Stoa workflow.
+
+    Returns:
+        Any: Result produced for the caller.
+    """
     return get_settings()
 
 
 @register_connector
 class HubSpotConnector(BaseConnector):
+    """Manage HubSpotConnector behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     provider = "hubspot"
 
     @classmethod
     def provider_info(cls) -> ProviderInfo:
+        """Handles provider info logic for the surrounding Stoa workflow.
+
+        Returns:
+            ProviderInfo: Result produced for the caller.
+        """
         return ProviderInfo(
             id="hubspot",
             name="HubSpot",
@@ -50,6 +71,15 @@ class HubSpotConnector(BaseConnector):
 
     @classmethod
     def oauth_authorize_url(cls, state: str, redirect_uri: str) -> str:
+        """Handles oauth authorize url logic for the surrounding Stoa workflow.
+
+        Args:
+            state (str): Input value used by this workflow step.
+            redirect_uri (str): Input value used by this workflow step.
+
+        Returns:
+            str: Result produced for the caller.
+        """
         s = _settings()
         params = {
             "client_id": s.hubspot_client_id,
@@ -61,6 +91,15 @@ class HubSpotConnector(BaseConnector):
 
     @classmethod
     def exchange_oauth_code(cls, code: str, redirect_uri: str) -> dict[str, Any]:
+        """Handles exchange oauth code logic for the surrounding Stoa workflow.
+
+        Args:
+            code (str): Input value used by this workflow step.
+            redirect_uri (str): Input value used by this workflow step.
+
+        Returns:
+            dict[str, Any]: Result produced for the caller.
+        """
         s = _settings()
         with httpx.Client(timeout=30) as client:
             res = client.post(
@@ -84,6 +123,14 @@ class HubSpotConnector(BaseConnector):
 
     @classmethod
     def _refresh_token(cls, credentials: dict[str, Any]) -> dict[str, Any]:
+        """Handles  refresh token logic for the surrounding Stoa workflow.
+
+        Args:
+            credentials (dict[str, Any]): Input value used by this workflow step.
+
+        Returns:
+            dict[str, Any]: Result produced for the caller.
+        """
         refresh = credentials.get("refresh_token")
         if not refresh:
             return credentials
@@ -108,6 +155,14 @@ class HubSpotConnector(BaseConnector):
 
     @classmethod
     def _headers(cls, credentials: dict[str, Any]) -> dict[str, str]:
+        """Handles  headers logic for the surrounding Stoa workflow.
+
+        Args:
+            credentials (dict[str, Any]): Input value used by this workflow step.
+
+        Returns:
+            dict[str, str]: Result produced for the caller.
+        """
         creds = cls._refresh_token(credentials)
         return {"Authorization": f"Bearer {creds['access_token']}"}
 
@@ -120,6 +175,17 @@ class HubSpotConnector(BaseConnector):
         after: str | None = None,
         properties: list[str] | None = None,
     ) -> tuple[list[dict[str, Any]], str | None]:
+        """Handles  fetch objects logic for the surrounding Stoa workflow.
+
+        Args:
+            credentials (dict[str, Any]): Input value used by this workflow step.
+            object_type (str): Input value used by this workflow step.
+            after (str | None): Input value used by this workflow step.
+            properties (list[str] | None): Input value used by this workflow step.
+
+        Returns:
+            tuple[list[dict[str, Any]], str | None]: Result produced for the caller.
+        """
         params: dict[str, Any] = {"limit": PAGE_SIZE}
         if properties:
             params["properties"] = ",".join(properties)
@@ -148,6 +214,18 @@ class HubSpotConnector(BaseConnector):
         cursor: dict[str, Any],
         full_backfill: bool = False,
     ) -> SyncResult:
+        """Handles sync logic for the surrounding Stoa workflow.
+
+        Args:
+            org_id (str): Input value used by this workflow step.
+            connection (dict[str, Any]): Input value used by this workflow step.
+            credentials (dict[str, Any]): Input value used by this workflow step.
+            cursor (dict[str, Any]): Input value used by this workflow step.
+            full_backfill (bool): Input value used by this workflow step.
+
+        Returns:
+            SyncResult: Result produced for the caller.
+        """
         result = SyncResult(cursor=dict(cursor))
         stage = cursor.get("stage") or "companies"
         after = cursor.get("after")
@@ -261,6 +339,14 @@ class HubSpotConnector(BaseConnector):
 
 
 def _employee_range(value: Any) -> str | None:
+    """Handles  employee range logic for the surrounding Stoa workflow.
+
+    Args:
+        value (Any): Input value used by this workflow step.
+
+    Returns:
+        str | None: Result produced for the caller.
+    """
     if value is None:
         return None
     try:
@@ -279,6 +365,14 @@ def _employee_range(value: Any) -> str | None:
 
 
 def _parse_bool(value: Any) -> bool | None:
+    """Handles  parse bool logic for the surrounding Stoa workflow.
+
+    Args:
+        value (Any): Input value used by this workflow step.
+
+    Returns:
+        bool | None: Result produced for the caller.
+    """
     if value is None:
         return None
     if isinstance(value, bool):
@@ -287,6 +381,14 @@ def _parse_bool(value: Any) -> bool | None:
 
 
 def _parse_amount(value: Any) -> float | None:
+    """Handles  parse amount logic for the surrounding Stoa workflow.
+
+    Args:
+        value (Any): Input value used by this workflow step.
+
+    Returns:
+        float | None: Result produced for the caller.
+    """
     if value is None:
         return None
     try:

@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/components/motion/ActivitySurface.tsx
+ * @layer Application Source
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies React
+ */
 "use client";
 
 import { useEffect, useRef } from "react";
@@ -6,6 +12,10 @@ import { activitySurfaceVariant } from "@/lib/pipeline-phases";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { cn } from "@/lib/cn";
 
+/**
+ * Handles activity surface behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function ActivitySurface({
   phase,
   className,
@@ -41,6 +51,12 @@ export function ActivitySurface({
   );
 }
 
+/**
+ * Handles planning visual behavior for this part of the Stoa application.
+ *
+ * @param reduced - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 function PlanningVisual({ reduced }: { reduced: boolean }) {
   return (
     <>
@@ -50,6 +66,12 @@ function PlanningVisual({ reduced }: { reduced: boolean }) {
   );
 }
 
+/**
+ * Handles research visual behavior for this part of the Stoa application.
+ *
+ * @param reduced - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 function ResearchVisual({ reduced }: { reduced: boolean }) {
   return (
     <>
@@ -75,6 +97,12 @@ function ResearchVisual({ reduced }: { reduced: boolean }) {
   );
 }
 
+/**
+ * Handles reasoning visual behavior for this part of the Stoa application.
+ *
+ * @param reduced - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 function ReasoningVisual({ reduced }: { reduced: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -146,6 +174,12 @@ function ReasoningVisual({ reduced }: { reduced: boolean }) {
   );
 }
 
+/**
+ * Handles writing visual behavior for this part of the Stoa application.
+ *
+ * @param reduced - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 function WritingVisual({ reduced }: { reduced: boolean }) {
   const lines = [0.92, 0.78, 0.85, 0.65, 0.88];
   return (
@@ -165,6 +199,10 @@ function WritingVisual({ reduced }: { reduced: boolean }) {
   );
 }
 
+/**
+ * Handles completed visual behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 function CompletedVisual() {
   return (
     <div className="absolute inset-0 flex items-center justify-center">
@@ -173,6 +211,10 @@ function CompletedVisual() {
   );
 }
 
+/**
+ * Handles failed visual behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 function FailedVisual() {
   return (
     <div className="absolute inset-0 flex items-center justify-center">

@@ -1,3 +1,10 @@
+"""
+File: services/api/app/routers/conversations.py
+Layer: FastAPI Route Layer
+Purpose: Exposes authenticated REST endpoints and coordinates validation, permissions, and service calls.
+Dependencies: FastAPI, Supabase, Redis, Pydantic, stoa_core
+"""
+
 from __future__ import annotations
 
 import json
@@ -23,11 +30,24 @@ router = APIRouter(prefix="/v1/conversations", tags=["conversations"])
 
 
 class AskBody(BaseModel):
+    """Manage AskBody behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     question: str = Field(min_length=1, max_length=2000)
 
 
 @router.get("")
 def list_conversations(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    """Handles list conversations logic for the surrounding Stoa workflow.
+
+    Args:
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "conversations:read")
     sb = get_supabase_admin()
     res = (
@@ -43,6 +63,15 @@ def list_conversations(scope: OrgScope = Depends(require_onboarded_scope)) -> di
 
 @router.post("/ask")
 def ask_question(body: AskBody, scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    """Handles ask question logic for the surrounding Stoa workflow.
+
+    Args:
+        body (AskBody): Input value used by this workflow step.
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "conversations:ask")
     check_rate_limit(scope.user_id, get_settings().rate_limit_per_minute, scope="ask")
     question = redact_pii(sanitize_user_content(body.question))
@@ -64,6 +93,15 @@ def ask_question(body: AskBody, scope: OrgScope = Depends(require_onboarded_scop
 
 @router.get("/{conversation_id}")
 def get_conversation(conversation_id: str, scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    """Handles get conversation logic for the surrounding Stoa workflow.
+
+    Args:
+        conversation_id (str): Input value used by this workflow step.
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "conversations:read")
     sb = get_supabase_admin()
     conv = (
@@ -92,6 +130,16 @@ async def conversation_events(
     last_id: str | None = None,
     scope: OrgScope = Depends(require_onboarded_scope),
 ) -> StreamingResponse:
+    """Asynchronously handles conversation events logic for the surrounding Stoa workflow.
+
+    Args:
+        conversation_id (str): Input value used by this workflow step.
+        last_id (str | None): Input value used by this workflow step.
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        StreamingResponse: Result produced for the caller.
+    """
     require_permission(scope, "conversations:read")
     sb = get_supabase_admin()
     conv = (
@@ -106,6 +154,11 @@ async def conversation_events(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Conversation not found")
 
     async def gen():
+        """Asynchronously handles gen logic for the surrounding Stoa workflow.
+
+        Returns:
+            Any: Result produced for the caller.
+        """
         async for msg_id, data in read_events_since("conversation", conversation_id, last_id):
             payload = json.dumps({"id": msg_id, **data})
             yield f"data: {payload}\n\n"

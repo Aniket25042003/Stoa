@@ -1,4 +1,10 @@
-"""Structured CSV import connector."""
+"""
+File: services/core/src/stoa_core/integrations/csv_structured.py
+Layer: Core Integration Connectors
+Purpose: Implements csv structured behavior for the core integration connectors.
+Dependencies: stoa_core
+"""
+
 
 from __future__ import annotations
 
@@ -106,16 +112,41 @@ FIELD_ALIASES: dict[str, list[str]] = {row["key"]: row["aliases"] for row in CSV
 
 
 def _normalize_header(header: str) -> str:
+    """Handles  normalize header logic for the surrounding Stoa workflow.
+
+    Args:
+        header (str): Input value used by this workflow step.
+
+    Returns:
+        str: Result produced for the caller.
+    """
     normalized = header.strip().lower()
     normalized = re.sub(r"[^a-z0-9]+", "_", normalized)
     return normalized.strip("_")
 
 
 def _header_tokens(norm_header: str) -> list[str]:
+    """Handles  header tokens logic for the surrounding Stoa workflow.
+
+    Args:
+        norm_header (str): Input value used by this workflow step.
+
+    Returns:
+        list[str]: Result produced for the caller.
+    """
     return [token for token in norm_header.split("_") if token]
 
 
 def _match_score(norm_header: str, alias: str) -> int:
+    """Handles  match score logic for the surrounding Stoa workflow.
+
+    Args:
+        norm_header (str): Input value used by this workflow step.
+        alias (str): Input value used by this workflow step.
+
+    Returns:
+        int: Result produced for the caller.
+    """
     norm_alias = _normalize_header(alias)
     if not norm_header or not norm_alias:
         return 0
@@ -132,6 +163,14 @@ def _match_score(norm_header: str, alias: str) -> int:
 
 
 def detect_columns(headers: list[str]) -> dict[str, str | None]:
+    """Handles detect columns logic for the surrounding Stoa workflow.
+
+    Args:
+        headers (list[str]): Input value used by this workflow step.
+
+    Returns:
+        dict[str, str | None]: Result produced for the caller.
+    """
     mapping: dict[str, str | None] = {field: None for field in FIELD_ALIASES}
     if not headers:
         return mapping
@@ -167,6 +206,15 @@ def parse_csv_content(
     content: str,
     column_mapping: dict[str, str | None] | None = None,
 ) -> tuple[list[str], dict[str, str | None]]:
+    """Handles parse csv content logic for the surrounding Stoa workflow.
+
+    Args:
+        content (str): Input value used by this workflow step.
+        column_mapping (dict[str, str | None] | None): Input value used by this workflow step.
+
+    Returns:
+        tuple[list[str], dict[str, str | None]]: Result produced for the caller.
+    """
     reader = csv.DictReader(io.StringIO(content))
     headers = [h for h in (reader.fieldnames or []) if h and h.strip()]
     mapping = column_mapping or detect_columns(headers)
@@ -175,10 +223,20 @@ def parse_csv_content(
 
 @register_connector
 class CsvStructuredConnector(BaseConnector):
+    """Manage CsvStructuredConnector behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     provider = "csv_structured"
 
     @classmethod
     def provider_info(cls) -> ProviderInfo:
+        """Handles provider info logic for the surrounding Stoa workflow.
+
+        Returns:
+            ProviderInfo: Result produced for the caller.
+        """
         return ProviderInfo(
             id="csv_structured",
             name="Structured CSV",
@@ -198,6 +256,18 @@ class CsvStructuredConnector(BaseConnector):
         cursor: dict[str, Any],
         full_backfill: bool = False,
     ) -> SyncResult:
+        """Handles sync logic for the surrounding Stoa workflow.
+
+        Args:
+            org_id (str): Input value used by this workflow step.
+            connection (dict[str, Any]): Input value used by this workflow step.
+            credentials (dict[str, Any]): Input value used by this workflow step.
+            cursor (dict[str, Any]): Input value used by this workflow step.
+            full_backfill (bool): Input value used by this workflow step.
+
+        Returns:
+            SyncResult: Result produced for the caller.
+        """
         result = SyncResult()
         csv_content = credentials.get("csv_content") or ""
         mapping = credentials.get("column_mapping") or {}
@@ -299,6 +369,15 @@ class CsvStructuredConnector(BaseConnector):
 
 
 def _cell(row: dict[str, str], column: str | None) -> str | None:
+    """Handles  cell logic for the surrounding Stoa workflow.
+
+    Args:
+        row (dict[str, str]): Input value used by this workflow step.
+        column (str | None): Input value used by this workflow step.
+
+    Returns:
+        str | None: Result produced for the caller.
+    """
     if not column:
         return None
     val = row.get(column)
@@ -309,6 +388,14 @@ def _cell(row: dict[str, str], column: str | None) -> str | None:
 
 
 def _parse_float(value: str | None) -> float | None:
+    """Handles  parse float logic for the surrounding Stoa workflow.
+
+    Args:
+        value (str | None): Input value used by this workflow step.
+
+    Returns:
+        float | None: Result produced for the caller.
+    """
     if not value:
         return None
     try:
@@ -318,6 +405,14 @@ def _parse_float(value: str | None) -> float | None:
 
 
 def _parse_won(value: str | None) -> bool | None:
+    """Handles  parse won logic for the surrounding Stoa workflow.
+
+    Args:
+        value (str | None): Input value used by this workflow step.
+
+    Returns:
+        bool | None: Result produced for the caller.
+    """
     if not value:
         return None
     lower = value.lower()

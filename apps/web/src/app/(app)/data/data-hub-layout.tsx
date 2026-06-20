@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/app/(app)/data/data-hub-layout.tsx
+ * @layer Frontend Product UI
+ * @description Implements data hub layout behavior for the frontend product ui.
+ * @dependencies React
+ */
 "use client";
 
 import { SectionSubnav } from "@/components/app-shell/SectionSubnav";
@@ -7,6 +13,10 @@ import { DATA_SUBNAV } from "@/lib/app-navigation";
 import { DataHubProvider, useDataHub } from "./data-hub-context";
 import { DataHubToast } from "./data-hub-toast";
 
+/**
+ * Handles data hub header behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 function DataHubHeader() {
   const { completeness } = useDataHub();
   return (
@@ -26,6 +36,10 @@ function DataHubHeader() {
   );
 }
 
+/**
+ * Handles data subnav behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 function DataSubnav() {
   const { permissions, loaded } = useAppPermissions();
   return (
@@ -38,11 +52,21 @@ function DataSubnav() {
   );
 }
 
+/**
+ * Handles data hub toast banner behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 function DataHubToastBanner() {
   const { toast } = useDataHub();
   return <DataHubToast message={toast?.message ?? null} variant={toast?.variant} />;
 }
 
+/**
+ * Handles data hub layout behavior for this part of the Stoa application.
+ *
+ * @param children - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function DataHubLayout({ children }: { children: React.ReactNode }) {
   return (
     <DataHubProvider>

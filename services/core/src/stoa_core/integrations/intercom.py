@@ -1,4 +1,10 @@
-"""Intercom conversations connector."""
+"""
+File: services/core/src/stoa_core/integrations/intercom.py
+Layer: Core Integration Connectors
+Purpose: Implements intercom behavior for the core integration connectors.
+Dependencies: Next.js, stoa_core
+"""
+
 
 from __future__ import annotations
 
@@ -20,10 +26,20 @@ BASE_URL = "https://api.intercom.io"
 
 @register_connector
 class IntercomConnector(BaseConnector):
+    """Manage IntercomConnector behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     provider = "intercom"
 
     @classmethod
     def provider_info(cls) -> ProviderInfo:
+        """Handles provider info logic for the surrounding Stoa workflow.
+
+        Returns:
+            ProviderInfo: Result produced for the caller.
+        """
         return ProviderInfo(
             id="intercom",
             name="Intercom",
@@ -33,6 +49,14 @@ class IntercomConnector(BaseConnector):
 
     @classmethod
     def connect_with_credentials(cls, credentials: dict[str, Any]) -> dict[str, Any]:
+        """Handles connect with credentials logic for the surrounding Stoa workflow.
+
+        Args:
+            credentials (dict[str, Any]): Input value used by this workflow step.
+
+        Returns:
+            dict[str, Any]: Result produced for the caller.
+        """
         token = credentials.get("access_token", "").strip()
         if not token:
             raise ValueError("Intercom access token is required")
@@ -57,6 +81,18 @@ class IntercomConnector(BaseConnector):
         cursor: dict[str, Any],
         full_backfill: bool = False,
     ) -> SyncResult:
+        """Handles sync logic for the surrounding Stoa workflow.
+
+        Args:
+            org_id (str): Input value used by this workflow step.
+            connection (dict[str, Any]): Input value used by this workflow step.
+            credentials (dict[str, Any]): Input value used by this workflow step.
+            cursor (dict[str, Any]): Input value used by this workflow step.
+            full_backfill (bool): Input value used by this workflow step.
+
+        Returns:
+            SyncResult: Result produced for the caller.
+        """
         result = SyncResult(cursor=dict(cursor))
         metadata = connection.get("provider_metadata") or {}
         base_url = metadata.get("base_url", BASE_URL)
@@ -118,6 +154,14 @@ class IntercomConnector(BaseConnector):
 
     @classmethod
     def _sync_contacts(cls, org_id: str, base_url: str, headers: dict[str, str], result: SyncResult) -> None:
+        """Handles  sync contacts logic for the surrounding Stoa workflow.
+
+        Args:
+            org_id (str): Input value used by this workflow step.
+            base_url (str): Input value used by this workflow step.
+            headers (dict[str, str]): Input value used by this workflow step.
+            result (SyncResult): Input value used by this workflow step.
+        """
         with httpx.Client(timeout=60) as client:
             res = client.get(f"{base_url}/contacts", headers=headers, params={"per_page": 50})
             if res.status_code >= 400:
@@ -139,6 +183,14 @@ class IntercomConnector(BaseConnector):
 
     @classmethod
     def _conversation_text(cls, conv: dict[str, Any]) -> str:
+        """Handles  conversation text logic for the surrounding Stoa workflow.
+
+        Args:
+            conv (dict[str, Any]): Input value used by this workflow step.
+
+        Returns:
+            str: Result produced for the caller.
+        """
         parts = [conv.get("source", {}).get("body") or ""]
         for part in conv.get("conversation_parts", {}).get("conversation_parts") or []:
             parts.append(part.get("body") or "")
@@ -146,6 +198,14 @@ class IntercomConnector(BaseConnector):
 
 
 def _ts(value: Any) -> str | None:
+    """Handles  ts logic for the surrounding Stoa workflow.
+
+    Args:
+        value (Any): Input value used by this workflow step.
+
+    Returns:
+        str | None: Result produced for the caller.
+    """
     if value is None:
         return None
     return str(value)

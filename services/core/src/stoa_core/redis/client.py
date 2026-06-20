@@ -1,4 +1,10 @@
-"""Sync Redis client for workers and event publishing."""
+"""
+File: services/core/src/stoa_core/redis/client.py
+Layer: Core Redis Infrastructure
+Purpose: Implements client behavior for the core redis infrastructure.
+Dependencies: Redis, stoa_core
+"""
+
 
 from __future__ import annotations
 
@@ -18,11 +24,25 @@ STREAM_TTL_SEC = 72 * 3600
 
 
 def stream_key(scope: str, entity_id: str) -> str:
+    """Handles stream key logic for the surrounding Stoa workflow.
+
+    Args:
+        scope (str): Input value used by this workflow step.
+        entity_id (str): Input value used by this workflow step.
+
+    Returns:
+        str: Result produced for the caller.
+    """
     return f"stoa:{scope}:{entity_id}:events"
 
 
 @lru_cache
 def get_redis_sync() -> redis.Redis:
+    """Handles get redis sync logic for the surrounding Stoa workflow.
+
+    Returns:
+        redis.Redis: Result produced for the caller.
+    """
     settings = get_settings()
     validate_redis_security(settings)
     ssl_kwargs = redis_ssl_kwargs(settings) or {}
@@ -30,6 +50,16 @@ def get_redis_sync() -> redis.Redis:
 
 
 def publish_event(scope: str, entity_id: str, payload: dict[str, Any]) -> str:
+    """Handles publish event logic for the surrounding Stoa workflow.
+
+    Args:
+        scope (str): Input value used by this workflow step.
+        entity_id (str): Input value used by this workflow step.
+        payload (dict[str, Any]): Input value used by this workflow step.
+
+    Returns:
+        str: Result produced for the caller.
+    """
     r = get_redis_sync()
     key = stream_key(scope, entity_id)
     safe_payload = redact_json({"ts": time.time(), **payload})

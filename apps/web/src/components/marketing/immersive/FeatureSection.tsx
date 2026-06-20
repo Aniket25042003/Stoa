@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/components/marketing/immersive/FeatureSection.tsx
+ * @layer Frontend Marketing UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies Next.js, React, Framer Motion
+ */
 "use client";
 
 import Link from "next/link";
@@ -15,6 +21,10 @@ type FeatureSectionProps = {
   className?: string;
 };
 
+/**
+ * Handles feature section behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function FeatureSection({ section, isActive, className }: FeatureSectionProps) {
   const isHero = section.kind === "hero";
   const isCta = section.kind === "cta";

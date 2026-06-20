@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/components/product/ProductButton.tsx
+ * @layer Frontend Design System
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies React
+ */
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
@@ -14,6 +20,12 @@ const variants = {
   ghost: "text-mkt-muted hover:bg-mkt-accent/[0.06] hover:text-mkt-ink",
 };
 
+/**
+ * Handles product button behavior for this part of the Stoa application.
+ *
+ * @param variant - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function ProductButton({
   variant = "primary",
   className,
