@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/components/marketing/immersive/MarketingCanvas.tsx
+ * @layer Frontend Marketing UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies React, Three.js
+ */
 "use client";
 
 import { Suspense } from "react";
@@ -12,6 +18,12 @@ type MarketingCanvasProps = {
   className?: string;
 };
 
+/**
+ * Handles marketing canvas behavior for this part of the Stoa application.
+ *
+ * @param variant - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function MarketingCanvas({ variant = "hero", className }: MarketingCanvasProps) {
   const { shouldRenderWebGL, dpr } = useMarketingWebGL();
   const mediaReady = useDeferredMarketingMedia();

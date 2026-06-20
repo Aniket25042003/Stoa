@@ -1,9 +1,19 @@
+/**
+ * @file apps/web/src/components/marketing/MarketingCtaBand.tsx
+ * @layer Frontend Marketing UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies Next.js, React
+ */
 "use client";
 
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/cn";
 
+/**
+ * Handles marketing cta band behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function MarketingCtaBand({
   eyebrow,
   title,

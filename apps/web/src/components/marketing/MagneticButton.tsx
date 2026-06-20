@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/components/marketing/MagneticButton.tsx
+ * @layer Frontend Marketing UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies React, Framer Motion
+ */
 "use client";
 
 import { motion, useMotionTemplate, useMotionValue, useSpring, useReducedMotion } from "framer-motion";
@@ -6,6 +12,10 @@ import { cn } from "@/lib/cn";
 
 type MotionButtonProps = ComponentProps<typeof motion.button>;
 
+/**
+ * Handles magnetic button behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function MagneticButton({
   children,
   className,

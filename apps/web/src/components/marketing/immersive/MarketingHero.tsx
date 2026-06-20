@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/components/marketing/immersive/MarketingHero.tsx
+ * @layer Frontend Marketing UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies Next.js, React, Framer Motion
+ */
 "use client";
 
 import Link from "next/link";
@@ -14,6 +20,10 @@ const PILLARS = [
   { label: "Competitive intel", accent: "indigo" as const },
 ];
 
+/**
+ * Handles marketing hero behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function MarketingHero() {
   return (
     <section className="marketing-snap-section relative min-h-[calc(100vh-65px)] overflow-hidden">

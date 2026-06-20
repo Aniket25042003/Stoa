@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/components/marketing/immersive/ProductOrbScene.tsx
+ * @layer Frontend Marketing UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies React, Three.js
+ */
 "use client";
 
 import { useMemo, useRef, useLayoutEffect } from "react";
@@ -23,6 +29,13 @@ type ProductOrbSceneProps = {
   activeSection: number;
 };
 
+/**
+ * Handles configure texture behavior for this part of the Stoa application.
+ *
+ * @param tex - Input value used to render UI or execute the workflow.
+ * @param maxAnisotropy - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 function configureTexture(tex: THREE.Texture, maxAnisotropy: number) {
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.anisotropy = maxAnisotropy;
@@ -34,6 +47,10 @@ function configureTexture(tex: THREE.Texture, maxAnisotropy: number) {
   tex.flipY = true;
 }
 
+/**
+ * Handles product orb scene behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function ProductOrbScene({ scrollProgress, activeSection }: ProductOrbSceneProps) {
   const groupRef = useRef<THREE.Group>(null);
   const rotationRef = useRef(0);

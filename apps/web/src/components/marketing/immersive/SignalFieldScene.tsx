@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/components/marketing/immersive/SignalFieldScene.tsx
+ * @layer Frontend Marketing UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies React, Three.js
+ */
 "use client";
 
 import { useMemo, useRef } from "react";
@@ -34,6 +40,12 @@ const EDGES: [number, number][] = [
   [2, 4],
 ];
 
+/**
+ * Handles signal field scene behavior for this part of the Stoa application.
+ *
+ * @param variant - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function SignalFieldScene({ variant = "hero" }: SignalFieldProps) {
   const groupRef = useRef<THREE.Group>(null);
   const ringsRef = useRef<THREE.Group>(null);

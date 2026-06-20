@@ -1,9 +1,19 @@
+/**
+ * @file apps/web/src/components/marketing/ActivityTickerTeaser.tsx
+ * @layer Frontend Marketing UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies React, Framer Motion
+ */
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { ACTIVITY_MESSAGES } from "@/lib/activity-messages";
 
+/**
+ * Handles activity ticker teaser behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function ActivityTickerTeaser() {
   const messages = useMemo(() => Object.values(ACTIVITY_MESSAGES).flat(), []);
   const [i, setI] = useState(0);

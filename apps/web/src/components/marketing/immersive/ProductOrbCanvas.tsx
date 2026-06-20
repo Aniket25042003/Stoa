@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/components/marketing/immersive/ProductOrbCanvas.tsx
+ * @layer Frontend Marketing UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies React, Three.js
+ */
 "use client";
 
 import { Suspense } from "react";
@@ -14,6 +20,10 @@ type ProductOrbCanvasProps = {
   className?: string;
 };
 
+/**
+ * Handles product orb canvas behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function ProductOrbCanvas({
   scrollProgress,
   activeSection,

@@ -1,7 +1,17 @@
+/**
+ * @file apps/web/src/components/marketing/immersive/ScrollProgress.tsx
+ * @layer Frontend Marketing UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies React
+ */
 "use client";
 
 import { useEffect, useState } from "react";
 
+/**
+ * Handles scroll progress behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function ScrollProgress() {
   const [scrollProgress, setScrollProgress] = useState(0);
 

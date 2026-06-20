@@ -1,8 +1,20 @@
+/**
+ * @file apps/web/src/components/marketing/GradientOrb.tsx
+ * @layer Frontend Marketing UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies React, Framer Motion
+ */
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/cn";
 
+/**
+ * Handles gradient orb behavior for this part of the Stoa application.
+ *
+ * @param className - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function GradientOrb({ className }: { className?: string }) {
   const reduce = useReducedMotion();
   return (

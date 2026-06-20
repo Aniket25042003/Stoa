@@ -1,5 +1,15 @@
+/**
+ * @file apps/web/src/components/marketing/Marquee.tsx
+ * @layer Frontend Marketing UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies React
+ */
 import { cn } from "@/lib/cn";
 
+/**
+ * Handles marquee behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function Marquee({ items, className }: { items: string[]; className?: string }) {
   const doubled = [...items, ...items];
   return (

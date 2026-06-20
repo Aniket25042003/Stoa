@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/components/marketing/FaqItem.tsx
+ * @layer Frontend Marketing UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies React, Framer Motion
+ */
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";

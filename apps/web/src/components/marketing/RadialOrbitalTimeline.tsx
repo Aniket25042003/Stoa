@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/components/marketing/RadialOrbitalTimeline.tsx
+ * @layer Frontend Marketing UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies React
+ */
 "use client";
 
 import { useState } from "react";
@@ -29,6 +35,10 @@ strategy:
     integrity: 1.00
     latency: "180ms"`;
 
+/**
+ * Handles radial orbital timeline behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function RadialOrbitalTimeline() {
   const [activeInput, setActiveInput] = useState<string>("brief");
 

@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/components/marketing/immersive/CapabilityPanel.tsx
+ * @layer Frontend Marketing UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies React, Framer Motion
+ */
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -41,6 +47,10 @@ const CAPABILITIES: Capability[] = [
   },
 ];
 
+/**
+ * Handles capability panel behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function CapabilityPanel() {
   const [activeWordIdx, setActiveWordIdx] = useState(0);
 
@@ -82,6 +92,10 @@ export function CapabilityPanel() {
   );
 }
 
+/**
+ * Handles capability card behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 function CapabilityCard({ capability, index }: { capability: Capability; index: number }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
