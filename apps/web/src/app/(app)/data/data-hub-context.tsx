@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/app/(app)/data/data-hub-context.tsx
+ * @layer Frontend Product UI
+ * @description Implements data hub context behavior for the frontend product ui.
+ * @dependencies React, BFF apiFetch
+ */
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -88,6 +94,12 @@ type DataHubContextValue = {
 
 const DataHubContext = createContext<DataHubContextValue | null>(null);
 
+/**
+ * Handles data hub provider behavior for this part of the Stoa application.
+ *
+ * @param children - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function DataHubProvider({ children }: { children: ReactNode }) {
   const [org, setOrg] = useState<Org | null>(null);
   const [completeness, setCompleteness] = useState<Completeness | null>(null);
@@ -324,6 +336,10 @@ export function DataHubProvider({ children }: { children: ReactNode }) {
   return <DataHubContext.Provider value={value}>{children}</DataHubContext.Provider>;
 }
 
+/**
+ * Handles use data hub behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function useDataHub() {
   const ctx = useContext(DataHubContext);
   if (!ctx) throw new Error("useDataHub must be used within DataHubProvider");

@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/app/(app)/data/sources/page.tsx
+ * @layer Frontend Product UI
+ * @description Defines the route entry point and composes the page-level UI for this product surface.
+ * @dependencies React
+ */
 "use client";
 
 import {
@@ -12,6 +18,10 @@ import { useDataHub } from "../data-hub-context";
 
 const labelClass = "font-dm-sans text-[9px] font-bold uppercase tracking-[0.18em] text-mkt-muted";
 
+/**
+ * Handles data sources page behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export default function DataSourcesPage() {
   const { documents, sources, refresh, showToast } = useDataHub();
   const {

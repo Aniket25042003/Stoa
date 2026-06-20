@@ -1,9 +1,19 @@
+/**
+ * @file apps/web/src/app/(app)/data/data-hub-toast.tsx
+ * @layer Frontend Product UI
+ * @description Implements data hub toast behavior for the frontend product ui.
+ * @dependencies React
+ */
 "use client";
 
 import { cn } from "@/lib/cn";
 
 export type DataHubToastVariant = "success" | "error";
 
+/**
+ * Handles data hub toast behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function DataHubToast({
   message,
   variant = "success",

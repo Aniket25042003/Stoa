@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/app/(app)/settings/roles/roles-workspace.tsx
+ * @layer Frontend Product UI
+ * @description Implements roles workspace behavior for the frontend product ui.
+ * @dependencies React, BFF apiFetch
+ */
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -27,6 +33,10 @@ type CatalogGroup = {
 
 const labelClass = "font-dm-sans text-[9px] font-bold uppercase tracking-[0.18em] text-mkt-muted";
 
+/**
+ * Handles roles workspace behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function RolesWorkspace() {
   const [roles, setRoles] = useState<Role[]>([]);
   const [catalog, setCatalog] = useState<CatalogGroup[]>([]);

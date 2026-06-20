@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/app/(app)/settings/team/team-workspace.tsx
+ * @layer Frontend Product UI
+ * @description Implements team workspace behavior for the frontend product ui.
+ * @dependencies Supabase, React, BFF apiFetch
+ */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -39,6 +45,10 @@ type Invite = {
 
 const labelClass = "font-dm-sans text-[9px] font-bold uppercase tracking-[0.18em] text-mkt-muted";
 
+/**
+ * Handles team workspace behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function TeamWorkspace() {
   const [members, setMembers] = useState<Member[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);

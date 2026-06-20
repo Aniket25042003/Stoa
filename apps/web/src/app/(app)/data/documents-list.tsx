@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/app/(app)/data/documents-list.tsx
+ * @layer Frontend Product UI
+ * @description Implements documents list behavior for the frontend product ui.
+ * @dependencies React, BFF apiFetch
+ */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -34,10 +40,22 @@ type DocumentDetail = Document & {
   updated_at?: string | null;
 };
 
+/**
+ * Handles format doc type behavior for this part of the Stoa application.
+ *
+ * @param docType - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 function formatDocType(docType: string) {
   return DOC_TYPE_LABELS[docType] ?? docType.replace(/_/g, " ");
 }
 
+/**
+ * Handles format date behavior for this part of the Stoa application.
+ *
+ * @param value - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 function formatDate(value?: string | null) {
   if (!value) return "—";
   return new Date(value).toLocaleString();
