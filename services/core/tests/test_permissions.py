@@ -1,3 +1,10 @@
+"""
+File: services/core/tests/test_permissions.py
+Layer: Test Suite
+Purpose: Covers regression and behavior checks for test permissions in the test suite.
+Dependencies: stoa_core
+"""
+
 from stoa_core.security.permissions import (
     builtin_role_permissions,
     catalog_for_ui,

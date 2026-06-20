@@ -1,3 +1,10 @@
+"""
+File: services/core/tests/test_pii.py
+Layer: Test Suite
+Purpose: Covers regression and behavior checks for test pii in the test suite.
+Dependencies: stoa_core
+"""
+
 from stoa_core.security.pii import redact_json, redact_pii, redact_pii_for_logs
 
 

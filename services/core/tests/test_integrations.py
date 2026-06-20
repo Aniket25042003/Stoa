@@ -1,4 +1,10 @@
-"""Integration crypto and CSV detection tests."""
+"""
+File: services/core/tests/test_integrations.py
+Layer: Test Suite
+Purpose: Covers regression and behavior checks for test integrations in the test suite.
+Dependencies: stoa_core
+"""
+
 
 from __future__ import annotations
 

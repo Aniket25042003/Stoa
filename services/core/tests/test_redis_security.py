@@ -1,3 +1,10 @@
+"""
+File: services/core/tests/test_redis_security.py
+Layer: Test Suite
+Purpose: Covers regression and behavior checks for test redis security in the test suite.
+Dependencies: Celery, Redis, stoa_core
+"""
+
 import pytest
 
 from stoa_core.config import Settings

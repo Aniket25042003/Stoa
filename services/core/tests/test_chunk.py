@@ -1,3 +1,10 @@
+"""
+File: services/core/tests/test_chunk.py
+Layer: Test Suite
+Purpose: Covers regression and behavior checks for test chunk in the test suite.
+Dependencies: stoa_core
+"""
+
 from stoa_core.ingestion.chunk import chunk_text, chunk_text_strings, estimate_tokens
 
 

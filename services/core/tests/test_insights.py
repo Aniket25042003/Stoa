@@ -1,3 +1,10 @@
+"""
+File: services/core/tests/test_insights.py
+Layer: Test Suite
+Purpose: Covers regression and behavior checks for test insights in the test suite.
+Dependencies: stoa_core
+"""
+
 from unittest.mock import patch
 
 from stoa_core.insights.common import COMMON_QUESTIONS, build_executive_summary, precompute_answers
