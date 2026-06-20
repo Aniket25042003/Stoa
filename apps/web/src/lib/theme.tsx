@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/lib/theme.tsx
+ * @layer Frontend Shared Utilities
+ * @description Provides shared client/server utility logic used across the Next.js app.
+ * @dependencies React
+ */
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
@@ -16,6 +22,13 @@ const STORAGE_KEY = "gtm-theme";
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
+/**
+ * Handles resolve theme behavior for this part of the Stoa application.
+ *
+ * @param preference - Input value used to render UI or execute the workflow.
+ * @param systemPrefersDark - Input value used to render UI or execute the workflow.
+ * @returns Result consumed by the caller or rendered by React.
+ */
 function resolveTheme(
   preference: ThemePreference,
   systemPrefersDark: boolean
@@ -26,6 +39,12 @@ function resolveTheme(
   return systemPrefersDark ? "dark" : "light";
 }
 
+/**
+ * Handles theme provider behavior for this part of the Stoa application.
+ *
+ * @param children - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [preference, setPreferenceState] = useState<ThemePreference>(null);
   const [systemPrefersDark, setSystemPrefersDark] = useState(false);
@@ -81,6 +100,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
+/**
+ * Handles use theme behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function useTheme() {
   const ctx = useContext(ThemeContext);
   if (!ctx) {

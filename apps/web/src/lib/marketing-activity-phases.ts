@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/lib/marketing-activity-phases.ts
+ * @layer Frontend Shared Utilities
+ * @description Provides shared client/server utility logic used across the Next.js app.
+ * @dependencies standard library / local modules
+ */
 export type MarketingActivityStep = "idle" | "route" | "create" | "review" | "done" | "failed";
 
 export const MARKETING_ACTIVITY_STEPS: { id: MarketingActivityStep; label: string }[] = [
@@ -25,6 +31,13 @@ const CREATE_AGENTS = new Set([
   "video_generator",
 ]);
 
+/**
+ * Handles resolve marketing step behavior for this part of the Stoa application.
+ *
+ * @param busy - Input value used to render UI or execute the workflow.
+ * @param events - Input value used to render UI or execute the workflow.
+ * @returns Result consumed by the caller or rendered by React.
+ */
 export function resolveMarketingStep(busy: boolean, events: MarketingEventPayload[]): MarketingActivityStep {
   if (!busy && events.length === 0) return "idle";
   const last = events.at(-1);
@@ -40,6 +53,12 @@ export function resolveMarketingStep(busy: boolean, events: MarketingEventPayloa
   return "idle";
 }
 
+/**
+ * Handles marketing step index behavior for this part of the Stoa application.
+ *
+ * @param step - Input value used to render UI or execute the workflow.
+ * @returns Result consumed by the caller or rendered by React.
+ */
 export function marketingStepIndex(step: MarketingActivityStep): number {
   if (step === "route") return 0;
   if (step === "create") return 1;
@@ -58,6 +77,12 @@ export const MARKETING_STATUS_MESSAGES: Record<MarketingActivityStep, string> = 
   failed: "The update failed",
 };
 
+/**
+ * Handles format marketing dev log behavior for this part of the Stoa application.
+ *
+ * @param data - Input value used to render UI or execute the workflow.
+ * @returns Result consumed by the caller or rendered by React.
+ */
 export function formatMarketingDevLog(data: MarketingEventPayload): string {
   const m = typeof data.message === "string" ? data.message : JSON.stringify(data);
   return `Activity: ${m}`;

@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/lib/proxy-headers.ts
+ * @layer Frontend Shared Utilities
+ * @description Provides shared client/server utility logic used across the Next.js app.
+ * @dependencies standard library / local modules
+ */
 export function clientIpFromRequest(request: Request): string {
   const forwarded = request.headers.get("x-forwarded-for");
   if (forwarded) {
@@ -9,6 +15,12 @@ export function clientIpFromRequest(request: Request): string {
   return "unknown";
 }
 
+/**
+ * Handles trusted proxy headers behavior for this part of the Stoa application.
+ *
+ * @param request - Input value used to render UI or execute the workflow.
+ * @returns Result consumed by the caller or rendered by React.
+ */
 export function trustedProxyHeaders(request: Request): Record<string, string> {
   const headers: Record<string, string> = {
     "X-Stoa-Client-IP": clientIpFromRequest(request),

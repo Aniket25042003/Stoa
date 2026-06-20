@@ -1,4 +1,10 @@
 /**
+ * @file apps/web/src/lib/public-site-gate.ts
+ * @layer Frontend Shared Utilities
+ * @description Provides shared client/server utility logic used across the Next.js app.
+ * @dependencies standard library / local modules
+ */
+/**
  * Pre-launch public site: production exposes only marketing + waitlist until the app ships.
  *
  * - Default: gated on Vercel production (and non-loopback prod builds).
@@ -19,10 +25,23 @@ export const PRELAUNCH_PUBLIC_PATHS = new Set([
 
 const PRELAUNCH_PUBLIC_API = new Set(["/api/waitlist"]);
 
+/**
+ * Handles is prelaunch public path behavior for this part of the Stoa application.
+ *
+ * @param pathname - Input value used to render UI or execute the workflow.
+ * @returns Result consumed by the caller or rendered by React.
+ */
 export function isPrelaunchPublicPath(pathname: string): boolean {
   return PRELAUNCH_PUBLIC_PATHS.has(pathname);
 }
 
+/**
+ * Handles is prelaunch public api behavior for this part of the Stoa application.
+ *
+ * @param pathname - Input value used to render UI or execute the workflow.
+ * @param method - Input value used to render UI or execute the workflow.
+ * @returns Result consumed by the caller or rendered by React.
+ */
 export function isPrelaunchPublicApi(pathname: string, method: string): boolean {
   if (!PRELAUNCH_PUBLIC_API.has(pathname)) return false;
   const verb = method.toUpperCase();

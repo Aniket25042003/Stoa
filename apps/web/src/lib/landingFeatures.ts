@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/lib/landingFeatures.ts
+ * @layer Frontend Shared Utilities
+ * @description Provides shared client/server utility logic used across the Next.js app.
+ * @dependencies standard library / local modules
+ */
 import { BRAND_SUBHEAD, BRAND_TAGLINE } from "@/lib/brand";
 
 export type LandingSectionKind = "hero" | "feature" | "cta";

@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/lib/rate-limit-gate.ts
+ * @layer Frontend Shared Utilities
+ * @description Provides shared client/server utility logic used across the Next.js app.
+ * @dependencies standard library / local modules
+ */
 import { getServerApiBase, proxyToApi } from "@/lib/server-api";
 
 /** Enforce API-side public rate limits before sensitive auth actions. */

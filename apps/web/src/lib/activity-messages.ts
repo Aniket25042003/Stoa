@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/lib/activity-messages.ts
+ * @layer Frontend Shared Utilities
+ * @description Provides shared client/server utility logic used across the Next.js app.
+ * @dependencies standard library / local modules
+ */
 export const ACTIVITY_MESSAGES = {
   planning: ["Shaping your strategy", "Mapping the approach", "Setting the stage"],
   queued: ["Preparing workspace", "Initializing progress", "Aligning strategy focus"],

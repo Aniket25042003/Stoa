@@ -1,4 +1,10 @@
 /**
+ * @file apps/web/src/lib/sse.ts
+ * @layer Frontend Shared Utilities
+ * @description Provides shared client/server utility logic used across the Next.js app.
+ * @dependencies standard library / local modules
+ */
+/**
  * Read text/event-stream. Browser calls go through the authenticated BFF proxy.
  */
 export async function consumeSse(

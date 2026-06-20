@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/lib/app-navigation.ts
+ * @layer Frontend Shared Utilities
+ * @description Provides shared client/server utility logic used across the Next.js app.
+ * @dependencies React
+ */
 import type { LucideIcon } from "lucide-react";
 import {
   Building2,
@@ -97,6 +103,10 @@ export const SETTINGS_SUBNAV: NavItem[] = [
   { href: "/settings/roles", label: "Roles & permissions", perm: "roles:manage", icon: Shield },
 ];
 
+/**
+ * Handles flatten nav items behavior for this part of the Stoa application.
+ * @returns Result consumed by the caller or rendered by React.
+ */
 export function flattenNavItems(): NavItem[] {
   const items: NavItem[] = [];
   for (const entry of APP_NAVIGATION) {
@@ -114,6 +124,12 @@ export function flattenNavItems(): NavItem[] {
   return items;
 }
 
+/**
+ * Handles group id for path behavior for this part of the Stoa application.
+ *
+ * @param pathname - Input value used to render UI or execute the workflow.
+ * @returns Result consumed by the caller or rendered by React.
+ */
 export function groupIdForPath(pathname: string): string | null {
   for (const entry of APP_NAVIGATION) {
     if (entry.type !== "group") continue;
@@ -124,6 +140,13 @@ export function groupIdForPath(pathname: string): string | null {
   return null;
 }
 
+/**
+ * Handles is nav item active behavior for this part of the Stoa application.
+ *
+ * @param pathname - Input value used to render UI or execute the workflow.
+ * @param href - Input value used to render UI or execute the workflow.
+ * @returns Result consumed by the caller or rendered by React.
+ */
 export function isNavItemActive(pathname: string, href: string): boolean {
   if (pathname === href) return true;
   if (href === "/data/profile" && pathname === "/data") return true;
