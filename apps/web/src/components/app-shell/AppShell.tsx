@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/components/app-shell/AppShell.tsx
+ * @layer Frontend Product UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies Next.js, React
+ */
 "use client";
 
 import Link from "next/link";
@@ -7,8 +13,12 @@ import { AppSidebar } from "./AppSidebar";
 import { AppTopBar } from "./AppTopBar";
 import { useAppPermissions } from "./useAppPermissions";
 import { ProductShellFrame } from "@/components/product";
-import { BRAND_LOGO_LETTER, BRAND_NAME } from "@/lib/brand";
+import { BrandLogo } from "@/components/product/BrandLogo";
 
+/**
+ * Handles app shell behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function AppShell({ email, children }: { email: string; children: ReactNode }) {
   const { permissions, loaded } = useAppPermissions();
 
@@ -25,14 +35,9 @@ export function AppShell({ email, children }: { email: string; children: ReactNo
         <div className="hidden lg:flex lg:w-60 lg:shrink-0 lg:flex-col">
           <Link
             href="/dashboard"
-            className="flex h-14 shrink-0 items-center gap-3 border-b border-r border-mkt-ink/[0.06] px-4"
+            className="flex h-14 shrink-0 items-center border-b border-r border-mkt-ink/[0.06] px-4"
           >
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm border border-mkt-accent/35 bg-mkt-accent/[0.08] font-mono text-sm font-black text-mkt-accent">
-              {BRAND_LOGO_LETTER}
-            </span>
-            <span className="truncate font-syne text-sm font-extrabold uppercase tracking-[0.1em] text-mkt-ink">
-              {BRAND_NAME}
-            </span>
+            <BrandLogo variant="icon" size="sm" />
           </Link>
           <AppSidebar permissions={permissions} permissionsLoaded={loaded} />
         </div>

@@ -1,8 +1,18 @@
+/**
+ * @file apps/web/src/components/product/AuthPageShell.tsx
+ * @layer Frontend Design System
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies Next.js, React
+ */
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { ProductShellFrame } from "@/components/product";
-import { BRAND_LOGO_LETTER, BRAND_NAME } from "@/lib/brand";
+import { BrandLogo } from "./BrandLogo";
+import { ProductShellFrame } from "./ProductAtmosphere";
 
+/**
+ * Handles auth page shell behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function AuthPageShell({
   children,
   lead,
@@ -22,19 +32,24 @@ export function AuthPageShell({
   );
 }
 
+/**
+ * Handles auth brand mark behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function AuthBrandMark() {
   return (
-    <Link href="/" className="inline-flex items-center gap-3">
-      <span className="flex h-10 w-10 items-center justify-center rounded-sm border border-mkt-accent/35 bg-mkt-accent/[0.08] font-mono text-sm font-black text-mkt-accent shadow-[0_4px_16px_rgba(79,70,229,0.12)]">
-        {BRAND_LOGO_LETTER}
-      </span>
-      <span className="font-syne text-xl font-extrabold uppercase tracking-[0.1em] text-mkt-ink">
-        {BRAND_NAME}
-      </span>
+    <Link href="/" className="inline-flex items-center">
+      <BrandLogo variant="logo" size="md" priority />
     </Link>
   );
 }
 
+/**
+ * Handles auth card behavior for this part of the Stoa application.
+ *
+ * @param children - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function AuthCard({ children }: { children: ReactNode }) {
   return (
     <div className="w-full max-w-md rounded-sm border border-mkt-ink/[0.06] bg-mkt-surface/90 p-7 shadow-[0_30px_70px_rgba(20,20,26,0.06)] backdrop-blur-xl md:p-8">
@@ -43,6 +58,10 @@ export function AuthCard({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * Handles auth card header behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function AuthCardHeader({ eyebrow, title, description }: { eyebrow: string; title: string; description: string }) {
   return (
     <div className="mb-8">

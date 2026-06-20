@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/components/app-shell/AppTopBar.tsx
+ * @layer Frontend Product UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies Next.js, React
+ */
 "use client";
 
 import Link from "next/link";
@@ -6,8 +12,14 @@ import { LogOut } from "lucide-react";
 import { OrgSwitcher } from "@/components/app-shell/OrgSwitcher";
 import { ProductButton } from "@/components/product";
 import { signOutClient } from "@/lib/auth-client";
-import { BRAND_LOGO_LETTER, BRAND_NAME } from "@/lib/brand";
+import { BrandLogo } from "@/components/product/BrandLogo";
 
+/**
+ * Handles app top bar behavior for this part of the Stoa application.
+ *
+ * @param email - Input value used to render UI or execute the workflow.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function AppTopBar({ email }: { email: string }) {
   const router = useRouter();
 
@@ -17,13 +29,8 @@ export function AppTopBar({ email }: { email: string }) {
 
   return (
     <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center justify-between gap-4 border-b border-mkt-ink/[0.06] bg-mkt-surface/85 px-4 backdrop-blur-xl md:px-6">
-      <Link href="/dashboard" className="inline-flex min-w-0 items-center gap-3 lg:hidden">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm border border-mkt-accent/35 bg-mkt-accent/[0.08] font-mono text-sm font-black text-mkt-accent">
-          {BRAND_LOGO_LETTER}
-        </span>
-        <span className="truncate font-syne text-sm font-extrabold uppercase tracking-[0.1em] text-mkt-ink">
-          {BRAND_NAME}
-        </span>
+      <Link href="/dashboard" className="inline-flex min-w-0 items-center lg:hidden">
+        <BrandLogo variant="icon" size="sm" />
       </Link>
 
       <div className="hidden lg:block" />

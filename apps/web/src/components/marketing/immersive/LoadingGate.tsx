@@ -1,9 +1,20 @@
+/**
+ * @file apps/web/src/components/marketing/immersive/LoadingGate.tsx
+ * @layer Frontend Marketing UI
+ * @description Implements a reusable React component used by the Stoa web experience.
+ * @dependencies React, Framer Motion
+ */
 "use client";
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { BrandLogo } from "@/components/product/BrandLogo";
 import { notifyMarketingMediaReady } from "@/lib/marketing-media";
 
+/**
+ * Handles loading gate behavior for this part of the Stoa application.
+ * @returns Rendered UI or completion signal for the workflow.
+ */
 export function LoadingGate() {
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
@@ -55,19 +66,11 @@ export function LoadingGate() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.5, ease: "easeOut" }}
-              className="h-20 w-20 mb-6 flex items-center justify-center"
+              className="mb-6 flex items-center justify-center"
             >
-              <img
-                src="/images/marketing/loading-brand-mark.webp"
-                alt="Stoa logo mark"
-                className="h-full w-full object-contain"
-              />
+              <BrandLogo variant="icon" size="lg" priority />
             </motion.div>
-            
-            <h2 className="font-syne text-sm font-bold tracking-[0.2em] text-[#14141A] mb-4 uppercase">
-              STOA
-            </h2>
-            
+
             <div className="w-full h-[2px] bg-[#14141A]/5 relative overflow-hidden rounded-full">
               <motion.div
                 className="absolute left-0 top-0 bottom-0 bg-[#4F46E5]"
