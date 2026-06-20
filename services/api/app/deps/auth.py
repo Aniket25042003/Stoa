@@ -1,3 +1,10 @@
+"""
+File: services/api/app/deps/auth.py
+Layer: FastAPI Dependencies
+Purpose: Implements auth behavior for the fastapi dependencies.
+Dependencies: FastAPI, Supabase
+"""
+
 from __future__ import annotations
 
 import time
@@ -16,10 +23,26 @@ _jwks_cache: dict[str, tuple[float, PyJWKClient]] = {}
 
 
 def _issuer(settings_url: str) -> str:
+    """Handles  issuer logic for the surrounding Stoa workflow.
+
+    Args:
+        settings_url (str): Input value used by this workflow step.
+
+    Returns:
+        str: Result produced for the caller.
+    """
     return f"{settings_url.rstrip('/')}/auth/v1"
 
 
 def _jwks_client(jwks_url: str) -> PyJWKClient:
+    """Handles  jwks client logic for the surrounding Stoa workflow.
+
+    Args:
+        jwks_url (str): Input value used by this workflow step.
+
+    Returns:
+        PyJWKClient: Result produced for the caller.
+    """
     now = time.time()
     cached = _jwks_cache.get(jwks_url)
     if cached and now - cached[0] < _JWKS_TTL_SECONDS:
@@ -30,6 +53,14 @@ def _jwks_client(jwks_url: str) -> PyJWKClient:
 
 
 def payload_from_jwt(token: str) -> dict:
+    """Handles payload from jwt logic for the surrounding Stoa workflow.
+
+    Args:
+        token (str): Input value used by this workflow step.
+
+    Returns:
+        dict: Result produced for the caller.
+    """
     settings = get_settings()
     try:
         header = jwt.get_unverified_header(token)
@@ -77,6 +108,14 @@ def payload_from_jwt(token: str) -> dict:
 
 
 def user_id_from_jwt(token: str) -> str:
+    """Handles user id from jwt logic for the surrounding Stoa workflow.
+
+    Args:
+        token (str): Input value used by this workflow step.
+
+    Returns:
+        str: Result produced for the caller.
+    """
     payload = payload_from_jwt(token)
     sub = payload.get("sub")
     if not sub:
@@ -85,6 +124,11 @@ def user_id_from_jwt(token: str) -> str:
 
 
 def _require_verified_email(payload: dict) -> None:
+    """Handles  require verified email logic for the surrounding Stoa workflow.
+
+    Args:
+        payload (dict): Input value used by this workflow step.
+    """
     user_id = str(payload["sub"])
     if not user_is_email_verified(user_id, payload):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Email verification required")
@@ -93,6 +137,14 @@ def _require_verified_email(payload: dict) -> None:
 def verify_supabase_jwt(
     creds: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
 ) -> str:
+    """Handles verify supabase jwt logic for the surrounding Stoa workflow.
+
+    Args:
+        creds (HTTPAuthorizationCredentials | None): Input value used by this workflow step.
+
+    Returns:
+        str: Result produced for the caller.
+    """
     if creds is None or creds.scheme.lower() != "bearer":
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Missing bearer token")
     payload = payload_from_jwt(creds.credentials)
@@ -103,6 +155,14 @@ def verify_supabase_jwt(
 def verify_supabase_jwt_payload(
     creds: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
 ) -> dict:
+    """Handles verify supabase jwt payload logic for the surrounding Stoa workflow.
+
+    Args:
+        creds (HTTPAuthorizationCredentials | None): Input value used by this workflow step.
+
+    Returns:
+        dict: Result produced for the caller.
+    """
     if creds is None or creds.scheme.lower() != "bearer":
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Missing bearer token")
     return payload_from_jwt(creds.credentials)
@@ -111,6 +171,14 @@ def verify_supabase_jwt_payload(
 def verify_supabase_jwt_payload_verified(
     creds: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
 ) -> dict:
+    """Handles verify supabase jwt payload verified logic for the surrounding Stoa workflow.
+
+    Args:
+        creds (HTTPAuthorizationCredentials | None): Input value used by this workflow step.
+
+    Returns:
+        dict: Result produced for the caller.
+    """
     if creds is None or creds.scheme.lower() != "bearer":
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Missing bearer token")
     payload = payload_from_jwt(creds.credentials)

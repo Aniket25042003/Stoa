@@ -1,3 +1,10 @@
+"""
+File: services/api/app/tasks/campaigns.py
+Layer: Celery Task Layer
+Purpose: Runs background work that precomputes intelligence and updates durable job state.
+Dependencies: Supabase, Celery, Redis, stoa_core
+"""
+
 from __future__ import annotations
 
 import logging
@@ -24,6 +31,11 @@ CAMPAIGN_KINDS = [
 
 @celery_app.task(name="campaigns.generate", bind=True, max_retries=2)
 def generate_campaign(self, campaign_id: str) -> None:
+    """Handles generate campaign logic for the surrounding Stoa workflow.
+
+    Args:
+        campaign_id (str): Input value used by this workflow step.
+    """
     sb = get_supabase_admin()
     try:
         campaign = verify_campaign(campaign_id)

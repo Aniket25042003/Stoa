@@ -1,4 +1,10 @@
-"""Trusted client IP extraction for rate limiting and abuse controls."""
+"""
+File: services/api/app/deps/client_ip.py
+Layer: FastAPI Dependencies
+Purpose: Implements client ip behavior for the fastapi dependencies.
+Dependencies: FastAPI
+"""
+
 
 from __future__ import annotations
 

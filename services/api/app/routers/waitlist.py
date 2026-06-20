@@ -1,3 +1,10 @@
+"""
+File: services/api/app/routers/waitlist.py
+Layer: FastAPI Route Layer
+Purpose: Exposes authenticated REST endpoints and coordinates validation, permissions, and service calls.
+Dependencies: FastAPI, Supabase, Pydantic, stoa_core
+"""
+
 from __future__ import annotations
 
 import re
@@ -13,12 +20,25 @@ router = APIRouter(prefix="/v1/waitlist", tags=["waitlist"])
 
 
 class WaitlistBody(BaseModel):
+    """Manage WaitlistBody behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     name: str = Field(min_length=1, max_length=200)
     email: str = Field(min_length=3, max_length=320)
 
     @field_validator("email")
     @classmethod
     def validate_email(cls, value: str) -> str:
+        """Handles validate email logic for the surrounding Stoa workflow.
+
+        Args:
+            value (str): Input value used by this workflow step.
+
+        Returns:
+            str: Result produced for the caller.
+        """
         email = value.strip().lower()
         if not re.fullmatch(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", email):
             raise ValueError("Invalid email")
@@ -27,11 +47,28 @@ class WaitlistBody(BaseModel):
     @field_validator("name")
     @classmethod
     def validate_name(cls, value: str) -> str:
+        """Handles validate name logic for the surrounding Stoa workflow.
+
+        Args:
+            value (str): Input value used by this workflow step.
+
+        Returns:
+            str: Result produced for the caller.
+        """
         return value.strip()
 
 
 @router.post("")
 def join_waitlist(body: WaitlistBody, request: Request) -> dict[str, str]:
+    """Handles join waitlist logic for the surrounding Stoa workflow.
+
+    Args:
+        body (WaitlistBody): Input value used by this workflow step.
+        request (Request): Input value used by this workflow step.
+
+    Returns:
+        dict[str, str]: Result produced for the caller.
+    """
     check_public_rate_limit(
         trusted_client_ip(request),
         email=body.email,

@@ -1,3 +1,10 @@
+"""
+File: services/api/app/routers/dashboard.py
+Layer: FastAPI Route Layer
+Purpose: Exposes authenticated REST endpoints and coordinates validation, permissions, and service calls.
+Dependencies: FastAPI, Supabase, stoa_core
+"""
+
 from __future__ import annotations
 
 from typing import Any
@@ -20,6 +27,14 @@ router = APIRouter(prefix="/v1/dashboard", tags=["dashboard"])
 
 @router.get("/summary")
 def get_dashboard_summary(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    """Handles get dashboard summary logic for the surrounding Stoa workflow.
+
+    Args:
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "intelligence:read")
     org = scope.org
     org_id = scope.org_id

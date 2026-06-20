@@ -1,3 +1,10 @@
+"""
+File: services/api/app/routers/team.py
+Layer: FastAPI Route Layer
+Purpose: Exposes authenticated REST endpoints and coordinates validation, permissions, and service calls.
+Dependencies: FastAPI, Supabase, Pydantic, stoa_core
+"""
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -20,6 +27,11 @@ router = APIRouter(prefix="/v1/team", tags=["team"])
 
 
 class ProfileHints(BaseModel):
+    """Manage ProfileHints behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     role_type: str | None = None
     job_title: str | None = None
     department: str | None = None
@@ -27,6 +39,11 @@ class ProfileHints(BaseModel):
 
 
 class InviteCreate(BaseModel):
+    """Manage InviteCreate behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     email: str = Field(pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
     role_id: str | None = None
     role: str | None = Field(default=None, pattern="^(admin|analyst|viewer)$")
@@ -34,18 +51,39 @@ class InviteCreate(BaseModel):
 
 
 class InviteAccept(BaseModel):
+    """Manage InviteAccept behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     token: str = Field(min_length=16)
 
 
 class MemberRoleUpdate(BaseModel):
+    """Manage MemberRoleUpdate behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     role_id: str
 
 
 def _now() -> datetime:
+    """Handles  now logic for the surrounding Stoa workflow.
+
+    Returns:
+        datetime: Result produced for the caller.
+    """
     return datetime.now(timezone.utc)
 
 
 def _send_supabase_invite(email: str, invite_url: str) -> None:
+    """Handles  send supabase invite logic for the surrounding Stoa workflow.
+
+    Args:
+        email (str): Input value used by this workflow step.
+        invite_url (str): Input value used by this workflow step.
+    """
     sb = get_supabase_admin()
     try:
         sb.auth.admin.invite_user_by_email(email, {"redirect_to": invite_url})
@@ -54,6 +92,17 @@ def _send_supabase_invite(email: str, invite_url: str) -> None:
 
 
 def _resolve_role_id(sb: Any, org_id: str, role_id: str | None, role_text: str | None) -> tuple[str, str]:
+    """Handles  resolve role id logic for the surrounding Stoa workflow.
+
+    Args:
+        sb (Any): Input value used by this workflow step.
+        org_id (str): Input value used by this workflow step.
+        role_id (str | None): Input value used by this workflow step.
+        role_text (str | None): Input value used by this workflow step.
+
+    Returns:
+        tuple[str, str]: Result produced for the caller.
+    """
     if role_id:
         res = sb.table("org_roles").select("id, role_key, permissions").eq("id", role_id).eq("org_id", org_id).limit(1).execute()
         row = (res.data or [None])[0]
@@ -70,6 +119,14 @@ def _resolve_role_id(sb: Any, org_id: str, role_id: str | None, role_text: str |
 
 @router.get("/members")
 def list_members(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    """Handles list members logic for the surrounding Stoa workflow.
+
+    Args:
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "team:read")
     sb = get_supabase_admin()
     members_res = (
@@ -99,6 +156,16 @@ def list_members(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str
 
 @router.patch("/members/{member_id}")
 def update_member_role(member_id: str, body: MemberRoleUpdate, scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    """Handles update member role logic for the surrounding Stoa workflow.
+
+    Args:
+        member_id (str): Input value used by this workflow step.
+        body (MemberRoleUpdate): Input value used by this workflow step.
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "team:assign_roles")
     sb = get_supabase_admin()
     target = (
@@ -136,6 +203,15 @@ def update_member_role(member_id: str, body: MemberRoleUpdate, scope: OrgScope =
 
 @router.delete("/members/{member_id}")
 def remove_member(member_id: str, scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    """Handles remove member logic for the surrounding Stoa workflow.
+
+    Args:
+        member_id (str): Input value used by this workflow step.
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "team:remove")
     sb = get_supabase_admin()
     target = (
@@ -163,6 +239,14 @@ def remove_member(member_id: str, scope: OrgScope = Depends(require_onboarded_sc
 
 @router.get("/invites")
 def list_invites(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    """Handles list invites logic for the surrounding Stoa workflow.
+
+    Args:
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "team:read")
     sb = get_supabase_admin()
     res = (
@@ -177,6 +261,15 @@ def list_invites(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str
 
 @router.post("/invites")
 def create_invite(body: InviteCreate, scope: OrgScope = Depends(verified_org_scope_dep)) -> dict[str, Any]:
+    """Handles create invite logic for the surrounding Stoa workflow.
+
+    Args:
+        body (InviteCreate): Input value used by this workflow step.
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "team:invite")
     sb = get_supabase_admin()
     email = body.email.lower()
@@ -218,6 +311,15 @@ def create_invite(body: InviteCreate, scope: OrgScope = Depends(verified_org_sco
 
 @router.post("/invites/{invite_id}/revoke")
 def revoke_invite(invite_id: str, scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    """Handles revoke invite logic for the surrounding Stoa workflow.
+
+    Args:
+        invite_id (str): Input value used by this workflow step.
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "team:invite")
     sb = get_supabase_admin()
     res = (
@@ -236,6 +338,15 @@ def revoke_invite(invite_id: str, scope: OrgScope = Depends(require_onboarded_sc
 
 @router.post("/invites/accept")
 def accept_invite(body: InviteAccept, claims: dict[str, Any] = Depends(verify_supabase_jwt_payload_verified)) -> dict[str, Any]:
+    """Handles accept invite logic for the surrounding Stoa workflow.
+
+    Args:
+        body (InviteAccept): Input value used by this workflow step.
+        claims (dict[str, Any]): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     user_id = str(claims["sub"])
     get_or_create_user_profile(user_id, claims)
     email = email_from_claims(claims)

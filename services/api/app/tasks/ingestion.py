@@ -1,3 +1,10 @@
+"""
+File: services/api/app/tasks/ingestion.py
+Layer: Celery Task Layer
+Purpose: Runs background work that precomputes intelligence and updates durable job state.
+Dependencies: Supabase, Celery, Redis, stoa_core
+"""
+
 from __future__ import annotations
 
 import logging
@@ -17,6 +24,11 @@ logger = logging.getLogger(__name__)
 
 @celery_app.task(name="ingestion.process_job", bind=True, max_retries=3)
 def process_ingestion_job(self, job_id: str) -> None:
+    """Handles process ingestion job logic for the surrounding Stoa workflow.
+
+    Args:
+        job_id (str): Input value used by this workflow step.
+    """
     sb = get_supabase_admin()
     try:
         job, doc = verify_ingestion_job(job_id)

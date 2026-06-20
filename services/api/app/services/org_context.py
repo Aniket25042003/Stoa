@@ -1,4 +1,10 @@
-"""Organization membership resolution and permission checks."""
+"""
+File: services/api/app/services/org_context.py
+Layer: FastAPI Service Layer
+Purpose: Contains reusable backend business logic shared by routes and workers.
+Dependencies: FastAPI, Supabase, stoa_core
+"""
+
 
 from __future__ import annotations
 
@@ -27,6 +33,11 @@ _MEMBERSHIP_SELECT = (
 
 @dataclass(frozen=True)
 class OrgScope:
+    """Manage OrgScope behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     user_id: str
     org_id: str
     membership: dict[str, Any]
@@ -37,10 +48,24 @@ class OrgScope:
 
     @property
     def org(self) -> dict[str, Any]:
+        """Handles org logic for the surrounding Stoa workflow.
+
+        Returns:
+            dict[str, Any]: Result produced for the caller.
+        """
         return self.membership.get("organizations") or {}
 
 
 def _resolve_org_id(request: Request, user_id: str) -> str | None:
+    """Handles  resolve org id logic for the surrounding Stoa workflow.
+
+    Args:
+        request (Request): Input value used by this workflow step.
+        user_id (str): Input value used by this workflow step.
+
+    Returns:
+        str | None: Result produced for the caller.
+    """
     header = (request.headers.get("x-org-id") or "").strip()
     if header:
         try:
@@ -62,6 +87,15 @@ def _resolve_org_id(request: Request, user_id: str) -> str | None:
 
 
 def _load_membership(user_id: str, org_id: str) -> dict[str, Any] | None:
+    """Handles  load membership logic for the surrounding Stoa workflow.
+
+    Args:
+        user_id (str): Input value used by this workflow step.
+        org_id (str): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any] | None: Result produced for the caller.
+    """
     sb = get_supabase_admin()
     res = (
         sb.table("memberships")
@@ -75,6 +109,14 @@ def _load_membership(user_id: str, org_id: str) -> dict[str, Any] | None:
 
 
 def list_user_memberships(user_id: str) -> list[dict[str, Any]]:
+    """Handles list user memberships logic for the surrounding Stoa workflow.
+
+    Args:
+        user_id (str): Input value used by this workflow step.
+
+    Returns:
+        list[dict[str, Any]]: Result produced for the caller.
+    """
     sb = get_supabase_admin()
     res = (
         sb.table("memberships")
@@ -87,6 +129,16 @@ def list_user_memberships(user_id: str) -> list[dict[str, Any]]:
 
 
 def build_org_scope(request: Request, user_id: str, *, org_id: str | None = None) -> OrgScope:
+    """Handles build org scope logic for the surrounding Stoa workflow.
+
+    Args:
+        request (Request): Input value used by this workflow step.
+        user_id (str): Input value used by this workflow step.
+        org_id (str | None): Input value used by this workflow step.
+
+    Returns:
+        OrgScope: Result produced for the caller.
+    """
     resolved_org_id = org_id or _resolve_org_id(request, user_id)
     if not resolved_org_id:
         raise HTTPException(
@@ -111,6 +163,15 @@ def build_org_scope(request: Request, user_id: str, *, org_id: str | None = None
 
 
 def get_org_scope(request: Request, user_id: str) -> OrgScope:
+    """Handles get org scope logic for the surrounding Stoa workflow.
+
+    Args:
+        request (Request): Input value used by this workflow step.
+        user_id (str): Input value used by this workflow step.
+
+    Returns:
+        OrgScope: Result produced for the caller.
+    """
     return build_org_scope(request, user_id)
 
 
@@ -136,12 +197,23 @@ def get_user_membership(user_id: str, org_id: str | None = None) -> dict[str, An
 
 
 def require_permission(scope: OrgScope, perm: str) -> None:
+    """Handles require permission logic for the surrounding Stoa workflow.
+
+    Args:
+        scope (OrgScope): Input value used by this workflow step.
+        perm (str): Input value used by this workflow step.
+    """
     if scope.is_owner or perm in scope.permissions:
         return
     raise HTTPException(status.HTTP_403_FORBIDDEN, f"Requires permission: {perm}")
 
 
 def require_any_permission(scope: OrgScope, *perms: str) -> None:
+    """Handles require any permission logic for the surrounding Stoa workflow.
+
+    Args:
+        scope (OrgScope): Input value used by this workflow step.
+    """
     if scope.is_owner:
         return
     if any(p in scope.permissions for p in perms):
@@ -150,17 +222,38 @@ def require_any_permission(scope: OrgScope, *perms: str) -> None:
 
 
 def require_role(membership: dict[str, Any], min_role: str) -> None:
+    """Handles require role logic for the surrounding Stoa workflow.
+
+    Args:
+        membership (dict[str, Any]): Input value used by this workflow step.
+        min_role (str): Input value used by this workflow step.
+    """
     role_key = role_key_from_membership(membership)
     if ROLE_HIERARCHY.get(role_key, 0) < ROLE_HIERARCHY.get(min_role, 0):
         raise HTTPException(status.HTTP_403_FORBIDDEN, f"Requires {min_role} role")
 
 
 def require_owner(scope: OrgScope) -> None:
+    """Handles require owner logic for the surrounding Stoa workflow.
+
+    Args:
+        scope (OrgScope): Input value used by this workflow step.
+    """
     if not scope.is_owner:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Owner access required")
 
 
 def ensure_org_access(user_id: str, org_id: str, *, min_role: str | None = None) -> dict[str, Any]:
+    """Handles ensure org access logic for the surrounding Stoa workflow.
+
+    Args:
+        user_id (str): Input value used by this workflow step.
+        org_id (str): Input value used by this workflow step.
+        min_role (str | None): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     membership = _load_membership(user_id, org_id)
     if not membership:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Organization access denied")
@@ -170,6 +263,12 @@ def ensure_org_access(user_id: str, org_id: str, *, min_role: str | None = None)
 
 
 def assert_permission_boundary(actor: OrgScope, requested_permissions: set[str]) -> None:
+    """Handles assert permission boundary logic for the surrounding Stoa workflow.
+
+    Args:
+        actor (OrgScope): Input value used by this workflow step.
+        requested_permissions (set[str]): Input value used by this workflow step.
+    """
     if actor.is_owner:
         return
     if not permission_set_satisfies(set(actor.permissions), requested_permissions):
@@ -177,11 +276,25 @@ def assert_permission_boundary(actor: OrgScope, requested_permissions: set[str])
 
 
 def set_last_active_org(user_id: str, org_id: str) -> None:
+    """Handles set last active org logic for the surrounding Stoa workflow.
+
+    Args:
+        user_id (str): Input value used by this workflow step.
+        org_id (str): Input value used by this workflow step.
+    """
     sb = get_supabase_admin()
     sb.table("user_profiles").update({"last_active_org_id": org_id}).eq("user_id", user_id).execute()
 
 
 def count_org_owners(org_id: str) -> int:
+    """Handles count org owners logic for the surrounding Stoa workflow.
+
+    Args:
+        org_id (str): Input value used by this workflow step.
+
+    Returns:
+        int: Result produced for the caller.
+    """
     sb = get_supabase_admin()
     res = (
         sb.table("memberships")

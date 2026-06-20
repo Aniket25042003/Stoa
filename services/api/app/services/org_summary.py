@@ -1,4 +1,10 @@
-"""Shared org summary helpers for dashboard and org endpoints."""
+"""
+File: services/api/app/services/org_summary.py
+Layer: FastAPI Service Layer
+Purpose: Contains reusable backend business logic shared by routes and workers.
+Dependencies: Supabase, stoa_core
+"""
+
 
 from __future__ import annotations
 
@@ -9,6 +15,14 @@ from stoa_core.org.completeness import compute_completeness
 
 
 def fetch_org_counts(org_id: str) -> dict[str, int]:
+    """Handles fetch org counts logic for the surrounding Stoa workflow.
+
+    Args:
+        org_id (str): Input value used by this workflow step.
+
+    Returns:
+        dict[str, int]: Result produced for the caller.
+    """
     sb = get_supabase_admin()
     docs = sb.table("documents").select("id", count="exact").eq("org_id", org_id).execute()
     signals = sb.table("intelligence").select("id", count="exact").eq("org_id", org_id).execute()
@@ -35,6 +49,14 @@ def fetch_org_counts(org_id: str) -> dict[str, int]:
 
 
 def signals_by_kind(org_id: str) -> dict[str, int]:
+    """Handles signals by kind logic for the surrounding Stoa workflow.
+
+    Args:
+        org_id (str): Input value used by this workflow step.
+
+    Returns:
+        dict[str, int]: Result produced for the caller.
+    """
     sb = get_supabase_admin()
     res = sb.table("intelligence").select("kind").eq("org_id", org_id).limit(500).execute()
     counts: dict[str, int] = {}
@@ -45,6 +67,14 @@ def signals_by_kind(org_id: str) -> dict[str, int]:
 
 
 def latest_icp_version(org_id: str) -> int | None:
+    """Handles latest icp version logic for the surrounding Stoa workflow.
+
+    Args:
+        org_id (str): Input value used by this workflow step.
+
+    Returns:
+        int | None: Result produced for the caller.
+    """
     sb = get_supabase_admin()
     res = (
         sb.table("icp_profiles")
@@ -64,6 +94,15 @@ def build_completeness_for_org(
     *,
     counts: dict[str, int] | None = None,
 ) -> dict[str, Any]:
+    """Handles build completeness for org logic for the surrounding Stoa workflow.
+
+    Args:
+        org (dict[str, Any]): Input value used by this workflow step.
+        counts (dict[str, int] | None): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     org_id = org["id"]
     resolved = counts or fetch_org_counts(org_id)
     return compute_completeness(

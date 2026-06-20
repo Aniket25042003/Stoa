@@ -1,3 +1,10 @@
+"""
+File: services/api/app/routers/campaigns.py
+Layer: FastAPI Route Layer
+Purpose: Exposes authenticated REST endpoints and coordinates validation, permissions, and service calls.
+Dependencies: FastAPI, Supabase, Pydantic, stoa_core
+"""
+
 from __future__ import annotations
 
 from typing import Any
@@ -17,12 +24,25 @@ router = APIRouter(prefix="/v1/campaigns", tags=["campaigns"])
 
 
 class CampaignCreate(BaseModel):
+    """Manage CampaignCreate behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     brief: str = Field(min_length=10, max_length=5000)
     brand_voice: str | None = None
 
 
 @router.get("")
 def list_campaigns(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    """Handles list campaigns logic for the surrounding Stoa workflow.
+
+    Args:
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "campaigns:read")
     sb = get_supabase_admin()
     res = (
@@ -37,6 +57,15 @@ def list_campaigns(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[s
 
 @router.post("")
 def create_campaign(body: CampaignCreate, scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    """Handles create campaign logic for the surrounding Stoa workflow.
+
+    Args:
+        body (CampaignCreate): Input value used by this workflow step.
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "campaigns:create")
     check_rate_limit(scope.user_id, limit_per_minute=10, scope="campaign_create")
     sb = get_supabase_admin()
@@ -63,6 +92,15 @@ def create_campaign(body: CampaignCreate, scope: OrgScope = Depends(require_onbo
 
 @router.get("/{campaign_id}")
 def get_campaign(campaign_id: str, scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    """Handles get campaign logic for the surrounding Stoa workflow.
+
+    Args:
+        campaign_id (str): Input value used by this workflow step.
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "campaigns:read")
     sb = get_supabase_admin()
     res = (

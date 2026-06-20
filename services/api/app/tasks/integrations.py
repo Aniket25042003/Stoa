@@ -1,3 +1,10 @@
+"""
+File: services/api/app/tasks/integrations.py
+Layer: Celery Task Layer
+Purpose: Runs background work that precomputes intelligence and updates durable job state.
+Dependencies: Celery, stoa_core
+"""
+
 from __future__ import annotations
 
 import logging
@@ -18,6 +25,16 @@ def sync_integration_source(
     *,
     full_backfill: bool = False,
 ) -> dict:
+    """Handles sync integration source logic for the surrounding Stoa workflow.
+
+    Args:
+        connection_id (str): Input value used by this workflow step.
+        org_id (str): Input value used by this workflow step.
+        full_backfill (bool): Input value used by this workflow step.
+
+    Returns:
+        dict: Result produced for the caller.
+    """
     try:
         verify_org_exists(org_id)
         result = run_sync(connection_id, org_id, full_backfill=full_backfill)

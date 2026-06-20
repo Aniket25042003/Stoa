@@ -1,4 +1,10 @@
-"""Validate Celery task arguments against database ownership."""
+"""
+File: services/api/app/services/task_context.py
+Layer: FastAPI Service Layer
+Purpose: Contains reusable backend business logic shared by routes and workers.
+Dependencies: Supabase, Celery, stoa_core
+"""
+
 
 from __future__ import annotations
 
@@ -21,11 +27,25 @@ ALLOWED_CELERY_TASKS = frozenset(
 
 
 def assert_allowed_task(task_name: str) -> None:
+    """Handles assert allowed task logic for the surrounding Stoa workflow.
+
+    Args:
+        task_name (str): Input value used by this workflow step.
+    """
     if task_name not in ALLOWED_CELERY_TASKS:
         raise ValueError(f"Disallowed Celery task: {task_name}")
 
 
 def _parse_uuid(value: str, field: str) -> str:
+    """Handles  parse uuid logic for the surrounding Stoa workflow.
+
+    Args:
+        value (str): Input value used by this workflow step.
+        field (str): Input value used by this workflow step.
+
+    Returns:
+        str: Result produced for the caller.
+    """
     try:
         return str(uuid.UUID(str(value)))
     except (TypeError, ValueError) as exc:
@@ -33,6 +53,11 @@ def _parse_uuid(value: str, field: str) -> str:
 
 
 def verify_org_exists(org_id: str) -> None:
+    """Handles verify org exists logic for the surrounding Stoa workflow.
+
+    Args:
+        org_id (str): Input value used by this workflow step.
+    """
     org_id = _parse_uuid(org_id, "org_id")
     sb = get_supabase_admin()
     res = sb.table("organizations").select("id").eq("id", org_id).limit(1).execute()
@@ -41,6 +66,17 @@ def verify_org_exists(org_id: str) -> None:
 
 
 def verify_resource_org(table: str, resource_id: str, org_id: str | None = None, *, id_column: str = "id") -> dict:
+    """Handles verify resource org logic for the surrounding Stoa workflow.
+
+    Args:
+        table (str): Input value used by this workflow step.
+        resource_id (str): Input value used by this workflow step.
+        org_id (str | None): Input value used by this workflow step.
+        id_column (str): Input value used by this workflow step.
+
+    Returns:
+        dict: Result produced for the caller.
+    """
     resource_id = _parse_uuid(resource_id, f"{table}_id")
     if org_id is not None:
         org_id = _parse_uuid(org_id, "org_id")
@@ -55,6 +91,15 @@ def verify_resource_org(table: str, resource_id: str, org_id: str | None = None,
 
 
 def verify_conversation_org(conversation_id: str, org_id: str) -> dict:
+    """Handles verify conversation org logic for the surrounding Stoa workflow.
+
+    Args:
+        conversation_id (str): Input value used by this workflow step.
+        org_id (str): Input value used by this workflow step.
+
+    Returns:
+        dict: Result produced for the caller.
+    """
     return verify_resource_org("conversations", conversation_id, org_id)
 
 
@@ -83,6 +128,14 @@ def verify_ingestion_job(job_id: str) -> tuple[dict, dict]:
 
 
 def verify_competitor(competitor_id: str) -> dict:
+    """Handles verify competitor logic for the surrounding Stoa workflow.
+
+    Args:
+        competitor_id (str): Input value used by this workflow step.
+
+    Returns:
+        dict: Result produced for the caller.
+    """
     competitor_id = _parse_uuid(competitor_id, "competitor_id")
     sb = get_supabase_admin()
     res = (
@@ -99,6 +152,14 @@ def verify_competitor(competitor_id: str) -> dict:
 
 
 def verify_campaign(campaign_id: str) -> dict:
+    """Handles verify campaign logic for the surrounding Stoa workflow.
+
+    Args:
+        campaign_id (str): Input value used by this workflow step.
+
+    Returns:
+        dict: Result produced for the caller.
+    """
     campaign_id = _parse_uuid(campaign_id, "campaign_id")
     sb = get_supabase_admin()
     res = (

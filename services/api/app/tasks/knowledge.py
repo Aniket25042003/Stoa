@@ -1,3 +1,10 @@
+"""
+File: services/api/app/tasks/knowledge.py
+Layer: Celery Task Layer
+Purpose: Runs background work that precomputes intelligence and updates durable job state.
+Dependencies: Supabase, Celery, Redis, stoa_core
+"""
+
 from __future__ import annotations
 
 import logging

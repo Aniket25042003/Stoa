@@ -1,3 +1,10 @@
+"""
+File: services/api/app/routers/ingestion.py
+Layer: FastAPI Route Layer
+Purpose: Exposes authenticated REST endpoints and coordinates validation, permissions, and service calls.
+Dependencies: FastAPI, Supabase, Pydantic, stoa_core
+"""
+
 from __future__ import annotations
 
 from typing import Any
@@ -24,17 +31,38 @@ router = APIRouter(prefix="/v1/ingestion", tags=["ingestion"])
 
 
 class PasteBody(BaseModel):
+    """Manage PasteBody behavior within the Stoa application layer.
+
+    This class groups related state and operations so routes, workers, or core
+    pipelines can depend on a focused abstraction instead of duplicating logic.
+    """
     title: str = Field(min_length=1, max_length=300)
     content: str = Field(min_length=1, max_length=10 * 1024 * 1024)
     doc_type: str = Field(default="note", pattern="^(call_transcript|review|crm_export|note)$")
 
 
 def _document_quota_exceeded(org_id: str) -> bool:
+    """Handles  document quota exceeded logic for the surrounding Stoa workflow.
+
+    Args:
+        org_id (str): Input value used by this workflow step.
+
+    Returns:
+        bool: Result produced for the caller.
+    """
     return document_quota_exceeded(org_id)
 
 
 @router.get("/sources")
 def list_sources(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    """Handles list sources logic for the surrounding Stoa workflow.
+
+    Args:
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "data_sources:read")
     sb = get_supabase_admin()
     res = (
@@ -54,6 +82,17 @@ async def upload_document(
     file: UploadFile = File(...),
     scope: OrgScope = Depends(require_onboarded_scope),
 ) -> dict[str, Any]:
+    """Asynchronously handles upload document logic for the surrounding Stoa workflow.
+
+    Args:
+        title (str): Input value used by this workflow step.
+        doc_type (str): Input value used by this workflow step.
+        file (UploadFile): Input value used by this workflow step.
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "documents:write")
     check_rate_limit(scope.user_id, get_settings().rate_limit_per_minute, scope="upload")
     settings = get_settings()
@@ -101,6 +140,15 @@ async def upload_document(
 
 @router.post("/paste")
 def paste_document(body: PasteBody, scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    """Handles paste document logic for the surrounding Stoa workflow.
+
+    Args:
+        body (PasteBody): Input value used by this workflow step.
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "documents:write")
     check_rate_limit(scope.user_id, get_settings().rate_limit_per_minute, scope="paste")
     settings = get_settings()
@@ -126,6 +174,15 @@ def paste_document(body: PasteBody, scope: OrgScope = Depends(require_onboarded_
 
 @router.get("/jobs/{job_id}")
 def get_job(job_id: str, scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+    """Handles get job logic for the surrounding Stoa workflow.
+
+    Args:
+        job_id (str): Input value used by this workflow step.
+        scope (OrgScope): Input value used by this workflow step.
+
+    Returns:
+        dict[str, Any]: Result produced for the caller.
+    """
     require_permission(scope, "documents:read")
     sb = get_supabase_admin()
     res = (
