@@ -1,3 +1,9 @@
+/**
+ * @file apps/web/src/app/(app)/runs/new/page.tsx
+ * @layer Frontend Product UI
+ * @description Defines the route entry point and composes the page-level UI for this product surface.
+ * @dependencies Next.js, React
+ */
 import { redirect } from "next/navigation";
 
 export default async function NewRunPage({ searchParams }: { searchParams: Promise<{ company_id?: string | string[] | undefined }> }) {
