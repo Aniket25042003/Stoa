@@ -95,6 +95,15 @@ class Settings(BaseSettings):
     app_base_url: str = "http://localhost:3000"
     invite_token_pepper: str = ""
 
+    # Content generation (Vertex AI Imagen + Veo)
+    content_image_model: str = "imagen-4.0-fast"
+    content_image_model_fast: str = "imagen-4.0-fast"
+    content_video_model: str = "veo-3.1-lite"
+    content_video_model_fast: str = "veo-3.1-lite"
+    content_video_timeout_seconds: int = 300
+    content_max_images_per_request: int = 4
+    content_storage_bucket: str = "content-assets"
+
     # Integrations — credentials encryption (Fernet key, base64)
     integration_credentials_key: str = ""
     api_base_url: str = "http://localhost:8000"
