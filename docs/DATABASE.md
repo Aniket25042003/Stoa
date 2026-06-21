@@ -17,7 +17,10 @@ erDiagram
   organizations ||--o{ conversations : owns
   organizations ||--o{ competitors : tracks
   organizations ||--o{ campaigns : creates
+  organizations ||--o{ content_assets : owns
   organizations ||--o{ integration_connections : connects
+  campaigns ||--o{ content_assets : has
+  content_assets ||--o{ content_assets : references
 
   knowledge_items ||--o{ knowledge_chunks : contains
   documents ||--o{ ingestion_jobs : triggers
@@ -83,6 +86,7 @@ erDiagram
 | `competitors`        | Tracked URLs        | `name`, `website_url`, `last_snapshot`, `content_hash` |
 | `competitive_alerts` | Change alerts       | `summary`, `severity`, `categories`                    |
 | `campaigns`          | Generated campaigns | `brief`, `brand_voice`, `assets` jsonb, `status`       |
+| `content_assets`     | Generated AI assets | `asset_type`, `prompt`, `files` jsonb, `status`        |
 
 
 ### Integrations

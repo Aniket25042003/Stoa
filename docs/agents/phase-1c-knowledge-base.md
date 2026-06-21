@@ -23,6 +23,7 @@ Triggered by:
 - ICP rebuild (`kind=icp_profile`)
 - Competitive scan (`kind=competitive_snapshot`)
 - Campaign completion (`kind=campaign_asset`)
+- Content generation (`kind=content_asset`)
 - Future MCP/CRM connectors (new `kind` string only)
 
 Idempotent on `uri` + `content_hash`. Bumps Redis `kb_version` on every write.

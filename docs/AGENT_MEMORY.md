@@ -18,6 +18,8 @@ The platform does not run multi-agent LangGraph loops on each request. Instead, 
 | ICP profiles (versioned) | `icp_profiles` table | New version on rebuild |
 | Knowledge chunks + embeddings | `knowledge_chunks` table | Updated on re-ingest |
 | Extracted signals | `intelligence` table | Per document chunk |
+| Generated content metadata | `content_assets` table | Permanent |
+| Content asset KB entries | `knowledge_chunks` (kind=content_asset) | Permanent |
 | SSE progress events | Redis streams `stoa:{scope}:{id}:events` | 72h TTL, 10k maxlen |
 | Query embedding cache | Redis `stoa:kb:qemb:{org}:{hash}` | 1800s TTL |
 | Retrieval result cache | Redis `stoa:kb:result:{org}:{version}:{hash}` | 3600s TTL |

@@ -68,6 +68,7 @@ Marketing teams connect customer data (uploads first; integrations later). The p
 | Conversations | `/v1/conversations` |
 | Competitive | `/v1/competitive` |
 | Campaigns | `/v1/campaigns` |
+| Content | `/v1/content` |
 
 ## Agent orchestration
 
@@ -92,6 +93,7 @@ Marketing teams connect customer data (uploads first; integrations later). The p
 - [Phase 1d — Customer Data Integrations](docs/agents/phase-1d-customer-data-integrations.md)
 - [Phase 2 — Competitive Intelligence](docs/agents/phase-2-competitive-intelligence.md)
 - [Phase 3 — Campaign Orchestration](docs/agents/phase-3-campaign-orchestration.md)
+- [Phase 4 — Content at Scale](docs/agents/phase-4-content-at-scale.md)
 
 ## Common pitfalls
 
