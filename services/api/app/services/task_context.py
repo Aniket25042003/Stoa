@@ -20,6 +20,7 @@ ALLOWED_CELERY_TASKS = frozenset(
         "intelligence.answer_question",
         "competitive.monitor",
         "campaigns.generate",
+        "content.generate_asset",
         "knowledge.reembed_org",
         "integrations.sync_source",
     }
@@ -172,4 +173,28 @@ def verify_campaign(campaign_id: str) -> dict:
     row = (res.data or [None])[0]
     if not row:
         raise ValueError(f"Campaign not found: {campaign_id}")
+    return row
+
+
+def verify_content_asset(asset_id: str) -> dict:
+    """Loads and verifies a content asset resource.
+
+    Args:
+        asset_id (str): UUID of the content asset.
+
+    Returns:
+        dict: The content asset row from the database.
+    """
+    asset_id = _parse_uuid(asset_id, "asset_id")
+    sb = get_supabase_admin()
+    res = (
+        sb.table("content_assets")
+        .select("id, org_id, campaign_id, asset_type, prompt, config, status, reference_asset_id")
+        .eq("id", asset_id)
+        .limit(1)
+        .execute()
+    )
+    row = (res.data or [None])[0]
+    if not row:
+        raise ValueError(f"Content asset not found: {asset_id}")
     return row
