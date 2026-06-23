@@ -33,7 +33,7 @@ function InlineTableInput({ className, ...props }: InputHTMLAttributes<HTMLInput
   return (
     <input
       className={cn(
-        "m-0 box-border h-6 w-full max-w-full min-w-0 rounded-sm border border-mkt-ink/12 bg-[#F8F6F2]/50 px-1 py-0 font-dm-sans text-sm leading-5 text-mkt-ink shadow-none placeholder:text-mkt-muted/50 focus:border-mkt-accent/60 focus:outline-none focus:ring-0",
+        "m-0 box-border h-6 w-full max-w-full min-w-0 rounded-sm border border-mkt-border bg-mkt-surface-elevated/50 px-1 py-0 text-sm leading-5 text-mkt-ink shadow-none placeholder:text-mkt-muted/50 focus:border-mkt-accent/60 focus:outline-none focus:ring-0",
         className
       )}
       {...props}
@@ -136,13 +136,13 @@ export function CompetitorsList({
 
   return (
     <ProductCard>
-      <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">Tracked competitors</h2>
-      <p className="mt-1 font-dm-sans text-sm text-mkt-muted">
+      <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">Tracked competitors</h2>
+      <p className="mt-1 text-sm text-mkt-muted">
         Update names and websites or remove competitors you no longer want to track.
       </p>
 
       {competitors.length === 0 ? (
-        <p className="mt-4 font-dm-sans text-sm text-mkt-muted">No competitors added yet.</p>
+        <p className="mt-4 text-sm text-mkt-muted">No competitors added yet.</p>
       ) : (
         <ProductTable className="mt-4 [&_table]:table-fixed">
           <colgroup>
@@ -197,7 +197,7 @@ export function CompetitorsList({
                           <>
                             <ProductButton
                               variant="secondary"
-                              className="px-2.5 py-1.5 text-[9px]"
+                              className="px-3 py-1.5 text-xs"
                               onClick={() => void saveEdit(competitor.id)}
                               disabled={savingId === competitor.id}
                             >
@@ -205,7 +205,7 @@ export function CompetitorsList({
                             </ProductButton>
                             <ProductButton
                               variant="ghost"
-                              className="px-2.5 py-1.5 text-[9px]"
+                              className="px-3 py-1.5 text-xs"
                               onClick={cancelEdit}
                               disabled={savingId === competitor.id}
                             >
@@ -216,14 +216,14 @@ export function CompetitorsList({
                           <>
                             <ProductButton
                               variant="secondary"
-                              className="px-2.5 py-1.5 text-[9px]"
+                              className="px-3 py-1.5 text-xs"
                               onClick={() => startEdit(competitor)}
                             >
                               Edit
                             </ProductButton>
                             <ProductButton
                               variant="ghost"
-                              className="px-2.5 py-1.5 text-[9px]"
+                              className="px-3 py-1.5 text-xs"
                               onClick={() => void deleteCompetitor(competitor)}
                               disabled={deletingId === competitor.id}
                             >

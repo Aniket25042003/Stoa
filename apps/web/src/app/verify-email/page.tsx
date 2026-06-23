@@ -10,13 +10,14 @@ import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { routeForSessionState, safeNextPath, type SessionState } from "@/lib/auth-workflow";
+import { SolidButton } from "@/components/marketing/v3/Buttons";
 import {
   AuthBrandMark,
   AuthCard,
   AuthCardHeader,
+  AuthInput,
+  AuthLabel,
   AuthPageShell,
-  ProductButton,
-  ProductInput,
 } from "@/components/product";
 
 /**
@@ -78,7 +79,7 @@ function VerifyEmailClient() {
       lead={
         <div>
           <AuthBrandMark />
-          <p className="mt-8 max-w-md font-dm-sans text-sm leading-relaxed text-mkt-muted">
+          <p className="mt-8 max-w-md text-sm leading-relaxed text-mkt-muted">
             We need to confirm your email before you can access your workspace. This page refreshes automatically once verification completes.
           </p>
         </div>
@@ -91,28 +92,34 @@ function VerifyEmailClient() {
           description="We sent a confirmation link to your email. Click it to verify your account — you will be signed in automatically."
         />
         <div className="space-y-4">
-          <div>
-            <label className="font-dm-sans text-[9px] font-bold uppercase tracking-[0.18em] text-mkt-muted">Email</label>
-            <ProductInput
+          <div className="space-y-1.5">
+            <AuthLabel htmlFor="verify-email">Email</AuthLabel>
+            <AuthInput
+              id="verify-email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               type="email"
               required
               autoComplete="email"
               placeholder="you@company.com"
-              className="mt-1.5"
             />
           </div>
-          <ProductButton className="w-full" disabled={resending} onClick={() => void resend()}>
+          <SolidButton
+            type="button"
+            disabled={resending}
+            variant="dark"
+            className="w-full justify-center py-3"
+            onClick={() => void resend()}
+          >
             {resending ? "Sending..." : "Resend verification link"}
-          </ProductButton>
-          <p className="font-dm-sans text-xs leading-relaxed text-mkt-muted">
+          </SolidButton>
+          <p className="text-xs leading-relaxed text-mkt-muted">
             Already clicked the link? This page will redirect you automatically once verification completes.
           </p>
         </div>
-        {message ? <p className="mt-4 font-dm-sans text-sm text-mkt-muted">{message}</p> : null}
-        <p className="mt-7 text-center font-dm-sans text-sm">
-          <Link href={`/login?next=${encodeURIComponent(next)}`} className="font-semibold text-mkt-accent underline-offset-4 hover:underline">
+        {message ? <p className="mt-4 text-sm text-mkt-muted">{message}</p> : null}
+        <p className="mt-7 text-center text-sm text-mkt-muted">
+          <Link href={`/login?next=${encodeURIComponent(next)}`} className="font-medium text-mkt-ink underline-offset-4 hover:underline">
             Back to sign in
           </Link>
         </p>
@@ -129,7 +136,7 @@ export default function VerifyEmailPage() {
   return (
     <Suspense
       fallback={
-        <div className="product-v2 flex min-h-screen items-center justify-center px-4 font-dm-sans text-sm text-mkt-muted">
+        <div className="product-v2 flex min-h-screen items-center justify-center px-4 text-sm text-mkt-muted">
           Loading...
         </div>
       }

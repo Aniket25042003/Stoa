@@ -5,8 +5,8 @@
  * @dependencies standard library / local modules
  */
 export { BrandLogo } from "./BrandLogo";
-export { AuthBrandMark, AuthCard, AuthCardHeader, AuthPageShell } from "./AuthPageShell";
-export { ProductAtmosphere, ProductShellFrame } from "./ProductAtmosphere";
+export { AuthBrandMark, AuthCard, AuthCardHeader, AuthDivider, AuthInput, AuthLabel, AuthOutlineButton, AuthPageShell } from "./AuthPageShell";
+export { AuthAtmosphere, ProductAtmosphere, ProductShellFrame } from "./ProductAtmosphere";
 export { ProductBadge, ProductStatusPill } from "./ProductBadge";
 export { ProductButton } from "./ProductButton";
 export { ProductCard } from "./ProductCard";
@@ -18,4 +18,4 @@ export {
   ProductTableHeaderCell,
 } from "./ProductEmptyState";
 export { ProductInput, ProductSelect, ProductTextarea } from "./ProductInput";
-export { ProductPageHeader } from "./ProductPageHeader";
+export { ProductPageHeader, ProductLabel, ProductSectionTitle } from "./ProductPageHeader";

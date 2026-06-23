@@ -41,7 +41,7 @@ export function DataHubToast({
           variant === "error" ? "bg-mkt-accent-warm" : "bg-mkt-accent"
         )}
       />
-      <p className="font-dm-sans text-sm leading-relaxed text-mkt-ink">{message}</p>
+      <p className="text-sm leading-relaxed text-mkt-ink">{message}</p>
     </div>
   );
 }

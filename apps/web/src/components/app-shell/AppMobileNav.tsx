@@ -66,7 +66,7 @@ export function AppMobileNav({ permissions, permissionsLoaded }: AppMobileNavPro
               key={tab.id}
               href={tab.href}
               className={cn(
-                "flex flex-1 flex-col items-center justify-center gap-1 py-2.5 font-dm-sans text-[9px] font-bold uppercase tracking-[0.12em] transition-colors",
+                "flex flex-1 flex-col items-center justify-center gap-1 py-2.5 text-[11px] font-medium transition-colors",
                 active ? "text-mkt-accent" : "text-mkt-muted"
               )}
             >
@@ -79,7 +79,7 @@ export function AppMobileNav({ permissions, permissionsLoaded }: AppMobileNavPro
           type="button"
           onClick={() => setSheetOpen(true)}
           className={cn(
-            "flex flex-1 flex-col items-center justify-center gap-1 py-2.5 font-dm-sans text-[9px] font-bold uppercase tracking-[0.12em] transition-colors",
+            "flex flex-1 flex-col items-center justify-center gap-1 py-2.5 text-[11px] font-medium transition-colors",
             sheetOpen ? "text-mkt-accent" : "text-mkt-muted"
           )}
           aria-label="More navigation"
@@ -99,7 +99,7 @@ export function AppMobileNav({ permissions, permissionsLoaded }: AppMobileNavPro
           />
           <div className="absolute inset-x-0 bottom-0 max-h-[70vh] overflow-y-auto rounded-t-lg border border-mkt-ink/[0.06] bg-mkt-surface p-5 shadow-[0_-12px_40px_rgba(20,20,26,0.12)]">
             <div className="mb-4 flex items-center justify-between">
-              <p className="font-dm-sans text-[9px] font-bold uppercase tracking-[0.2em] text-mkt-accent">
+              <p className="text-xs font-medium uppercase tracking-wider text-mkt-subtle">
                 Navigation
               </p>
               <button
@@ -114,7 +114,7 @@ export function AppMobileNav({ permissions, permissionsLoaded }: AppMobileNavPro
 
             {intelGroup?.type === "group" ? (
               <div className="mb-6">
-                <p className="mb-2 font-dm-sans text-[9px] font-bold uppercase tracking-[0.18em] text-mkt-muted">
+                <p className="mb-2 text-xs font-medium uppercase tracking-wider text-mkt-subtle">
                   Intelligence
                 </p>
                 <div className="space-y-1">
@@ -125,7 +125,7 @@ export function AppMobileNav({ permissions, permissionsLoaded }: AppMobileNavPro
                         key={item.href}
                         href={item.href}
                         className={cn(
-                          "block rounded-sm px-3 py-2.5 font-dm-sans text-sm font-medium",
+                          "block rounded-sm px-3 py-2.5 text-sm font-medium",
                           isNavItemActive(pathname, item.href)
                             ? "bg-mkt-accent/[0.08] text-mkt-accent"
                             : "text-mkt-ink hover:bg-mkt-ink/[0.03]"
@@ -140,7 +140,7 @@ export function AppMobileNav({ permissions, permissionsLoaded }: AppMobileNavPro
 
             {orgGroup?.type === "group" ? (
               <div className="mb-6">
-                <p className="mb-2 font-dm-sans text-[9px] font-bold uppercase tracking-[0.18em] text-mkt-muted">
+                <p className="mb-2 text-xs font-medium uppercase tracking-wider text-mkt-subtle">
                   Organization
                 </p>
                 <div className="space-y-1">
@@ -151,7 +151,7 @@ export function AppMobileNav({ permissions, permissionsLoaded }: AppMobileNavPro
                         key={item.href}
                         href={item.href}
                         className={cn(
-                          "block rounded-sm px-3 py-2.5 font-dm-sans text-sm font-medium",
+                          "block rounded-sm px-3 py-2.5 text-sm font-medium",
                           isNavItemActive(pathname, item.href)
                             ? "bg-mkt-accent/[0.08] text-mkt-accent"
                             : "text-mkt-ink hover:bg-mkt-ink/[0.03]"

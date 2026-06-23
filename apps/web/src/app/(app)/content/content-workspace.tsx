@@ -23,7 +23,6 @@ import { CompleteDataPrompt } from "@/components/app-shell/CompleteDataPrompt";
 import {
   ProductButton,
   ProductCard,
-  ProductInput,
   ProductPageHeader,
   ProductSelect,
   ProductStatusPill,
@@ -267,8 +266,8 @@ export function ContentWorkspace() {
 
       {loadError ? (
         <ProductCard className="border-mkt-accent-warm/25 bg-mkt-accent-warm/[0.06]">
-          <p className="font-dm-sans text-sm text-mkt-ink">{loadError}</p>
-          <p className="mt-2 font-dm-sans text-xs text-mkt-muted">
+          <p className="text-sm text-mkt-ink">{loadError}</p>
+          <p className="mt-2 text-xs text-mkt-muted">
             Start the API with <code className="font-mono">pnpm dev:api</code> (or your usual FastAPI command), then refresh this page.
           </p>
         </ProductCard>
@@ -278,7 +277,7 @@ export function ContentWorkspace() {
         {/* Creator Panel */}
         <div className="lg:col-span-1 space-y-6">
           <ProductCard className="p-6 h-fit">
-            <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink border-b border-mkt-ink/10 pb-3">
+            <h2 className="text-lg font-semibold tracking-tight text-mkt-ink border-b border-mkt-ink/10 pb-3">
               Asset Creator
             </h2>
             
@@ -328,7 +327,7 @@ export function ContentWorkspace() {
                   >
                     <X className="h-4 w-4" />
                   </button>
-                  <span className="block text-[10px] font-bold uppercase tracking-wider text-mkt-accent">
+                  <span className="block text-xs font-medium uppercase tracking-wider text-mkt-subtle">
                     Reference Image Attached
                   </span>
                   <div className="flex gap-3 items-center">
@@ -464,7 +463,7 @@ export function ContentWorkspace() {
                 {/* Batch count / Resolution */}
                 {assetType === "image" ? (
                   <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-mkt-muted mb-1">
+                    <label className="block text-xs font-medium uppercase tracking-wider text-mkt-subtle mb-1">
                       Batch Count (Images to generate)
                     </label>
                     <ProductSelect
@@ -479,7 +478,7 @@ export function ContentWorkspace() {
                   </div>
                 ) : (
                   <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-mkt-muted mb-1">
+                    <label className="block text-xs font-medium uppercase tracking-wider text-mkt-subtle mb-1">
                       Video Resolution
                     </label>
                     <ProductSelect
@@ -494,7 +493,7 @@ export function ContentWorkspace() {
 
                 {/* Campaign Link dropdown */}
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-mkt-muted mb-1">
+                  <label className="block text-xs font-medium uppercase tracking-wider text-mkt-subtle mb-1">
                     Link to Campaign
                   </label>
                   <ProductSelect
@@ -533,7 +532,7 @@ export function ContentWorkspace() {
           </ProductCard>
           
           {status && (
-            <p className="font-dm-sans text-xs font-semibold text-mkt-accent bg-mkt-accent/[0.04] p-3 rounded-sm border border-mkt-accent/10">
+            <p className="text-xs font-semibold text-mkt-accent bg-mkt-accent/[0.04] p-3 rounded-sm border border-mkt-accent/10">
               {status}
             </p>
           )}
@@ -543,7 +542,7 @@ export function ContentWorkspace() {
         <div className="lg:col-span-2 space-y-6">
           <ProductCard className="p-6 h-full flex flex-col">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-mkt-ink/10 pb-4">
-              <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">
+              <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">
                 Asset Library
               </h2>
               
@@ -572,7 +571,7 @@ export function ContentWorkspace() {
               {filteredAssets.length === 0 ? (
                 <div className="py-24 text-center">
                   <ImageIcon className="h-10 w-10 text-mkt-muted/45 mx-auto mb-3" />
-                  <p className="font-dm-sans text-sm text-mkt-muted">
+                  <p className="text-sm text-mkt-muted">
                     No visual assets found in library. Use the creator panel to generate images and videos.
                   </p>
                 </div>
@@ -607,7 +606,7 @@ export function ContentWorkspace() {
                           {isFailed && (
                             <div className="text-center p-4">
                               <X className="h-8 w-8 text-mkt-accent-warm mx-auto mb-2" />
-                              <span className="block text-[10px] tracking-wider font-semibold text-mkt-accent-warm uppercase">
+                              <span className="block text-xs font-medium uppercase tracking-wider text-mkt-subtle">
                                 Generation Failed
                               </span>
                             </div>
@@ -630,7 +629,6 @@ export function ContentWorkspace() {
                                       <Play className="h-4 w-4 fill-white ml-0.5" />
                                     </div>
                                   </div>
-                                  {/* eslint-disable-next-line @next/next/no-img-element */}
                                   <div className="w-full h-full bg-mkt-accent/10 flex items-center justify-center text-mkt-muted text-xs font-mono uppercase tracking-widest">
                                     <Clapperboard className="h-8 w-8 text-mkt-accent opacity-50" />
                                   </div>
@@ -699,7 +697,7 @@ export function ContentWorkspace() {
               {selectedAsset.status === "failed" && (
                 <div className="text-center p-8 text-white max-w-md">
                   <X className="h-12 w-12 text-mkt-accent-warm mx-auto mb-4" />
-                  <h3 className="font-syne font-extrabold uppercase text-lg text-mkt-accent-warm">
+                  <h3 className="text-lg font-semibold text-mkt-ink">
                     Generation Failed
                   </h3>
                   <p className="mt-2 text-xs text-white/60 font-mono overflow-auto max-h-[150px] border border-white/10 bg-white/5 p-3 rounded-sm leading-relaxed text-left">
@@ -735,19 +733,19 @@ export function ContentWorkspace() {
               <div className="space-y-6">
                 <div>
                   <div className="flex gap-2 items-center mb-1">
-                    <span className="text-[10px] uppercase font-bold tracking-widest text-mkt-muted">
+                    <span className="text-xs font-medium uppercase tracking-wider text-mkt-muted">
                       {selectedAsset.asset_type}
                     </span>
                     <ProductStatusPill status={selectedAsset.status} />
                   </div>
-                  <h3 className="font-syne text-md font-extrabold uppercase text-mkt-ink tracking-tight">
+                  <h3 className="text-base font-semibold tracking-tight text-mkt-ink">
                     Creative Metadata
                   </h3>
                 </div>
 
                 {/* Brief */}
                 <div className="space-y-1">
-                  <span className="block text-[10px] font-bold uppercase tracking-wider text-mkt-muted">
+                  <span className="block text-xs font-medium uppercase tracking-wider text-mkt-subtle">
                     Original Brief
                   </span>
                   <p className="text-xs text-mkt-ink leading-relaxed font-medium">
@@ -758,7 +756,7 @@ export function ContentWorkspace() {
                 {/* Enriched Prompt */}
                 {selectedAsset.enriched_prompt && (
                   <div className="space-y-1">
-                    <span className="block text-[10px] font-bold uppercase tracking-wider text-mkt-muted">
+                    <span className="block text-xs font-medium uppercase tracking-wider text-mkt-subtle">
                       Enriched Grounding Prompt
                     </span>
                     <p className="text-[11px] text-mkt-muted leading-relaxed italic bg-mkt-ink/[0.02] border border-mkt-ink/5 p-3 rounded-sm">
@@ -771,7 +769,7 @@ export function ContentWorkspace() {
                 {selectedAsset.status === "completed" && (
                   <div className="grid grid-cols-2 gap-4 text-xs border-y border-mkt-ink/10 py-3">
                     <div>
-                      <span className="block text-[10px] font-bold uppercase tracking-wider text-mkt-muted">
+                      <span className="block text-xs font-medium uppercase tracking-wider text-mkt-subtle">
                         AI Model
                       </span>
                       <span className="font-mono text-mkt-ink font-semibold mt-0.5 block truncate">
@@ -779,7 +777,7 @@ export function ContentWorkspace() {
                       </span>
                     </div>
                     <div>
-                      <span className="block text-[10px] font-bold uppercase tracking-wider text-mkt-muted">
+                      <span className="block text-xs font-medium uppercase tracking-wider text-mkt-subtle">
                         Render Time
                       </span>
                       <span className="font-mono text-mkt-ink font-semibold mt-0.5 block">
@@ -796,7 +794,7 @@ export function ContentWorkspace() {
                   selectedAsset.generation_metadata?.kb_context_refs &&
                   selectedAsset.generation_metadata.kb_context_refs.length > 0 && (
                     <div className="space-y-2">
-                      <span className="block text-[10px] font-bold uppercase tracking-wider text-mkt-muted">
+                      <span className="block text-xs font-medium uppercase tracking-wider text-mkt-subtle">
                         Knowledge Grounding Citations
                       </span>
                       <div className="space-y-1 max-h-[120px] overflow-y-auto">

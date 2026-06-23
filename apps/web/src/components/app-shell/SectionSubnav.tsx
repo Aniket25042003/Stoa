@@ -33,16 +33,16 @@ export function SectionSubnav({
   if (visible.length === 0) return null;
 
   return (
-    <nav aria-label={ariaLabel} className="mb-8 flex flex-wrap gap-2 border-b border-mkt-ink/[0.06] pb-4">
+    <nav aria-label={ariaLabel} className="mb-8 flex flex-wrap gap-2 border-b border-mkt-border pb-4">
       {visible.map((item) => (
         <Link
           key={item.href}
           href={item.href}
           className={cn(
-            "rounded-sm px-3 py-2 font-dm-sans text-[10px] font-bold uppercase tracking-[0.14em] transition-colors",
+            "rounded-full px-3.5 py-2 text-xs font-medium transition-colors",
             isNavItemActive(pathname, item.href)
-              ? "bg-mkt-accent/[0.08] text-mkt-accent"
-              : "text-mkt-muted hover:bg-mkt-ink/[0.03] hover:text-mkt-ink"
+              ? "bg-mkt-accent text-white"
+              : "text-mkt-muted hover:bg-mkt-ink/[0.04] hover:text-mkt-ink"
           )}
         >
           {item.label}

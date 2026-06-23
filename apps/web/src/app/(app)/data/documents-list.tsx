@@ -6,6 +6,7 @@
  */
 "use client";
 
+import { productLabelClass } from "@/lib/product-typography";
 import { useEffect, useState } from "react";
 import { useAppPermissions } from "@/components/app-shell/useAppPermissions";
 import {
@@ -30,7 +31,7 @@ const DOC_TYPE_LABELS: Record<string, string> = {
   crm_export: "CRM export",
 };
 
-const labelClass = "font-dm-sans text-[9px] font-bold uppercase tracking-[0.18em] text-mkt-muted";
+const labelClass = productLabelClass;
 
 type DocumentDetail = Document & {
   content?: string | null;
@@ -140,13 +141,13 @@ function DocumentViewerModal({
               </div>
             ) : (
               <>
-                <p className="font-dm-sans text-[9px] font-bold uppercase tracking-[0.22em] text-mkt-accent">
+                <p className="text-xs font-medium uppercase tracking-wider text-mkt-subtle">
                   {formatDocType(document.doc_type)}
                   {isUploaded ? " · File upload" : " · Pasted text"}
                 </p>
                 <h3
                   id="document-viewer-title"
-                  className="mt-1 font-syne text-xl font-extrabold uppercase tracking-tight text-mkt-ink"
+                  className="mt-1 text-xl font-semibold tracking-tight text-mkt-ink"
                 >
                   {document.title}
                 </h3>
@@ -154,7 +155,7 @@ function DocumentViewerModal({
             )}
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <ProductStatusPill status={document.status} />
-              <span className="font-dm-sans text-xs text-mkt-muted">Added {formatDate(document.created_at)}</span>
+              <span className="text-xs text-mkt-muted">Added {formatDate(document.created_at)}</span>
             </div>
           </div>
           <div className="flex shrink-0 gap-2">
@@ -191,14 +192,14 @@ function DocumentViewerModal({
                 onChange={(e) => setDraftContent(e.target.value)}
                 className="mt-1.5 min-h-[280px]"
               />
-              <p className="mt-2 font-dm-sans text-xs text-mkt-muted">
+              <p className="mt-2 text-xs text-mkt-muted">
                 Saving will re-process this document for intelligence signals.
               </p>
             </div>
           ) : document.content ? (
-            <pre className="whitespace-pre-wrap font-dm-sans text-sm leading-relaxed text-mkt-ink">{document.content}</pre>
+            <pre className="whitespace-pre-wrap text-sm leading-relaxed text-mkt-ink">{document.content}</pre>
           ) : isUploaded ? (
-            <p className="font-dm-sans text-sm text-mkt-muted">
+            <p className="text-sm text-mkt-muted">
               This document was uploaded as a file
               {document.storage_path ? (
                 <>
@@ -213,7 +214,7 @@ function DocumentViewerModal({
               . Re-upload from the form above to replace it.
             </p>
           ) : (
-            <p className="font-dm-sans text-sm text-mkt-muted">No content available for this document.</p>
+            <p className="text-sm text-mkt-muted">No content available for this document.</p>
           )}
         </div>
       </ProductCard>
@@ -269,16 +270,16 @@ export function DocumentsList({
   return (
     <>
       <ProductCard>
-        <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">
+        <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">
           Uploaded documents
         </h2>
-        <p className="mt-1 font-dm-sans text-sm text-mkt-muted">
+        <p className="mt-1 text-sm text-mkt-muted">
           View content or remove documents you no longer want in your knowledge base. Pasted documents can be edited
           in place.
         </p>
 
         {documents.length === 0 ? (
-          <p className="mt-4 font-dm-sans text-sm text-mkt-muted">No documents yet. Paste or upload one above.</p>
+          <p className="mt-4 text-sm text-mkt-muted">No documents yet. Paste or upload one above.</p>
         ) : (
           <ProductTable className="mt-4">
             <ProductTableHead>

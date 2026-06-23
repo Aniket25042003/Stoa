@@ -27,6 +27,14 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   transpilePackages: [],
+  async redirects() {
+    return [
+      { source: "/see-it-in-action", destination: "/#how-it-works", permanent: false },
+      { source: "/pricing", destination: "/#pricing", permanent: false },
+      { source: "/faq", destination: "/#faq", permanent: false },
+      { source: "/how-it-works", destination: "/#how-it-works", permanent: false },
+    ];
+  },
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];
   },

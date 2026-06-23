@@ -6,6 +6,7 @@
  */
 "use client";
 
+import { productLabelClass } from "@/lib/product-typography";
 import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/cn";
@@ -31,7 +32,7 @@ type CatalogGroup = {
   permissions: { key: string; label: string }[];
 };
 
-const labelClass = "font-dm-sans text-[9px] font-bold uppercase tracking-[0.18em] text-mkt-muted";
+const labelClass = productLabelClass;
 
 /**
  * Handles roles workspace behavior for this part of the Stoa application.
@@ -148,8 +149,8 @@ export function RolesWorkspace() {
                   : "border-l-2 border-transparent bg-mkt-ink/[0.02] hover:bg-mkt-ink/[0.04]"
               )}
             >
-              <p className="font-dm-sans text-sm font-semibold text-mkt-ink">{role.name}</p>
-              <p className="font-dm-sans text-xs text-mkt-muted">
+              <p className="text-sm font-semibold text-mkt-ink">{role.name}</p>
+              <p className="text-xs text-mkt-muted">
                 {role.is_system ? "System" : "Custom"} · {role.permissions.length} permissions
               </p>
             </button>
@@ -157,7 +158,7 @@ export function RolesWorkspace() {
         </ProductCard>
 
         <ProductCard className="space-y-5">
-          <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">
+          <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">
             {selected?.is_system ? "View role" : selected ? "Edit role" : "Create role"}
           </h2>
           <div>
@@ -181,7 +182,7 @@ export function RolesWorkspace() {
           <div className="space-y-4">
             {catalog.map((group) => (
               <div key={group.resource}>
-                <p className="font-dm-sans text-sm font-semibold text-mkt-ink">{group.label}</p>
+                <p className="text-sm font-semibold text-mkt-ink">{group.label}</p>
                 <div className="mt-2 flex flex-wrap gap-3">
                   {group.permissions.map((perm) => {
                     const allowed = grantable.includes(perm.key);
@@ -190,7 +191,7 @@ export function RolesWorkspace() {
                       <label
                         key={perm.key}
                         className={cn(
-                          "flex items-center gap-2 font-dm-sans text-sm text-mkt-ink",
+                          "flex items-center gap-2 text-sm text-mkt-ink",
                           !allowed && "opacity-50"
                         )}
                       >
@@ -224,7 +225,7 @@ export function RolesWorkspace() {
               </ProductButton>
             ) : null}
           </div>
-          {message ? <p className="font-dm-sans text-sm text-mkt-muted">{message}</p> : null}
+          {message ? <p className="text-sm text-mkt-muted">{message}</p> : null}
         </ProductCard>
       </div>
     </div>

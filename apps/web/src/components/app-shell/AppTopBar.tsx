@@ -38,7 +38,7 @@ export function AppTopBar({ email }: { email: string }) {
       <div className="flex min-w-0 flex-1 items-center justify-end gap-3 md:gap-4">
         <OrgSwitcher />
         <span
-          className="hidden max-w-[180px] truncate font-dm-sans text-xs text-mkt-muted md:inline"
+          className="hidden max-w-[180px] truncate text-xs text-mkt-muted md:inline"
           title={email}
         >
           {email}

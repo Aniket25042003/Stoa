@@ -44,8 +44,8 @@ type CrmStats = {
 function StatCard({ label, value }: { label: string; value: string | number }) {
   return (
     <ProductCard className="p-4">
-      <p className="font-dm-sans text-[9px] font-bold uppercase tracking-[0.22em] text-mkt-muted">{label}</p>
-      <p className="mt-1 font-syne text-2xl font-extrabold text-mkt-accent">{value}</p>
+      <p className="text-xs font-medium uppercase tracking-wider text-mkt-subtle">{label}</p>
+      <p className="mt-1 text-2xl font-semibold text-mkt-ink">{value}</p>
     </ProductCard>
   );
 }
@@ -192,7 +192,7 @@ export function IntelligenceWorkspace() {
           {prepared.length > 0 ? (
             <ProductCard className="space-y-4">
               <div className="flex items-center justify-between gap-4">
-                <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">
+                <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">
                   Prepared answers
                 </h2>
                 <ProductButton variant="secondary" onClick={() => void refreshInsights()}>
@@ -207,10 +207,10 @@ export function IntelligenceWorkspace() {
                       className="w-full text-left"
                       onClick={() => setExpanded(expanded === item.id ? null : item.id)}
                     >
-                      <p className="font-dm-sans text-sm font-semibold text-mkt-ink">{item.title}</p>
+                      <p className="text-sm font-semibold text-mkt-ink">{item.title}</p>
                     </button>
                     {expanded === item.id ? (
-                      <div className="mt-3 font-dm-sans text-sm leading-relaxed text-mkt-muted">
+                      <div className="mt-3 text-sm leading-relaxed text-mkt-muted">
                         <p>{item.content?.answer ?? "No answer yet."}</p>
                         {item.citations?.length ? (
                           <div className="mt-3 flex flex-wrap gap-1.5">
@@ -228,16 +228,16 @@ export function IntelligenceWorkspace() {
               </div>
             </ProductCard>
           ) : hasData ? (
-            <p className="font-dm-sans text-sm text-mkt-muted">
+            <p className="text-sm text-mkt-muted">
               Prepared answers will appear after documents are processed.
             </p>
           ) : null}
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-1">
             <ProductCard>
-              <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">ICP explorer</h2>
+              <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">ICP explorer</h2>
               {profile?.profile ? (
-                <div className="mt-4 space-y-3 font-dm-sans text-sm">
+                <div className="mt-4 space-y-3 text-sm">
                   {((profile.profile as { top_segments?: { name: string }[] }).top_segments ?? [])
                     .slice(0, 5)
                     .map((s, i) => (
@@ -254,17 +254,17 @@ export function IntelligenceWorkspace() {
                   )}
                 </div>
               ) : (
-                <p className="mt-4 font-dm-sans text-sm text-mkt-muted">
+                <p className="mt-4 text-sm text-mkt-muted">
                   Connect CRM data to populate ICP segments.
                 </p>
               )}
             </ProductCard>
 
             <ProductCard>
-              <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">
+              <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">
                 Pain points & objections
               </h2>
-              <ul className="mt-4 space-y-2 font-dm-sans text-sm">
+              <ul className="mt-4 space-y-2 text-sm">
                 {signals
                   .filter((s) => s.kind === "pain_point")
                   .slice(0, 5)
@@ -284,11 +284,11 @@ export function IntelligenceWorkspace() {
               </ul>
               {crmStats?.top_loss_reasons?.length ? (
                 <div className="mt-4 border-t border-mkt-ink/[0.06] pt-3">
-                  <p className="font-dm-sans text-[9px] font-bold uppercase tracking-[0.22em] text-mkt-muted">
+                  <p className="text-xs font-medium uppercase tracking-wider text-mkt-subtle">
                     Win/loss — top loss reasons
                   </p>
                   {crmStats.top_loss_reasons.map((r) => (
-                    <p key={r.reason} className="mt-1 font-dm-sans text-sm text-mkt-muted">
+                    <p key={r.reason} className="mt-1 text-sm text-mkt-muted">
                       {r.reason} ({r.count})
                     </p>
                   ))}
@@ -300,7 +300,7 @@ export function IntelligenceWorkspace() {
 
         <div className="space-y-6">
           <ProductCard className="space-y-4">
-            <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">Ask a follow-up</h2>
+            <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">Ask a follow-up</h2>
             <form onSubmit={handleAsk} className="space-y-4">
               <ProductInput
                 placeholder="Who are our highest-converting customers?"
@@ -313,18 +313,18 @@ export function IntelligenceWorkspace() {
               </ProductButton>
             </form>
             {answer ? (
-              <div className="rounded-sm border border-mkt-ink/[0.06] bg-mkt-ink/[0.02] p-4 font-dm-sans text-sm leading-relaxed text-mkt-ink">
+              <div className="rounded-sm border border-mkt-ink/[0.06] bg-mkt-ink/[0.02] p-4 text-sm leading-relaxed text-mkt-ink">
                 {answer}
               </div>
             ) : null}
             {conversationId ? (
-              <p className="font-dm-sans text-xs text-mkt-muted">Conversation: {conversationId}</p>
+              <p className="text-xs text-mkt-muted">Conversation: {conversationId}</p>
             ) : null}
           </ProductCard>
 
           <ProductCard>
             <div className="flex items-center justify-between gap-4">
-              <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">ICP profile</h2>
+              <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">ICP profile</h2>
               <ProductButton variant="secondary" onClick={() => void rebuildIcp()}>
                 Rebuild ICP
               </ProductButton>
@@ -334,15 +334,15 @@ export function IntelligenceWorkspace() {
                 {JSON.stringify(profile.profile, null, 2)}
               </pre>
             ) : (
-              <p className="mt-4 font-dm-sans text-sm text-mkt-muted">No ICP profile yet.</p>
+              <p className="mt-4 text-sm text-mkt-muted">No ICP profile yet.</p>
             )}
           </ProductCard>
 
           <ProductCard>
-            <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">
+            <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">
               Signals ({signals.length})
             </h2>
-            <ul className="mt-4 space-y-2 font-dm-sans text-sm">
+            <ul className="mt-4 space-y-2 text-sm">
               {signals.slice(0, 10).map((s) => (
                 <li key={s.id} className="flex flex-wrap items-baseline gap-2 text-mkt-muted">
                   <ProductBadge variant="accent">{s.kind}</ProductBadge>
@@ -354,7 +354,7 @@ export function IntelligenceWorkspace() {
         </div>
       </div>
 
-      {status ? <p className="font-dm-sans text-sm text-mkt-muted">{status}</p> : null}
+      {status ? <p className="text-sm text-mkt-muted">{status}</p> : null}
     </div>
   );
 }

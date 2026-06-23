@@ -148,21 +148,21 @@ export function OnboardingWizard() {
   }
 
   if (!context) {
-    return <p className="font-dm-sans text-sm text-mkt-muted">Loading setup...</p>;
+    return <p className="text-sm text-mkt-muted">Loading setup...</p>;
   }
 
   return (
     <div className="space-y-8">
       <ProductCard className="bg-mkt-dark-band text-mkt-dark-ink">
-        <p className="font-dm-sans text-[9px] font-bold uppercase tracking-[0.22em] text-mkt-accent">Workspace setup</p>
-        <h1 className="mt-4 font-syne text-3xl font-extrabold uppercase leading-tight tracking-tight md:text-4xl">
+        <p className="text-xs font-medium uppercase tracking-wider text-mkt-subtle">Workspace setup</p>
+        <h1 className="mt-4 text-3xl font-semibold leading-tight tracking-tight md:text-4xl">
           Tell {BRAND_NAME} about {context.mode === "invitee_profile" ? "you" : "your company"}.
         </h1>
         <p className="mt-4 font-dm-sans text-sm leading-relaxed text-mkt-dark-ink/70">
           Complete this guided setup before entering the product.
         </p>
         <div className="mt-6">
-          <div className="flex justify-between font-dm-sans text-xs text-mkt-dark-ink/70">
+          <div className="flex justify-between text-xs text-mkt-dark-ink/70">
             <span>
               Step {stepIndex + 1} of {steps.length}: {STEP_LABELS[currentStep] ?? currentStep}
             </span>
@@ -240,7 +240,7 @@ export function OnboardingWizard() {
             </ProductButton>
           )}
         </div>
-        {message ? <p className="font-dm-sans text-sm text-mkt-accent-warm">{message}</p> : null}
+        {message ? <p className="text-sm text-mkt-accent-warm">{message}</p> : null}
       </ProductCard>
     </div>
   );
@@ -267,7 +267,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="font-dm-sans text-[9px] font-bold uppercase tracking-[0.18em] text-mkt-muted">{label}</label>
+      <label className="text-xs font-medium uppercase tracking-wider text-mkt-subtle">{label}</label>
       {as === "select" ? (
         <ProductSelect
           name={name}
