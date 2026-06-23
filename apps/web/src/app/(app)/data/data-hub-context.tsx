@@ -171,83 +171,107 @@ export function DataHubProvider({ children }: { children: ReactNode }) {
     void refresh();
   }, [refresh]);
 
-  async function saveProfile(e: React.FormEvent) {
-    e.preventDefault();
-    setSaving(true);
-    const res = await apiFetch("/v1/orgs/me", {
-      method: "PATCH",
-      body: JSON.stringify({
-        name,
-        website_url: websiteUrl || null,
-        industry: industry || null,
-        profile: {
-          target_customers: targetCustomers || null,
-          business_model: businessModel || null,
-          stage: stage || null,
-          goals: goals || null,
-          brand_voice: brandVoice || null,
-          known_competitors_notes: competitorNotes || null,
-        },
-      }),
-    });
-    setSaving(false);
-    if (!res.ok) {
-      showToast("Could not save profile", "error");
-      return;
-    }
-    showToast("Profile saved");
-    void refresh();
-  }
+  const saveProfile = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      setSaving(true);
+      const res = await apiFetch("/v1/orgs/me", {
+        method: "PATCH",
+        body: JSON.stringify({
+          name,
+          website_url: websiteUrl || null,
+          industry: industry || null,
+          profile: {
+            target_customers: targetCustomers || null,
+            business_model: businessModel || null,
+            stage: stage || null,
+            goals: goals || null,
+            brand_voice: brandVoice || null,
+            known_competitors_notes: competitorNotes || null,
+          },
+        }),
+      });
+      setSaving(false);
+      if (!res.ok) {
+        showToast("Could not save profile", "error");
+        return;
+      }
+      showToast("Profile saved");
+      void refresh();
+    },
+    [
+      name,
+      websiteUrl,
+      industry,
+      targetCustomers,
+      businessModel,
+      stage,
+      goals,
+      brandVoice,
+      competitorNotes,
+      showToast,
+      refresh,
+    ]
+  );
 
-  async function handlePaste(e: React.FormEvent) {
-    e.preventDefault();
-    const res = await apiFetch("/v1/ingestion/paste", {
-      method: "POST",
-      body: JSON.stringify({ title: pasteTitle, content: pasteContent, doc_type: pasteType }),
-    });
-    if (!res.ok) {
-      showToast("Could not ingest document", "error");
-      return;
-    }
-    setPasteTitle("");
-    setPasteContent("");
-    showToast("Document queued for processing");
-    void refresh();
-  }
+  const handlePaste = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      const res = await apiFetch("/v1/ingestion/paste", {
+        method: "POST",
+        body: JSON.stringify({ title: pasteTitle, content: pasteContent, doc_type: pasteType }),
+      });
+      if (!res.ok) {
+        showToast("Could not ingest document", "error");
+        return;
+      }
+      setPasteTitle("");
+      setPasteContent("");
+      showToast("Document queued for processing");
+      void refresh();
+    },
+    [pasteTitle, pasteContent, pasteType, showToast, refresh]
+  );
 
-  async function handleUpload(e: React.FormEvent) {
-    e.preventDefault();
-    if (!uploadFile) return;
-    const form = new FormData();
-    form.append("title", uploadTitle || uploadFile.name);
-    form.append("doc_type", uploadType);
-    form.append("file", uploadFile);
-    const res = await apiFetch("/v1/ingestion/upload", { method: "POST", body: form });
-    if (!res.ok) {
-      showToast("Could not upload file", "error");
-      return;
-    }
-    setUploadTitle("");
-    setUploadFile(null);
-    showToast("File uploaded");
-    void refresh();
-  }
+  const handleUpload = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!uploadFile) return;
+      const form = new FormData();
+      form.append("title", uploadTitle || uploadFile.name);
+      form.append("doc_type", uploadType);
+      form.append("file", uploadFile);
+      const res = await apiFetch("/v1/ingestion/upload", { method: "POST", body: form });
+      if (!res.ok) {
+        showToast("Could not upload file", "error");
+        return;
+      }
+      setUploadTitle("");
+      setUploadFile(null);
+      showToast("File uploaded");
+      void refresh();
+    },
+    [uploadFile, uploadTitle, uploadType, showToast, refresh]
+  );
 
-  async function handleAddCompetitor(e: React.FormEvent) {
-    e.preventDefault();
-    const res = await apiFetch("/v1/competitive/competitors", {
-      method: "POST",
-      body: JSON.stringify({ name: compName, website_url: compUrl || undefined }),
-    });
-    if (!res.ok) {
-      showToast("Could not add competitor", "error");
-      return;
-    }
-    setCompName("");
-    setCompUrl("");
-    showToast("Competitor added");
-    void refresh();
-  }
+  const handleAddCompetitor = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      const res = await apiFetch("/v1/competitive/competitors", {
+        method: "POST",
+        body: JSON.stringify({ name: compName, website_url: compUrl || undefined }),
+      });
+      if (!res.ok) {
+        showToast("Could not add competitor", "error");
+        return;
+      }
+      setCompName("");
+      setCompUrl("");
+      showToast("Competitor added");
+      void refresh();
+    },
+    [compName, compUrl, showToast, refresh]
+  );
 
   const value = useMemo<DataHubContextValue>(
     () => ({
@@ -330,6 +354,10 @@ export function DataHubProvider({ children }: { children: ReactNode }) {
       uploadFile,
       compName,
       compUrl,
+      saveProfile,
+      handlePaste,
+      handleUpload,
+      handleAddCompetitor,
     ]
   );
 
