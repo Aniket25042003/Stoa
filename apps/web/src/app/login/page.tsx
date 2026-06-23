@@ -10,15 +10,19 @@ import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
+import { SolidButton } from "@/components/marketing/v3/Buttons";
+import { DualToneHeadline } from "@/components/marketing/v3/DualToneHeadline";
 import { routeForSessionState, safeNextPath, type SessionState } from "@/lib/auth-workflow";
-import { BRAND_NAME, BRAND_SUBHEAD, BRAND_TAGLINE } from "@/lib/brand";
+import { BRAND_NAME, BRAND_SUBHEAD } from "@/lib/brand";
 import {
   AuthBrandMark,
   AuthCard,
   AuthCardHeader,
+  AuthDivider,
+  AuthInput,
+  AuthLabel,
+  AuthOutlineButton,
   AuthPageShell,
-  ProductButton,
-  ProductInput,
 } from "@/components/product";
 
 /**
@@ -37,8 +41,6 @@ function GoogleIcon({ className }: { className?: string }) {
     </svg>
   );
 }
-
-const labelClass = "font-dm-sans text-[9px] font-bold uppercase tracking-[0.18em] text-mkt-muted";
 
 /**
  * Handles login form behavior for this part of the Stoa application.
@@ -146,14 +148,9 @@ function LoginForm() {
         <>
           <AuthBrandMark />
           <div className="mt-8">
-            <p className="font-dm-sans text-[9px] font-bold uppercase tracking-[0.22em] text-mkt-accent">
-              Secure workspace
-            </p>
-            <h1 className="mt-4 font-syne text-4xl font-extrabold uppercase leading-tight tracking-tight text-mkt-ink md:text-5xl">
-              {BRAND_TAGLINE}
-            </h1>
-            <p className="mt-5 font-dm-sans text-base leading-relaxed text-mkt-muted">{BRAND_SUBHEAD}</p>
-            <p className="mt-4 font-dm-sans text-sm leading-relaxed text-mkt-muted">
+            <DualToneHeadline primary="Know your market." secondary="Ship faster." as="h1" />
+            <p className="mt-5 text-base leading-relaxed text-mkt-muted md:text-lg">{BRAND_SUBHEAD}</p>
+            <p className="mt-4 text-sm leading-relaxed text-mkt-muted">
               Sign in with Google, Microsoft, or your work email to open your {BRAND_NAME} workspace.
             </p>
           </div>
@@ -167,21 +164,11 @@ function LoginForm() {
             title="Continue to dashboard"
             description="Use SSO or email/password. Email accounts verify through your inbox before first sign-in."
           />
-          <ProductButton
-            variant="secondary"
-            className="w-full"
-            disabled={loading}
-            onClick={() => void signInWithProvider("google")}
-          >
+          <AuthOutlineButton disabled={loading} onClick={() => void signInWithProvider("google")}>
             <GoogleIcon className="h-5 w-5 shrink-0" />
             {loading ? "Redirecting..." : "Continue with Google"}
-          </ProductButton>
-          <ProductButton
-            variant="secondary"
-            className="mt-3 w-full"
-            disabled={loading}
-            onClick={() => void signInWithProvider("azure")}
-          >
+          </AuthOutlineButton>
+          <AuthOutlineButton className="mt-3" disabled={loading} onClick={() => void signInWithProvider("azure")}>
             <span className="grid h-5 w-5 shrink-0 grid-cols-2 gap-0.5" aria-hidden>
               <span className="bg-[#f25022]" />
               <span className="bg-[#7fba00]" />
@@ -189,45 +176,52 @@ function LoginForm() {
               <span className="bg-[#ffb900]" />
             </span>
             {loading ? "Redirecting..." : "Continue with Microsoft"}
-          </ProductButton>
-          <div className="my-6 flex items-center gap-3 font-dm-sans text-[9px] font-bold uppercase tracking-[0.16em] text-mkt-muted">
-            <span className="h-px flex-1 bg-mkt-ink/10" />
-            Work email
-            <span className="h-px flex-1 bg-mkt-ink/10" />
-          </div>
+          </AuthOutlineButton>
+          <AuthDivider label="Work email" />
           <form onSubmit={(event) => void submitEmail(event)} className="space-y-4">
             {mode === "signup" ? (
-              <div>
-                <label className={labelClass}>Full name</label>
-                <ProductInput name="full_name" type="text" required autoComplete="name" placeholder="Jane Doe" className="mt-1.5" />
+              <div className="space-y-1.5">
+                <AuthLabel htmlFor="full_name">Full name</AuthLabel>
+                <AuthInput id="full_name" name="full_name" type="text" required autoComplete="name" placeholder="Jane Doe" />
               </div>
             ) : null}
-            <div>
-              <label className={labelClass}>Email</label>
-              <ProductInput name="email" type="email" required placeholder="you@company.com" className="mt-1.5" />
+            <div className="space-y-1.5">
+              <AuthLabel htmlFor="email">Email</AuthLabel>
+              <AuthInput id="email" name="email" type="email" required placeholder="you@company.com" />
             </div>
-            <div>
-              <label className={labelClass}>Password</label>
-              <ProductInput name="password" type="password" required minLength={8} placeholder="At least 8 characters" className="mt-1.5" />
+            <div className="space-y-1.5">
+              <AuthLabel htmlFor="password">Password</AuthLabel>
+              <AuthInput
+                id="password"
+                name="password"
+                type="password"
+                required
+                minLength={8}
+                placeholder="At least 8 characters"
+              />
             </div>
-            <ProductButton type="submit" className="w-full" disabled={loading}>
+            <SolidButton type="submit" disabled={loading} variant="dark" className="w-full justify-center py-3">
               {loading ? "Working..." : mode === "signin" ? "Sign in with email" : "Create account"}
-            </ProductButton>
+            </SolidButton>
           </form>
           <button
             type="button"
             onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-            className="mt-4 w-full text-center font-dm-sans text-sm font-semibold text-mkt-accent underline-offset-4 hover:underline"
+            className="mt-4 w-full text-center text-sm font-medium text-mkt-ink underline-offset-4 hover:underline"
           >
             {mode === "signin" ? "Need an account? Sign up" : "Already have an account? Sign in"}
           </button>
           {msg ? (
-            <motion.p initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="mt-4 font-dm-sans text-sm text-mkt-accent-warm">
+            <motion.p
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm leading-relaxed text-red-700"
+            >
               {msg}
             </motion.p>
           ) : null}
-          <p className="mt-7 text-center font-dm-sans text-sm">
-            <Link href="/" className="font-semibold text-mkt-accent underline-offset-4 hover:underline">
+          <p className="mt-7 text-center text-sm text-mkt-muted">
+            <Link href="/" className="font-medium text-mkt-ink underline-offset-4 hover:underline">
               Back home
             </Link>
           </p>
@@ -245,7 +239,7 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="product-v2 flex min-h-screen items-center justify-center px-4 font-dm-sans text-sm text-mkt-muted">
+        <div className="product-v2 flex min-h-screen items-center justify-center px-4 text-sm text-mkt-muted">
           Loading sign-in...
         </div>
       }

@@ -9,6 +9,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api";
+import { ProductButton, ProductCard } from "@/components/product";
 
 /**
  * Handles onboarding processing page behavior for this part of the Stoa application.
@@ -46,12 +47,14 @@ export default function OnboardingProcessingPage() {
   }, [router]);
 
   return (
-    <div className="rounded-3xl p-8 card-glass text-center space-y-4">
-      <h1 className="font-display text-2xl font-bold">Preparing your workspace</h1>
-      <p className="text-sm text-on-surface-variant">{message}</p>
-      <button type="button" className="btn-primary px-5 py-3 text-sm" onClick={() => router.replace("/dashboard")}>
+    <ProductCard className="space-y-4 p-8 text-center">
+      <h1 className="text-2xl font-semibold tracking-tight text-mkt-ink">
+        Preparing your workspace
+      </h1>
+      <p className="text-sm text-mkt-muted">{message}</p>
+      <ProductButton type="button" onClick={() => router.replace("/dashboard")}>
         Go to dashboard
-      </button>
-    </div>
+      </ProductButton>
+    </ProductCard>
   );
 }

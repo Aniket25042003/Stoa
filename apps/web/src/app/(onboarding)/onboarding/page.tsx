@@ -13,7 +13,7 @@ import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
  */
 export default function OnboardingPage() {
   return (
-    <Suspense fallback={<p className="text-sm text-on-surface-variant">Loading...</p>}>
+    <Suspense fallback={<p className="text-sm text-mkt-muted">Loading...</p>}>
       <OnboardingWizard />
     </Suspense>
   );

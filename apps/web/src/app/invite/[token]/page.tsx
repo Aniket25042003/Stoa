@@ -68,7 +68,7 @@ export default function InvitePage() {
       lead={
         <div>
           <AuthBrandMark />
-          <p className="mt-8 max-w-md font-dm-sans text-sm leading-relaxed text-mkt-muted">
+          <p className="mt-8 max-w-md text-sm leading-relaxed text-mkt-muted">
             Accepting your team invite and linking you to the inviting organization.
           </p>
         </div>
@@ -80,9 +80,9 @@ export default function InvitePage() {
           title={message}
           description="You will be linked to the inviting organization after sign-in and verification."
         />
-        {error ? <p className="font-dm-sans text-sm text-mkt-accent-warm">{error}</p> : null}
-        <p className="mt-7 text-center font-dm-sans text-sm">
-          <Link href="/dashboard" className="font-semibold text-mkt-accent underline-offset-4 hover:underline">
+        {error ? <p className="text-sm text-red-700">{error}</p> : null}
+        <p className="mt-7 text-center text-sm text-mkt-muted">
+          <Link href="/dashboard" className="font-medium text-mkt-ink underline-offset-4 hover:underline">
             Go to dashboard
           </Link>
         </p>
