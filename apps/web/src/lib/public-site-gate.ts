@@ -18,10 +18,23 @@ import { isLoopbackHost, resolveHostname } from "@/lib/host";
 export const PRELAUNCH_PUBLIC_PATHS = new Set([
   "/",
   "/waitlist",
-  "/see-it-in-action",
-  "/pricing",
-  "/faq",
 ]);
+
+/** Legacy marketing routes merged into the single-page landing. */
+export const PRELAUNCH_LEGACY_REDIRECTS: Record<string, string> = {
+  "/see-it-in-action": "/#how-it-works",
+  "/pricing": "/#pricing",
+  "/faq": "/#faq",
+  "/how-it-works": "/#how-it-works",
+};
+
+/**
+ * @param pathname - Request path without query string.
+ * @returns Anchor redirect target on `/`, or null.
+ */
+export function getPrelaunchLegacyRedirect(pathname: string): string | null {
+  return PRELAUNCH_LEGACY_REDIRECTS[pathname] ?? null;
+}
 
 const PRELAUNCH_PUBLIC_API = new Set(["/api/waitlist"]);
 

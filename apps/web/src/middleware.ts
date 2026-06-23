@@ -9,6 +9,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getAuthEntryPath, isLoginEnabled } from "@/lib/auth-entry";
 import { buildContentSecurityPolicy } from "@/lib/csp";
 import {
+  getPrelaunchLegacyRedirect,
   isPrelaunchPublicApi,
   isPrelaunchPublicPath,
   isPublicSiteOnlyMode,
@@ -78,6 +79,11 @@ export async function middleware(request: NextRequest) {
   const publicOnly = isPublicSiteOnlyMode(hostname);
 
   if (publicOnly) {
+    const legacyRedirect = getPrelaunchLegacyRedirect(pathname);
+    if (legacyRedirect) {
+      return applySecurityHeaders(NextResponse.redirect(new URL(legacyRedirect, request.url)));
+    }
+
     if (pathname.startsWith("/api/")) {
       if (!isPrelaunchPublicApi(pathname, request.method)) {
         return applySecurityHeaders(

@@ -19,7 +19,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
     <LenisProvider>
       <div className="marketing-v2 relative min-h-screen">
         <Navbar />
-        <main className="marketing-v2-scroll relative">{children}</main>
+        <main className="relative">{children}</main>
         <Footer />
       </div>
     </LenisProvider>

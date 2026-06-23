@@ -1,28 +1,12 @@
-/**
- * @file apps/web/src/app/(marketing)/waitlist/page.tsx
- * @layer Frontend Marketing UI
- * @description Defines the route entry point and composes the page-level UI for this product surface.
- * @dependencies React, Framer Motion
- */
 "use client";
 
 import { motion } from "framer-motion";
-import { VideoBackground } from "@/components/marketing/immersive/VideoBackground";
-import { WaitlistForm } from "@/components/marketing/immersive/WaitlistForm";
+import { WaitlistForm } from "@/components/marketing/v3/WaitlistForm";
 
-/**
- * Handles waitlist page behavior for this part of the Stoa application.
- * @returns Rendered UI or completion signal for the workflow.
- */
 export default function WaitlistPage() {
   return (
-    <div className="relative flex min-h-[calc(100vh-65px)] flex-col justify-center overflow-hidden px-4 py-12 md:px-6">
-      <VideoBackground
-        src="/videos/marketing/hero-loop.mp4"
-        poster="/images/marketing/waitlist-backdrop.webp"
-        posterMobile="/images/marketing/hero-orb-mobile.webp"
-        overlayClassName="bg-gradient-to-b from-mkt-surface/70 via-mkt-surface/88 to-mkt-surface"
-      />
+    <div className="relative flex min-h-[calc(100vh-5rem)] flex-col justify-center overflow-hidden bg-mkt-surface px-4 py-12 md:px-6 mkt-section-pad">
+      <div className="pointer-events-none absolute inset-0 mkt-dot-grid opacity-40" aria-hidden />
 
       <main className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 items-center justify-center">
         <motion.div

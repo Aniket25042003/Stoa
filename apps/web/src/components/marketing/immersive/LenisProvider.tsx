@@ -17,18 +17,19 @@ import Lenis from "lenis";
  */
 export function LenisProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    if (window.innerWidth < 768) return;
-
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reducedMotion) return;
 
+    const isMobile = window.innerWidth < 768;
+
     const lenis = new Lenis({
-      duration: 1.4,
+      duration: isMobile ? 1.1 : 1.4,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       orientation: "vertical",
       gestureOrientation: "vertical",
       smoothWheel: true,
-      wheelMultiplier: 1.1,
+      wheelMultiplier: isMobile ? 0.9 : 1.1,
+      touchMultiplier: 1.2,
       autoRaf: true,
     });
 
