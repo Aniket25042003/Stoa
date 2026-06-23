@@ -158,8 +158,8 @@ export function OnboardingWizard() {
         <h1 className="mt-4 text-3xl font-semibold leading-tight tracking-tight md:text-4xl">
           Tell {BRAND_NAME} about {context.mode === "invitee_profile" ? "you" : "your company"}.
         </h1>
-        <p className="mt-4 text-sm leading-relaxed text-mkt-dark-ink/70">
-          Complete this guided setup before entering the product. Your answers are saved once at the end.
+        <p className="mt-4 font-dm-sans text-sm leading-relaxed text-mkt-dark-ink/70">
+          Complete this guided setup before entering the product.
         </p>
         <div className="mt-6">
           <div className="flex justify-between text-xs text-mkt-dark-ink/70">
@@ -215,8 +215,8 @@ export function OnboardingWizard() {
                 className="mt-1 block w-full text-sm"
                 onChange={(e) => setSeedFile(e.target.files?.[0] ?? null)}
               />
-              <p className="mt-1 text-xs text-mkt-muted">
-                Uploaded after setup completes. Stored in your org bucket and embedded into semantic memory.
+              <p className="mt-1 font-dm-sans text-xs text-mkt-muted">
+                Thanks for uploading.
               </p>
             </div>
           </>
