@@ -75,16 +75,16 @@ export function DashboardWorkspace({ email, org, role }: Props) {
         <ProductCard className="bg-mkt-dark-band text-mkt-dark-ink">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div className="max-w-xl">
-              <p className="font-dm-sans text-[9px] font-bold uppercase tracking-[0.22em] text-mkt-accent">Data readiness</p>
-              <p className="mt-2 font-syne text-xl font-extrabold uppercase tracking-tight">
+              <p className="text-xs font-medium uppercase tracking-wider text-mkt-subtle">Data readiness</p>
+              <p className="mt-2 text-xl font-semibold tracking-tight">
                 {completeness.percent}% complete
               </p>
               {completeness.missing.length > 0 ? (
-                <p className="mt-2 font-dm-sans text-sm text-mkt-dark-ink/70">
+                <p className="mt-2 text-sm text-mkt-dark-ink/70">
                   Still needed: {completeness.missing.join(", ")}
                 </p>
               ) : (
-                <p className="mt-2 font-dm-sans text-sm text-mkt-dark-ink/70">Your workspace is ready for intelligence pipelines.</p>
+                <p className="mt-2 text-sm text-mkt-dark-ink/70">Your workspace is ready for intelligence pipelines.</p>
               )}
             </div>
             <Link href="/data/profile">
@@ -108,16 +108,16 @@ export function DashboardWorkspace({ email, org, role }: Props) {
           { label: "Campaigns", value: counts?.campaigns ?? 0 },
         ].map((tile) => (
           <ProductCard key={tile.label} className="text-center">
-            <p className="font-syne text-3xl font-extrabold text-mkt-accent">{tile.value}</p>
-            <p className="mt-1 font-dm-sans text-[10px] font-bold uppercase tracking-[0.14em] text-mkt-muted">{tile.label}</p>
+            <p className="text-3xl font-semibold text-mkt-ink">{tile.value}</p>
+            <p className="mt-1 text-xs font-medium uppercase tracking-wider text-mkt-muted">{tile.label}</p>
           </ProductCard>
         ))}
       </div>
 
       {summary?.executive_summary?.content?.summary ? (
         <ProductCard>
-          <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">Executive summary</h2>
-          <p className="mt-3 font-dm-sans text-sm leading-relaxed text-mkt-muted">
+          <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">Executive summary</h2>
+          <p className="mt-3 text-sm leading-relaxed text-mkt-muted">
             {summary.executive_summary.content.summary}
           </p>
         </ProductCard>
@@ -125,12 +125,12 @@ export function DashboardWorkspace({ email, org, role }: Props) {
 
       {summary?.insight_highlights && summary.insight_highlights.length > 0 ? (
         <ProductCard>
-          <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">Intelligence highlights</h2>
+          <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">Intelligence highlights</h2>
           <ul className="mt-4 space-y-3">
             {summary.insight_highlights.slice(0, 3).map((item, i) => (
               <li key={i} className="rounded-sm border border-mkt-ink/[0.06] bg-mkt-ink/[0.02] p-4">
-                <p className="font-dm-sans text-sm font-semibold text-mkt-ink">{item.title}</p>
-                <p className="mt-1 font-dm-sans text-sm text-mkt-muted line-clamp-2">{item.content?.answer ?? ""}</p>
+                <p className="text-sm font-semibold text-mkt-ink">{item.title}</p>
+                <p className="mt-1 text-sm text-mkt-muted line-clamp-2">{item.content?.answer ?? ""}</p>
               </li>
             ))}
           </ul>
@@ -142,7 +142,7 @@ export function DashboardWorkspace({ email, org, role }: Props) {
 
       {completeness ? (
         <ProductCard>
-          <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">Next steps</h2>
+          <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">Next steps</h2>
           <ul className="mt-4 space-y-2">
             {readinessLinks.map((item) => {
               const ready = completeness[item.key];
@@ -150,7 +150,7 @@ export function DashboardWorkspace({ email, org, role }: Props) {
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    className="flex items-center justify-between rounded-sm border border-mkt-ink/[0.06] px-4 py-3 font-dm-sans text-sm transition-colors hover:border-mkt-accent/25 hover:bg-mkt-accent/[0.04]"
+                    className="flex items-center justify-between rounded-sm border border-mkt-ink/[0.06] px-4 py-3 text-sm transition-colors hover:border-mkt-accent/25 hover:bg-mkt-accent/[0.04]"
                   >
                     <span className="text-mkt-ink">{item.label}</span>
                     <span className={ready ? "text-emerald-600" : "text-mkt-muted"}>{ready ? "Ready" : "Incomplete"}</span>
@@ -163,7 +163,7 @@ export function DashboardWorkspace({ email, org, role }: Props) {
       ) : null}
 
       {summary?.icp_version ? (
-        <p className="font-dm-sans text-sm text-mkt-muted">Latest ICP profile: v{summary.icp_version}</p>
+        <p className="text-sm text-mkt-muted">Latest ICP profile: v{summary.icp_version}</p>
       ) : null}
     </div>
   );

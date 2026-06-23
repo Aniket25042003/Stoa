@@ -132,8 +132,8 @@ export function CsvImportPanel({ onImported }: { onImported?: () => void }) {
 
   return (
     <ProductCard className="space-y-4">
-      <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">Structured CSV import</h2>
-      <p className="font-dm-sans text-sm text-mkt-muted">
+      <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">Structured CSV import</h2>
+      <p className="text-sm text-mkt-muted">
         Upload a CRM export or customer list. We match your columns to contacts, companies, and deals. Imported CSVs also
         appear on Sources &amp; uploads as CRM exports.
       </p>
@@ -142,7 +142,7 @@ export function CsvImportPanel({ onImported }: { onImported?: () => void }) {
         <div className="space-y-2">
           <label
             htmlFor="csv-import-file"
-            className="inline-flex cursor-pointer items-center justify-center rounded-sm border border-mkt-ink/10 bg-[#F8F6F2] px-4 py-2.5 font-dm-sans text-[10px] font-bold uppercase tracking-widest text-mkt-ink shadow-sm transition-all hover:border-mkt-accent/30 hover:text-mkt-accent"
+            className="inline-flex cursor-pointer items-center justify-center rounded-full border border-mkt-border bg-mkt-surface-elevated px-4 py-2.5 text-sm font-medium text-mkt-ink shadow-sm transition-all hover:border-mkt-ink/20 hover:bg-mkt-surface"
           >
             {loading ? "Reading file…" : "Choose file"}
           </label>
@@ -163,11 +163,11 @@ export function CsvImportPanel({ onImported }: { onImported?: () => void }) {
       {step === "map" && file ? (
         <form onSubmit={importCsv} className="space-y-4">
           <div className="rounded-sm border border-mkt-ink/[0.06] bg-mkt-ink/[0.02] p-4">
-            <p className="font-dm-sans text-sm font-medium text-mkt-ink">{file.name}</p>
-            <p className="mt-1 font-dm-sans text-xs text-mkt-muted">
+            <p className="text-sm font-medium text-mkt-ink">{file.name}</p>
+            <p className="mt-1 text-xs text-mkt-muted">
               {headers.length} columns detected · {detectedCount} auto-matched
             </p>
-            <p className="mt-2 font-dm-sans text-xs text-mkt-muted">
+            <p className="mt-2 text-xs text-mkt-muted">
               Columns in file: {headers.join(", ")}
             </p>
           </div>
@@ -177,10 +177,10 @@ export function CsvImportPanel({ onImported }: { onImported?: () => void }) {
           <div className="space-y-5">
             {groupedFields.map(([group, groupFields]) => (
               <div key={group} className="space-y-3">
-                <p className="font-dm-sans text-[9px] font-bold uppercase tracking-[0.22em] text-mkt-accent">{group}</p>
+                <p className="text-xs font-medium uppercase tracking-wider text-mkt-subtle">{group}</p>
                 {groupFields.map((field) => (
                   <label key={field.key} className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
-                    <span className="w-full shrink-0 font-dm-sans text-sm text-mkt-ink sm:w-40">{field.label}</span>
+                    <span className="w-full shrink-0 text-sm text-mkt-ink sm:w-40">{field.label}</span>
                     <ProductSelect
                       className="flex-1"
                       value={mapping[field.key] ?? ""}

@@ -27,8 +27,8 @@ function DataHubHeader() {
       actions={
         completeness ? (
           <div className="text-right">
-            <p className="font-dm-sans text-[9px] font-bold uppercase tracking-[0.18em] text-mkt-muted">Completeness</p>
-            <p className="font-syne text-2xl font-extrabold text-mkt-accent">{completeness.percent}%</p>
+            <p className="text-xs font-medium uppercase tracking-wider text-mkt-subtle">Completeness</p>
+            <p className="text-2xl font-semibold text-mkt-ink">{completeness.percent}%</p>
           </div>
         ) : null
       }

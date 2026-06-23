@@ -230,8 +230,8 @@ export function ConnectionsPanel({ onConnected }: { onConnected?: () => void }) 
   return (
     <div className="space-y-6">
       <div>
-        <p className="font-dm-sans text-[9px] font-bold uppercase tracking-[0.22em] text-mkt-accent">Integrations</p>
-        <p className="mt-2 max-w-2xl font-dm-sans text-sm leading-relaxed text-mkt-muted">
+        <p className="text-xs font-medium uppercase tracking-wider text-mkt-subtle">Integrations</p>
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-mkt-muted">
           Connect your stack by category. Data syncs in the background and feeds Customer Intelligence, competitive
           monitoring, and campaign generation.
         </p>
@@ -240,10 +240,10 @@ export function ConnectionsPanel({ onConnected }: { onConnected?: () => void }) 
       {categories.map((category) => (
         <ProductCard key={category.id} className="space-y-4">
           <div>
-            <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">
+            <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">
               {category.label}
             </h2>
-            <p className="mt-1 font-dm-sans text-sm leading-relaxed text-mkt-muted">{category.description}</p>
+            <p className="mt-1 text-sm leading-relaxed text-mkt-muted">{category.description}</p>
           </div>
 
           <div className="space-y-3">
@@ -257,19 +257,19 @@ export function ConnectionsPanel({ onConnected }: { onConnected?: () => void }) 
                   <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="font-dm-sans text-sm font-semibold text-mkt-ink">{provider.name}</h3>
+                        <h3 className="text-sm font-semibold text-mkt-ink">{provider.name}</h3>
                         {isConnected ? <ProductStatusPill status={connection!.status} /> : null}
                       </div>
-                      <p className="mt-1 font-dm-sans text-sm leading-relaxed text-mkt-muted">
+                      <p className="mt-1 text-sm leading-relaxed text-mkt-muted">
                         {benefitFor(provider)}
                       </p>
                       {isConnected && connection?.last_sync_at ? (
-                        <p className="mt-1 font-dm-sans text-xs text-mkt-muted">
+                        <p className="mt-1 text-xs text-mkt-muted">
                           Last sync: {new Date(connection.last_sync_at).toLocaleString()}
                         </p>
                       ) : null}
                       {isConnected && connection?.last_error ? (
-                        <p className="mt-1 font-dm-sans text-xs text-mkt-accent-warm">{connection.last_error}</p>
+                        <p className="mt-1 text-xs text-mkt-accent-warm">{connection.last_error}</p>
                       ) : null}
                     </div>
 

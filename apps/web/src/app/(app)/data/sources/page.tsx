@@ -6,6 +6,7 @@
  */
 "use client";
 
+import { productLabelClass } from "@/lib/product-typography";
 import {
   ProductButton,
   ProductCard,
@@ -16,7 +17,7 @@ import {
 import { DocumentsList } from "../documents-list";
 import { useDataHub } from "../data-hub-context";
 
-const labelClass = "font-dm-sans text-[9px] font-bold uppercase tracking-[0.18em] text-mkt-muted";
+const labelClass = productLabelClass;
 
 /**
  * Handles data sources page behavior for this part of the Stoa application.
@@ -45,7 +46,7 @@ export default function DataSourcesPage() {
     <div className="space-y-6">
       <ProductCard>
         <form onSubmit={(e) => void handlePaste(e)} className="space-y-4">
-          <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">Paste document</h2>
+          <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">Paste document</h2>
           <div>
             <label className={labelClass}>Title</label>
             <ProductInput value={pasteTitle} onChange={(e) => setPasteTitle(e.target.value)} required className="mt-1.5" />
@@ -75,7 +76,7 @@ export default function DataSourcesPage() {
 
       <ProductCard>
         <form onSubmit={(e) => void handleUpload(e)} className="space-y-4">
-          <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">Upload file</h2>
+          <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">Upload file</h2>
           <div>
             <label className={labelClass}>Title (optional)</label>
             <ProductInput value={uploadTitle} onChange={(e) => setUploadTitle(e.target.value)} className="mt-1.5" />
@@ -92,7 +93,7 @@ export default function DataSourcesPage() {
           <input
             type="file"
             accept=".txt,.csv,.md,.json"
-            className="block font-dm-sans text-sm text-mkt-muted"
+            className="block text-sm text-mkt-muted"
             onChange={(e) => setUploadFile(e.target.files?.[0] ?? null)}
           />
           <ProductButton type="submit" variant="secondary" disabled={!uploadFile}>

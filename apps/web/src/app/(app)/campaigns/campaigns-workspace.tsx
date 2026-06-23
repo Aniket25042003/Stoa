@@ -113,8 +113,8 @@ export function CampaignsWorkspace() {
 
       {loadError ? (
         <ProductCard className="border-mkt-accent-warm/25 bg-mkt-accent-warm/[0.06]">
-          <p className="font-dm-sans text-sm text-mkt-ink">{loadError}</p>
-          <p className="mt-2 font-dm-sans text-xs text-mkt-muted">
+          <p className="text-sm text-mkt-ink">{loadError}</p>
+          <p className="mt-2 text-xs text-mkt-muted">
             Start the API with <code className="font-mono">pnpm dev:api</code> (or your usual FastAPI command), then
             refresh this page.
           </p>
@@ -123,7 +123,7 @@ export function CampaignsWorkspace() {
 
       <ProductCard>
         <form onSubmit={handleCreate} className="space-y-4">
-          <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">
+          <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">
             New campaign brief
           </h2>
           <ProductTextarea
@@ -139,8 +139,8 @@ export function CampaignsWorkspace() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <ProductCard>
-          <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">Campaigns</h2>
-          <ul className="mt-4 space-y-2 font-dm-sans text-sm">
+          <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">Campaigns</h2>
+          <ul className="mt-4 space-y-2 text-sm">
             {campaigns.length === 0 ? (
               <p className="text-mkt-muted">No campaigns yet. Submit a brief to generate your first package.</p>
             ) : (
@@ -169,7 +169,7 @@ export function CampaignsWorkspace() {
 
         <ProductCard>
           <div className="flex items-center justify-between gap-4">
-            <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">Assets</h2>
+            <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">Assets</h2>
             {selected ? <ProductStatusPill status={selected.status} /> : null}
           </div>
           {selected?.assets && Object.keys(selected.assets).length > 0 ? (
@@ -177,14 +177,14 @@ export function CampaignsWorkspace() {
               {JSON.stringify(selected.assets, null, 2)}
             </pre>
           ) : (
-            <p className="mt-4 font-dm-sans text-sm text-mkt-muted">
+            <p className="mt-4 text-sm text-mkt-muted">
               {selected ? `Status: ${selected.status}` : "Select a campaign to view assets."}
             </p>
           )}
         </ProductCard>
       </div>
 
-      {status ? <p className="font-dm-sans text-sm text-mkt-muted">{status}</p> : null}
+      {status ? <p className="text-sm text-mkt-muted">{status}</p> : null}
     </div>
   );
 }

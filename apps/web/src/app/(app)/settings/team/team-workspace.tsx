@@ -6,6 +6,7 @@
  */
 "use client";
 
+import { productLabelClass } from "@/lib/product-typography";
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import {
@@ -43,7 +44,7 @@ type Invite = {
   org_roles?: { name?: string; role_key?: string };
 };
 
-const labelClass = "font-dm-sans text-[9px] font-bold uppercase tracking-[0.18em] text-mkt-muted";
+const labelClass = productLabelClass;
 
 /**
  * Handles team workspace behavior for this part of the Stoa application.
@@ -137,7 +138,7 @@ export function TeamWorkspace() {
       <div className="grid gap-6 lg:grid-cols-[1fr_1.2fr]">
         <ProductCard>
           <form onSubmit={(event) => void invite(event)} className="space-y-4">
-            <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">Invite teammate</h2>
+            <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">Invite teammate</h2>
             <div>
               <label className={labelClass}>Work email</label>
               <ProductInput name="email" type="email" required placeholder="teammate@company.com" className="mt-1.5" />
@@ -167,21 +168,21 @@ export function TeamWorkspace() {
             <ProductButton type="submit" disabled={loading}>
               {loading ? "Creating..." : "Create invite"}
             </ProductButton>
-            {message ? <p className="font-dm-sans text-sm text-mkt-muted">{message}</p> : null}
-            {inviteUrl ? <p className="break-all font-dm-sans text-xs text-mkt-muted">Fallback link: {inviteUrl}</p> : null}
+            {message ? <p className="text-sm text-mkt-muted">{message}</p> : null}
+            {inviteUrl ? <p className="break-all text-xs text-mkt-muted">Fallback link: {inviteUrl}</p> : null}
           </form>
         </ProductCard>
 
         <div className="space-y-6">
           <ProductCard>
-            <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">Members</h2>
+            <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">Members</h2>
             <div className="mt-4 space-y-3">
               {members.map((member) => (
                 <div key={member.id} className="rounded-sm border border-mkt-ink/[0.06] bg-mkt-ink/[0.02] p-4 space-y-2">
-                  <p className="font-dm-sans text-sm font-semibold text-mkt-ink">
+                  <p className="text-sm font-semibold text-mkt-ink">
                     {member.profile?.full_name || member.profile?.email || member.user_id}
                   </p>
-                  <p className="font-dm-sans text-sm text-mkt-muted">{member.profile?.email || "No profile email"}</p>
+                  <p className="text-sm text-mkt-muted">{member.profile?.email || "No profile email"}</p>
                   <ProductSelect
                     value={member.role_id ?? ""}
                     onChange={(e) => void changeMemberRole(member.id, e.target.value)}
@@ -197,14 +198,14 @@ export function TeamWorkspace() {
             </div>
           </ProductCard>
           <ProductCard>
-            <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">Pending invites</h2>
+            <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">Pending invites</h2>
             <div className="mt-4 space-y-3">
               {invites
                 .filter((invite) => !invite.accepted_at && !invite.revoked_at)
                 .map((invite) => (
                   <div key={invite.id} className="rounded-sm border border-mkt-ink/[0.06] bg-mkt-ink/[0.02] p-4">
-                    <p className="font-dm-sans text-sm font-semibold text-mkt-ink">{invite.email}</p>
-                    <p className="font-dm-sans text-sm text-mkt-muted">
+                    <p className="text-sm font-semibold text-mkt-ink">{invite.email}</p>
+                    <p className="text-sm text-mkt-muted">
                       {(invite.org_roles?.name ?? invite.role)} · expires {new Date(invite.expires_at).toLocaleDateString()}
                     </p>
                   </div>

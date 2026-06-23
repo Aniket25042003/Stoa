@@ -6,6 +6,7 @@
  */
 "use client";
 
+import { productLabelClass } from "@/lib/product-typography";
 import {
   ProductButton,
   ProductCard,
@@ -14,7 +15,7 @@ import {
 } from "@/components/product";
 import { useDataHub } from "../data-hub-context";
 
-const labelClass = "font-dm-sans text-[9px] font-bold uppercase tracking-[0.18em] text-mkt-muted";
+const labelClass = productLabelClass;
 
 /**
  * Handles data profile page behavior for this part of the Stoa application.
@@ -47,7 +48,7 @@ export default function DataProfilePage() {
   return (
     <ProductCard>
       <form onSubmit={(e) => void saveProfile(e)} className="space-y-4">
-        <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">Company profile</h2>
+        <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">Company profile</h2>
         <div className="grid gap-4 md:grid-cols-2">
           <div>
             <label className={labelClass}>Company name</label>

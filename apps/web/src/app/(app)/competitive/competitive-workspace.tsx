@@ -66,10 +66,10 @@ export function CompetitiveWorkspace() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <ProductCard>
-          <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">
+          <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">
             Competitors ({competitors.length})
           </h2>
-          <ul className="mt-4 space-y-3 font-dm-sans text-sm">
+          <ul className="mt-4 space-y-3 text-sm">
             {competitors.map((c) => (
               <li key={c.id} className="rounded-sm border border-mkt-ink/[0.06] bg-mkt-ink/[0.02] p-4">
                 <p className="font-semibold text-mkt-ink">{c.name}</p>
@@ -85,10 +85,10 @@ export function CompetitiveWorkspace() {
         </ProductCard>
 
         <ProductCard>
-          <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">
+          <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">
             Alerts ({alerts.length})
           </h2>
-          <ul className="mt-4 space-y-3 font-dm-sans text-sm">
+          <ul className="mt-4 space-y-3 text-sm">
             {alerts.length === 0 ? (
               <p className="text-mkt-muted">No alerts yet. Scans run after competitors are added.</p>
             ) : (

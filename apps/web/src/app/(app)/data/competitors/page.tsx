@@ -6,11 +6,12 @@
  */
 "use client";
 
+import { productLabelClass } from "@/lib/product-typography";
 import { ProductButton, ProductCard, ProductInput } from "@/components/product";
 import { CompetitorsList } from "../competitors-list";
 import { useDataHub } from "../data-hub-context";
 
-const labelClass = "font-dm-sans text-[9px] font-bold uppercase tracking-[0.18em] text-mkt-muted";
+const labelClass = productLabelClass;
 
 /**
  * Handles data competitors page behavior for this part of the Stoa application.
@@ -24,7 +25,7 @@ export default function DataCompetitorsPage() {
     <div className="grid gap-6 lg:grid-cols-2">
       <ProductCard>
         <form onSubmit={(e) => void handleAddCompetitor(e)} className="space-y-4">
-          <h2 className="font-syne text-lg font-extrabold uppercase tracking-tight text-mkt-ink">Add competitor</h2>
+          <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">Add competitor</h2>
           <div>
             <label className={labelClass}>Name</label>
             <ProductInput value={compName} onChange={(e) => setCompName(e.target.value)} required className="mt-1.5" />
