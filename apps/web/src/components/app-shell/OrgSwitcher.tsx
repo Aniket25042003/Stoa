@@ -61,7 +61,7 @@ export function OrgSwitcher() {
         value={active?.org_id ?? ""}
         onChange={(e) => void switchOrg(e.target.value)}
         disabled={loading || orgs.length === 0}
-        className="max-w-[200px] truncate rounded-sm border border-mkt-ink/10 bg-[#F8F6F2] px-3 py-2 font-dm-sans text-xs text-mkt-ink"
+        className="max-w-[200px] truncate rounded-xl border border-mkt-border bg-mkt-surface-elevated px-3 py-2 text-xs text-mkt-ink"
         aria-label="Switch organization"
       >
         {orgs.length === 0 ? <option value="">No organization</option> : null}
@@ -73,7 +73,7 @@ export function OrgSwitcher() {
       </select>
       <Link
         href="/onboarding?mode=create"
-        className="whitespace-nowrap rounded-sm border border-mkt-ink/10 px-3 py-2 font-dm-sans text-[10px] font-bold uppercase tracking-widest text-mkt-muted transition-colors hover:border-mkt-accent/30 hover:text-mkt-accent"
+        className="whitespace-nowrap rounded-full border border-mkt-border px-3 py-2 text-xs font-medium text-mkt-muted transition-colors hover:border-mkt-ink/20 hover:text-mkt-ink"
       >
         Create org
       </Link>

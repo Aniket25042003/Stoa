@@ -25,22 +25,27 @@ export function StatusPill({ status }: { status: string }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-2 rounded-full border px-3 py-1 font-mono text-[11px] font-semibold uppercase tracking-[0.12em]",
+        "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium uppercase tracking-wider",
         failed
-          ? "border-error/25 bg-error-container text-error"
+          ? "border-red-200 bg-red-50 text-red-700"
           : completed
-            ? "border-primary/20 bg-primary/10 text-primary"
-            : "border-outline-variant/60 bg-surface-container-low/80 text-on-surface"
+            ? "border-mkt-border bg-mkt-surface-elevated text-mkt-ink"
+            : "border-mkt-border bg-mkt-surface text-mkt-muted"
       )}
     >
       {pulse ? (
         <motion.span
-          className="inline-block h-2 w-2 rounded-full bg-primary shadow-[0_0_16px_rgb(73_75_214_/_0.75)]"
+          className="inline-block h-2 w-2 rounded-full bg-mkt-accent"
           animate={{ opacity: [1, 0.35, 1], scale: [1, 1.18, 1] }}
           transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
         />
       ) : (
-        <span className={cn("inline-block h-2 w-2 rounded-full", failed ? "bg-error" : completed ? "bg-primary" : "bg-outline")} />
+        <span
+          className={cn(
+            "inline-block h-2 w-2 rounded-full",
+            failed ? "bg-red-600" : completed ? "bg-mkt-accent" : "bg-mkt-subtle"
+          )}
+        />
       )}
       {status}
     </span>

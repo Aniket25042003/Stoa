@@ -45,7 +45,7 @@ function NavLink({
       href={item.href}
       title={collapsed ? item.label : undefined}
       className={cn(
-        "flex items-center gap-3 rounded-sm px-3 py-2.5 font-dm-sans text-[11px] font-semibold transition-colors",
+        "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
         active
           ? "border-l-2 border-mkt-accent bg-mkt-accent/[0.08] text-mkt-accent"
           : "border-l-2 border-transparent text-mkt-muted hover:bg-mkt-ink/[0.03] hover:text-mkt-ink"
@@ -112,7 +112,7 @@ function NavGroupSection({
         onClick={onToggle}
         aria-expanded={expanded}
         className={cn(
-          "flex w-full items-center justify-between rounded-sm px-3 py-2 font-dm-sans text-[9px] font-bold uppercase tracking-[0.18em] transition-colors",
+          "flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-medium uppercase tracking-wider transition-colors",
           groupActive ? "text-mkt-accent" : "text-mkt-muted hover:text-mkt-ink"
         )}
       >
