@@ -7,7 +7,6 @@ import Image from "next/image";
 import {
   BRAND_ICON_SRC_48,
   BRAND_ICON_SRC_80,
-  BRAND_LOGO_SRC,
   BRAND_LOGO_SRC_LG,
   BRAND_LOGO_SRC_MD,
   BRAND_LOGO_SRC_SM,

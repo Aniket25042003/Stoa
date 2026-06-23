@@ -1,7 +1,7 @@
 /**
  * @file apps/web/src/components/product/ProductButton.tsx
  * @layer Frontend Design System
- * @description Implements a reusable React component used by the Stoa web experience.
+ * @description Marketing V3–aligned pill buttons for app surfaces.
  * @dependencies React
  */
 import type { ButtonHTMLAttributes, ReactNode } from "react";
@@ -13,11 +13,10 @@ type ProductButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const variants = {
-  primary:
-    "bg-mkt-accent text-mkt-dark-ink shadow-[0_8px_20px_rgba(79,70,229,0.18)] hover:bg-[#4338CA] active:scale-[0.98]",
+  primary: "mkt-solid-btn border-none text-white",
   secondary:
-    "border border-mkt-ink/10 bg-mkt-surface text-mkt-ink hover:border-mkt-accent/30 hover:text-mkt-accent",
-  ghost: "text-mkt-muted hover:bg-mkt-accent/[0.06] hover:text-mkt-ink",
+    "rounded-full border border-mkt-border bg-mkt-surface-elevated px-4 py-2.5 text-sm font-medium text-mkt-ink hover:border-mkt-ink/20 hover:bg-mkt-surface",
+  ghost: "rounded-full px-4 py-2.5 text-sm font-medium text-mkt-muted hover:bg-mkt-ink/[0.04] hover:text-mkt-ink",
 };
 
 /**
@@ -36,7 +35,7 @@ export function ProductButton({
     <button
       type="button"
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-sm px-4 py-2.5 font-dm-sans text-[10px] font-bold uppercase tracking-widest transition-all disabled:cursor-not-allowed disabled:opacity-50",
+        "inline-flex items-center justify-center gap-2 transition-all disabled:cursor-not-allowed disabled:opacity-50",
         variants[variant],
         className
       )}

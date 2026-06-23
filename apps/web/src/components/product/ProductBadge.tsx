@@ -30,7 +30,7 @@ export function ProductBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-sm border px-2 py-0.5 font-dm-sans text-[9px] font-bold uppercase tracking-[0.14em]",
+        "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium uppercase tracking-wider",
         variants[variant],
         className
       )}

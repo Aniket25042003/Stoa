@@ -19,7 +19,7 @@ export function ProductCard({
   return (
     <div
       className={cn(
-        "rounded-sm border border-mkt-ink/[0.06] bg-mkt-surface p-5 shadow-[0_4px_24px_rgba(20,20,26,0.04)]",
+        "rounded-2xl border border-mkt-border bg-mkt-surface-elevated p-5 shadow-[0_4px_24px_rgba(0,0,0,0.04)]",
         className
       )}
       {...props}
