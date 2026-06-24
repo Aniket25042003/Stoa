@@ -140,7 +140,12 @@ def list_members(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str
     user_ids = [m["user_id"] for m in members]
     profiles: dict[str, dict[str, Any]] = {}
     if user_ids:
-        profiles_res = sb.table("user_profiles").select("*").in_("user_id", user_ids).execute()
+        profiles_res = (
+            sb.table("user_profiles")
+            .select("user_id, full_name, role_type, job_title, use_case")
+            .in_("user_id", user_ids)
+            .execute()
+        )
         profiles = {p["user_id"]: p for p in profiles_res.data or []}
     return {
         "members": [

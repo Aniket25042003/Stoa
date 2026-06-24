@@ -7,6 +7,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { enforceAuthRateLimit } from "@/lib/rate-limit-gate";
+import { rejectIfCrossOrigin } from "@/lib/same-origin";
 
 /**
  * Handles post behavior for this part of the Stoa application.
@@ -15,6 +16,9 @@ import { enforceAuthRateLimit } from "@/lib/rate-limit-gate";
  * @returns Rendered UI or completion signal for the workflow.
  */
 export async function POST(request: Request) {
+  const crossOrigin = rejectIfCrossOrigin(request);
+  if (crossOrigin) return crossOrigin;
+
   let body: { email?: string; password?: string };
   try {
     body = await request.json();

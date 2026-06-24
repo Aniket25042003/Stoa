@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Generate Stoa brand logo derivatives from source files."""
+"""Generate Stoa brand logo derivatives from V3 source JPEGs."""
 
 from __future__ import annotations
 
+import shutil
 import struct
 import zlib
 from pathlib import Path
@@ -13,36 +14,34 @@ ROOT = Path(__file__).resolve().parents[1]
 LOGOS = ROOT / "public" / "images" / "logos"
 SOURCE = LOGOS / "source"
 APP = ROOT / "src" / "app"
-PUBLIC = ROOT / "public"
+IMAGES = ROOT / "public" / "images"
 
 TAGLINE = "Know your market. Ship faster."
-BG = (248, 246, 242)  # #F8F6F2 — marketing/product surface
-INK = (20, 20, 26)  # #14141A
-MUTED = (107, 111, 125)  # #6B6F7D
+SURFACE_LIGHT = (249, 248, 246)  # #F9F8F6 — marketing/product canvas
+SURFACE_DARK = (20, 20, 20)  # #141414 — dark band
+INK = (10, 10, 10)  # #0A0A0A
+MUTED = (107, 107, 107)  # #6B6B6B
 
-SOURCE_STEMS = {
-    "icon": "stoa-icon-1x1",
-    "logo": "stoa-logo-horizontal",
+SOURCE_FILES = {
+    "icon_light": IMAGES / "STOA_icon_light.jpeg",
+    "icon_dark": IMAGES / "STOA_icon_dark.jpeg",
+    "logo_light": IMAGES / "STOA_logo_light.jpeg",
+    "logo_dark": IMAGES / "STOA_logo_dark.jpeg",
 }
 
 
-def open_source(stem: str) -> Image.Image:
-    for ext in (".jpeg", ".jpg", ".png", ".webp"):
-        path = SOURCE / f"{stem}{ext}"
-        if path.exists():
-            return Image.open(path)
-    raise FileNotFoundError(
-        f"Missing source asset '{stem}' in {SOURCE}. "
-        f"Expected one of: {stem}.jpeg, {stem}.jpg, {stem}.png"
-    )
+def open_rgb(path: Path) -> Image.Image:
+    if not path.exists():
+        raise FileNotFoundError(f"Missing source asset: {path}")
+    return Image.open(path).convert("RGB")
 
 
-def remove_theme_bg(
+def key_color_to_alpha(
     img: Image.Image,
-    bg: tuple[int, int, int] = BG,
-    tolerance: int = 20,
+    bg: tuple[int, int, int],
+    tolerance: int = 28,
 ) -> Image.Image:
-    """Make pixels near the app surface color transparent."""
+    """Make pixels near a solid background color transparent."""
     img = img.convert("RGBA")
     pixels = img.load()
     width, height = img.size
@@ -101,21 +100,6 @@ def write_png_chunk(chunk_type: bytes, data: bytes) -> bytes:
     return struct.pack(">I", len(data)) + chunk_type + data + struct.pack(">I", crc)
 
 
-def write_png_rgba(path: Path, width: int, height: int, rgba: bytes) -> None:
-    # Minimal PNG writer for ICO composition without Pillow ICO limitations.
-    raw = b""
-    row_bytes = width * 4
-    for y in range(height):
-        raw += b"\x00" + rgba[y * row_bytes : (y + 1) * row_bytes]
-    compressed = zlib.compress(raw, 9)
-    ihdr = struct.pack(">IIBBBBB", width, height, 8, 6, 0, 0, 0)
-    png = b"\x89PNG\r\n\x1a\n"
-    png += write_png_chunk(b"IHDR", ihdr)
-    png += write_png_chunk(b"IDAT", compressed)
-    png += write_png_chunk(b"IEND", b"")
-    path.write_bytes(png)
-
-
 def save_ico(images: list[tuple[int, Image.Image]], path: Path) -> None:
     entries = []
     image_data_list = []
@@ -143,25 +127,24 @@ def save_ico(images: list[tuple[int, Image.Image]], path: Path) -> None:
 
 
 def build_og_image(logo: Image.Image) -> Image.Image:
-    canvas = Image.new("RGB", (1200, 675), BG)
+    canvas = Image.new("RGB", (1200, 675), SURFACE_LIGHT)
     draw = ImageDraw.Draw(canvas)
 
-    # Subtle radial-ish gradient bands
     for i in range(675):
         t = i / 675
-        shade = tuple(int(BG[j] * (1 - 0.04 * (0.5 - abs(t - 0.5) * 2))) for j in range(3))
+        shade = tuple(int(SURFACE_LIGHT[j] * (1 - 0.03 * (0.5 - abs(t - 0.5) * 2))) for j in range(3))
         draw.line([(0, i), (1200, i)], fill=shade)
 
-    logo_h = 112
+    logo_h = 96
     logo_resized = resize_height(logo, logo_h)
     logo_w = logo_resized.width
 
-    tag_font = load_font(28, bold=False)
+    tag_font = load_font(26, bold=False)
     tag_bbox = draw.textbbox((0, 0), TAGLINE, font=tag_font)
     tag_w = tag_bbox[2] - tag_bbox[0]
     tag_h = tag_bbox[3] - tag_bbox[1]
 
-    gap = 32
+    gap = 28
     block_h = logo_h + gap + tag_h
     block_top = (675 - block_h) // 2
 
@@ -176,53 +159,75 @@ def build_og_image(logo: Image.Image) -> Image.Image:
     return canvas
 
 
+def archive_sources() -> None:
+    SOURCE.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(SOURCE_FILES["icon_light"], SOURCE / "stoa-icon-1x1.jpeg")
+    shutil.copy2(SOURCE_FILES["logo_light"], SOURCE / "stoa-logo-horizontal.jpeg")
+    shutil.copy2(SOURCE_FILES["icon_dark"], SOURCE / "stoa-icon-1x1-dark.jpeg")
+    shutil.copy2(SOURCE_FILES["logo_dark"], SOURCE / "stoa-logo-horizontal-dark.jpeg")
+
+
 def main() -> None:
-    icon_src = open_source(SOURCE_STEMS["icon"])
-    logo_src = open_source(SOURCE_STEMS["logo"])
+    archive_sources()
 
-    icon = trim_transparent(remove_theme_bg(icon_src))
-    logo = trim_transparent(remove_theme_bg(logo_src))
+    icon_light = trim_transparent(key_color_to_alpha(open_rgb(SOURCE_FILES["icon_light"]), SURFACE_LIGHT))
+    icon_dark = trim_transparent(key_color_to_alpha(open_rgb(SOURCE_FILES["icon_dark"]), SURFACE_DARK, tolerance=35))
+    logo_light = trim_transparent(key_color_to_alpha(open_rgb(SOURCE_FILES["logo_light"]), SURFACE_LIGHT))
+    logo_dark = trim_transparent(key_color_to_alpha(open_rgb(SOURCE_FILES["logo_dark"]), SURFACE_DARK, tolerance=35))
 
-    # Master assets (512px height — matches icon master for crisp downscales)
-    icon_master = resize_height(icon, 512)
-    logo_master = resize_height(logo, 512)
+    # Master assets
+    icon_master = resize_height(icon_light, 512)
+    logo_master = resize_height(logo_light, 256)
     save_png(icon_master, LOGOS / "stoa-icon.png")
     save_webp(icon_master, LOGOS / "stoa-icon.webp", quality=95, method=6)
     save_png(logo_master, LOGOS / "stoa-logo.png")
     save_webp(logo_master, LOGOS / "stoa-logo.webp", quality=100, lossless=True)
 
-    # Icon sizes (1.5–2× typical display for retina)
+    # Light icon sizes (retina-friendly)
     for size in (32, 48, 80):
-        sized = resize_height(icon, size)
+        sized = resize_height(icon_light, size)
         save_webp(sized, LOGOS / f"stoa-icon-{size}.webp", quality=95, method=6)
 
-    icon_180 = resize_height(icon, 180)
-    icon_512 = resize_height(icon, 512)
+    icon_180 = resize_height(icon_light, 180)
+    icon_512 = resize_height(icon_light, 512)
     save_png(icon_180, LOGOS / "stoa-icon-180.png")
     save_png(icon_512, LOGOS / "stoa-icon-512.png")
 
-    # Logo sizes at 2× display height for retina (text needs extra pixels)
+    # Dark-surface icon (white mark)
+    for size in (32, 48, 80):
+        sized = resize_height(icon_dark, size)
+        save_webp(sized, LOGOS / f"stoa-icon-on-dark-{size}.webp", quality=95, method=6)
+    save_webp(resize_height(icon_dark, 80), LOGOS / "stoa-icon-on-dark.webp", quality=95, method=6)
+
+    # Logo sizes at 2× display height for retina
     logo_display_heights = {"sm": 36, "md": 44, "lg": 56}
     for name, display_h in logo_display_heights.items():
         export_h = display_h * 2
-        sized = resize_height(logo, export_h)
+        sized = resize_height(logo_light, export_h)
         save_webp(sized, LOGOS / f"stoa-logo-{name}.webp", quality=100, lossless=True)
         save_png(sized, LOGOS / f"stoa-logo-{name}.png")
 
-    # Favicon
-    icon_32 = resize_height(icon, 32)
-    save_png(icon_32, LOGOS / "favicon-32.png")
-    save_ico([(16, icon), (32, icon), (48, icon)], APP / "favicon.ico")
+    # Dark-surface wordmark
+    for name, display_h in logo_display_heights.items():
+        export_h = display_h * 2
+        sized = resize_height(logo_dark, export_h)
+        save_webp(sized, LOGOS / f"stoa-logo-on-dark-{name}.webp", quality=100, lossless=True)
+        save_png(sized, LOGOS / f"stoa-logo-on-dark-{name}.png")
 
-    # Next.js app icons
-    save_png(resize_height(icon, 32), APP / "icon.png")
+    # Favicon + Next.js app icons (from light icon)
+    icon_32 = resize_height(icon_light, 32)
+    save_png(icon_32, LOGOS / "favicon-32.png")
+    save_ico([(16, icon_light), (32, icon_light), (48, icon_light)], APP / "favicon.ico")
+    save_png(resize_height(icon_light, 32), APP / "icon.png")
     save_png(icon_180, APP / "apple-icon.png")
 
     # OG image
-    og = build_og_image(logo)
+    og = build_og_image(logo_light)
     save_webp(og, LOGOS / "og-stoa.webp", quality=92, method=6)
 
     print("Generated brand assets in", LOGOS)
+    print(f"  icon light: {icon_light.width}x{icon_light.height}")
+    print(f"  logo light: {logo_light.width}x{logo_light.height}")
 
 
 if __name__ == "__main__":

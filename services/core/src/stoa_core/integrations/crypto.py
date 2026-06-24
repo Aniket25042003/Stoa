@@ -10,10 +10,20 @@ from __future__ import annotations
 
 import json
 from typing import Any
+from urllib.parse import urlparse
 
 from cryptography.fernet import Fernet, InvalidToken
 
 from stoa_core.config import get_settings
+
+
+def _integrations_require_encryption() -> bool:
+    """True when the API is not running on localhost (integrations outside local dev)."""
+    settings = get_settings()
+    if settings.is_development:
+        return False
+    host = (urlparse(settings.api_base_url).hostname or "").lower()
+    return host not in {"localhost", "127.0.0.1", "::1"}
 
 
 def _fernet() -> Fernet | None:
@@ -40,8 +50,10 @@ def encrypt_credentials(data: dict[str, Any]) -> str:
     f = _fernet()
     payload = json.dumps(data).encode("utf-8")
     if f is None:
-        if get_settings().is_production:
-            raise RuntimeError("INTEGRATION_CREDENTIALS_KEY is required in production")
+        if get_settings().is_production or _integrations_require_encryption():
+            raise RuntimeError(
+                "INTEGRATION_CREDENTIALS_KEY is required when integrations are used outside local development"
+            )
         import base64
 
         return base64.b64encode(payload).decode("ascii")

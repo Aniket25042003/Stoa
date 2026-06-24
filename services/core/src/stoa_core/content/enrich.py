@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from stoa_core.db.supabase import get_supabase_admin
+from stoa_core.db.resource_scope import verify_org_resource
 from stoa_core.llm.router import invoke_text
 from stoa_core.rag.retrieve import retrieve_context
 
@@ -95,18 +95,24 @@ def enrich_content_prompt(
     campaign_voice = ""
     if campaign_id:
         try:
-            sb = get_supabase_admin()
-            res = sb.table("campaigns").select("*").eq("id", campaign_id).execute()
-            if res.data:
-                campaign = res.data[0]
-                campaign_brief = campaign.get("brief") or ""
-                campaign_voice = campaign.get("brand_voice") or ""
-                logger.info("Retrieved linked campaign context: %s", campaign.get("id"))
-                context_text_blocks.append(
-                    f"[Linked Campaign Brief]\n{campaign_brief}\n\n[Brand Voice]\n{campaign_voice}"
-                )
-        except Exception as e:
-            logger.warning("Failed to retrieve linked campaign context: %s", e)
+            campaign = verify_org_resource(
+                "campaigns",
+                campaign_id,
+                org_id,
+                select="id, brief, brand_voice",
+            )
+            campaign_brief = campaign.get("brief") or ""
+            campaign_voice = campaign.get("brand_voice") or ""
+            logger.info("Retrieved linked campaign context: %s", campaign.get("id"))
+            context_text_blocks.append(
+                f"[Linked Campaign Brief]\n{campaign_brief}\n\n[Brand Voice]\n{campaign_voice}"
+            )
+        except ValueError:
+            logger.warning(
+                "Campaign %s does not belong to org %s; skipping campaign context",
+                campaign_id,
+                org_id,
+            )
 
     # 3. Build Prompt for LLM Router
     kb_context_summary = "\n\n".join(context_text_blocks)

@@ -13,6 +13,7 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.config import get_settings
+from app.deps.proxy_gate import ProxySecretMiddleware
 from app.routers import auth_workflow, campaigns, competitive, content, conversations, dashboard, health, ingestion, integrations, intelligence, onboarding, orgs, roles, team, waitlist
 from stoa_core.logging import setup_logging
 from stoa_core.redis.security import validate_redis_security
@@ -23,11 +24,11 @@ setup_logging()
 settings = get_settings()
 validate_redis_security(settings)
 
-if settings.is_production and not settings.invite_token_pepper:
-    raise RuntimeError("INVITE_TOKEN_PEPPER is required in production")
+if not settings.is_development and not settings.invite_token_pepper:
+    raise RuntimeError("INVITE_TOKEN_PEPPER is required outside development")
 
-if settings.is_production and not settings.internal_proxy_secret:
-    raise RuntimeError("INTERNAL_PROXY_SECRET is required in production")
+if not settings.is_development and not settings.internal_proxy_secret:
+    raise RuntimeError("INTERNAL_PROXY_SECRET is required outside development")
 
 _openapi_url = None if settings.is_production else "/openapi.json"
 _docs_url = None if settings.is_production else "/docs"
@@ -69,6 +70,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         return response
 
 
+app.add_middleware(ProxySecretMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(
     CORSMiddleware,

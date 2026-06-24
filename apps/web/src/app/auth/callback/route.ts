@@ -9,6 +9,7 @@ import { NextResponse } from "next/server";
 import { getAuthEntryPath } from "@/lib/auth-entry";
 import { routeForSessionState, safeNextPath, type SessionState } from "@/lib/auth-workflow";
 import { getServerApiBase } from "@/lib/server-api";
+import { trustedProxyHeaders } from "@/lib/proxy-headers";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -59,7 +60,10 @@ export async function GET(request: Request) {
   if (apiBase && session?.access_token) {
     try {
       const res = await fetch(`${apiBase}/v1/auth/session-state`, {
-        headers: { Authorization: `Bearer ${session.access_token}` },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          ...trustedProxyHeaders(request),
+        },
         cache: "no-store",
       });
       if (res.ok) {

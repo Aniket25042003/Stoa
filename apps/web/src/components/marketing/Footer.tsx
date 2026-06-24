@@ -23,7 +23,7 @@ export function Footer() {
       <div className="relative z-10 mx-auto max-w-7xl px-4 py-14 md:px-8 md:py-16">
         <div className="grid gap-12 md:grid-cols-[1.4fr_1fr_1fr]">
           <div>
-            <BrandLogo variant="icon" size="sm" />
+            <BrandLogo variant="icon" size="sm" tone="on-dark" />
             <p className="mt-5 max-w-sm text-xl font-semibold leading-tight tracking-tight text-mkt-dark-ink">
               {BRAND_TAGLINE}
             </p>

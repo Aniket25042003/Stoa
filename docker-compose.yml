@@ -1,9 +1,10 @@
+# Local Redis password defaults to "localdev"; override with REDIS_PASSWORD in .env.
 services:
   redis:
     image: redis:7-alpine
     ports:
       - "127.0.0.1:6379:6379"
-    command: ["redis-server", "--requirepass", "localdev", "--appendonly", "yes"]
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:-localdev}", "--appendonly", "yes"]
     volumes:
       - redis_data:/data
 

@@ -31,19 +31,19 @@ def test_enrich_content_prompt_basic() -> None:
         }
     ]
     
-    mock_campaign = [{"id": "camp-1", "brief": "Launch SaaS feature", "brand_voice": "energetic"}]
-    
-    sb_mock = MagicMock()
-    exec_mock = MagicMock(data=mock_campaign)
-    sb_mock.table.return_value.select.return_value.eq.return_value.execute.return_value = exec_mock
-    
+    mock_campaign = {
+        "id": "camp-1",
+        "brief": "Launch SaaS feature",
+        "brand_voice": "energetic",
+    }
+
     with (
         patch("stoa_core.content.enrich.retrieve_context", return_value=mock_kb_items) as mock_ret,
-        patch("stoa_core.content.enrich.get_supabase_admin", return_value=sb_mock),
+        patch("stoa_core.content.enrich.verify_org_resource", return_value=mock_campaign),
         patch(
             "stoa_core.content.enrich.invoke_text",
-            return_value=("A sleek, professional banner for B2B marketers.", "vertex")
-        ) as mock_invoke
+            return_value=("A sleek, professional banner for B2B marketers.", "vertex"),
+        ) as mock_invoke,
     ):
          
         enriched, refs = enrich_content_prompt(

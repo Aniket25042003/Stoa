@@ -6,9 +6,11 @@
  */
 import { AppShell } from "@/components/app-shell/AppShell";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { getServerApiBase } from "@/lib/server-api";
 import { getServerActiveOrgId } from "@/lib/active-org-server";
+import { trustedProxyHeadersFromHeaders } from "@/lib/proxy-headers";
 import { type SessionState } from "@/lib/auth-workflow";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -29,6 +31,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           headers: {
             Authorization: `Bearer ${session.access_token}`,
             ...(activeOrg ? { "X-Org-Id": activeOrg } : {}),
+            ...trustedProxyHeadersFromHeaders(await headers()),
           },
           cache: "no-store",
         });

@@ -16,8 +16,30 @@ from stoa_core.db.supabase import get_supabase_admin
 from stoa_core.integrations.crypto import decrypt_credentials, encrypt_credentials
 from stoa_core.integrations.registry import get_connector
 from stoa_core.redis.client import publish_event
+from stoa_core.security.client_errors import client_safe_error_message
 
 logger = logging.getLogger(__name__)
+
+
+def connection_for_client(conn: dict[str, Any] | None) -> dict[str, Any] | None:
+    """Strip secrets and sanitize errors before returning to API clients."""
+    if not conn:
+        return None
+    safe = {k: v for k, v in conn.items() if k != "credentials_encrypted"}
+    if safe.get("last_error"):
+        safe["last_error"] = client_safe_error_message(str(safe["last_error"]), context="sync")
+    return safe
+
+
+def _client_safe_sync_error(error: str | None) -> str | None:
+    return client_safe_error_message(error, context="sync")
+
+
+def _publish_integration_event(connection_id: str, payload: dict[str, Any]) -> None:
+    safe = dict(payload)
+    if "error" in safe and safe["error"]:
+        safe["error"] = _client_safe_sync_error(str(safe["error"]))
+    publish_event("integration", connection_id, safe)
 
 
 def oauth_redirect_uri_for(provider: str) -> str:
@@ -90,7 +112,7 @@ def create_connection(
             .limit(1)
             .execute()
         )
-        return (res.data or [None])[0]
+        return connection_for_client((res.data or [None])[0])
 
     ds_res = (
         sb.table("data_sources")
@@ -124,7 +146,7 @@ def create_connection(
         )
         .execute()
     )
-    return (conn_res.data or [None])[0]
+    return connection_for_client((conn_res.data or [None])[0])
 
 
 def get_connection(connection_id: str, org_id: str) -> dict[str, Any] | None:
@@ -166,7 +188,11 @@ def list_connections(org_id: str) -> list[dict[str, Any]]:
         .order("created_at", desc=True)
         .execute()
     )
-    return res.data or []
+    rows = res.data or []
+    for row in rows:
+        if row.get("last_error"):
+            row["last_error"] = client_safe_error_message(str(row["last_error"]), context="sync")
+    return rows
 
 
 def revoke_connection(connection_id: str, org_id: str) -> None:
@@ -251,8 +277,7 @@ def run_sync(connection_id: str, org_id: str, *, full_backfill: bool = False) ->
             }
         ).eq("id", run_id).execute()
 
-        publish_event(
-            "integration",
+        _publish_integration_event(
             connection_id,
             {
                 "status": "failed" if result.error else "completed",
@@ -281,7 +306,7 @@ def run_sync(connection_id: str, org_id: str, *, full_backfill: bool = False) ->
         sb.table("integration_connections").update(
             {"status": "error", "last_error": str(exc)}
         ).eq("id", connection_id).execute()
-        publish_event("integration", connection_id, {"status": "failed", "error": str(exc)})
+        _publish_integration_event(connection_id, {"status": "failed", "error": str(exc)})
         raise
 
 
@@ -309,4 +334,8 @@ def list_sync_runs(connection_id: str, org_id: str, *, limit: int = 10) -> list[
         .limit(limit)
         .execute()
     )
-    return res.data or []
+    rows = res.data or []
+    for row in rows:
+        if row.get("error"):
+            row["error"] = client_safe_error_message(str(row["error"]), context="sync")
+    return rows

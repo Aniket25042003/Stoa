@@ -30,6 +30,7 @@ import {
 } from "@/components/product";
 import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/cn";
+import { safeStoragePublicUrl } from "@/lib/storage-url";
 
 type ContentFile = {
   storage_path: string;
@@ -245,7 +246,7 @@ export function ContentWorkspace() {
   const getReferenceImageFile = (refId: string | null) => {
     if (!refId) return null;
     const refAsset = assets.find((a) => a.id === refId);
-    return refAsset?.files?.[0]?.public_url || null;
+    return safeStoragePublicUrl(refAsset?.files?.[0]?.public_url);
   };
 
   return (
@@ -617,7 +618,7 @@ export function ContentWorkspace() {
                               {asset.asset_type === "image" ? (
                                 // eslint-disable-next-line @next/next/no-img-element
                                 <img
-                                  src={asset.files[0].public_url || ""}
+                                  src={safeStoragePublicUrl(asset.files[0].public_url) ?? ""}
                                   alt={asset.prompt}
                                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                 />
@@ -711,13 +712,13 @@ export function ContentWorkspace() {
                   {selectedAsset.asset_type === "image" ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={selectedAsset.files[0].public_url || ""}
+                      src={safeStoragePublicUrl(selectedAsset.files[0].public_url) ?? ""}
                       alt={selectedAsset.prompt}
                       className="max-w-full max-h-[550px] object-contain"
                     />
                   ) : (
                     <video
-                      src={selectedAsset.files[0].public_url || ""}
+                      src={safeStoragePublicUrl(selectedAsset.files[0].public_url) ?? ""}
                       controls
                       autoPlay
                       loop
@@ -832,9 +833,12 @@ export function ContentWorkspace() {
                   </ProductButton>
                 )}
 
-                {selectedAsset.status === "completed" && selectedAsset.files && selectedAsset.files.length > 0 && (
+                {selectedAsset.status === "completed" &&
+                  selectedAsset.files &&
+                  selectedAsset.files.length > 0 &&
+                  safeStoragePublicUrl(selectedAsset.files[0].public_url) && (
                   <a
-                    href={selectedAsset.files[0].public_url}
+                    href={safeStoragePublicUrl(selectedAsset.files[0].public_url)!}
                     download={`stoa-asset-${selectedAsset.id}`}
                     target="_blank"
                     rel="noreferrer"

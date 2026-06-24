@@ -19,6 +19,7 @@ from app.services.audit import write_audit
 from app.services.org_context import OrgScope, require_permission
 from app.tasks.content import generate_content_asset
 from stoa_core.config import get_settings
+from stoa_core.db.resource_scope import verify_org_resource
 from stoa_core.db.supabase import get_supabase_admin
 from stoa_core.redis.sse import read_events_since
 from stoa_core.security.sanitize import sanitize_user_content
@@ -44,6 +45,25 @@ class ContentGenerateRequest(BaseModel):
     config: ContentConfig | None = None
 
 
+def _validate_content_cross_refs(
+    org_id: str,
+    *,
+    campaign_id: str | None = None,
+    reference_asset_id: str | None = None,
+) -> None:
+    """Ensure linked campaign and reference assets belong to the active org."""
+    if campaign_id:
+        try:
+            verify_org_resource("campaigns", campaign_id, org_id, select="id")
+        except ValueError as exc:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Campaign not found") from exc
+    if reference_asset_id:
+        try:
+            verify_org_resource("content_assets", reference_asset_id, org_id, select="id")
+        except ValueError as exc:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Reference asset not found") from exc
+
+
 class ContentAssetUpdate(BaseModel):
     """Request model for updating an existing content asset (e.g. linking campaign)."""
     campaign_id: str | None = None
@@ -65,11 +85,10 @@ def _sign_asset_files(assets: list[dict[str, Any]], sb: Any, bucket: str) -> Non
                     if isinstance(signed_res, dict):
                         url = url or signed_res.get("signedURL") or signed_res.get("signedUrl")
                     
-                    file_info["public_url"] = url or sb.storage.from_(bucket).get_public_url(storage_path)
+                    if url:
+                        file_info["public_url"] = url
                 except Exception as e:
                     logger.warning("Failed to generate signed URL for path %s: %s", storage_path, e)
-                    # Fallback to public URL in case of configuration variances
-                    file_info["public_url"] = sb.storage.from_(bucket).get_public_url(storage_path)
 
 
 @router.get("")
@@ -113,7 +132,12 @@ def create_content_generation(
     sb = get_supabase_admin()
     prompt = sanitize_user_content(body.prompt)
     config = (body.config or ContentConfig()).model_dump()
-    
+    _validate_content_cross_refs(
+        scope.org_id,
+        campaign_id=body.campaign_id,
+        reference_asset_id=body.reference_asset_id,
+    )
+
     # 1. Insert queued record into public.content_assets
     res = (
         sb.table("content_assets")
@@ -186,6 +210,8 @@ def update_content_asset(
         
     updates: dict[str, Any] = {}
     if body.campaign_id is not None:
+        if body.campaign_id:
+            _validate_content_cross_refs(scope.org_id, campaign_id=body.campaign_id)
         updates["campaign_id"] = body.campaign_id or None
     if body.prompt is not None:
         updates["prompt"] = sanitize_user_content(body.prompt)
@@ -248,7 +274,18 @@ async def content_generation_events(
 ) -> StreamingResponse:
     """SSE endpoint to stream real-time progress of visual asset generation."""
     require_permission(scope, "content:read")
-    
+    sb = get_supabase_admin()
+    asset = (
+        sb.table("content_assets")
+        .select("id")
+        .eq("id", asset_id)
+        .eq("org_id", scope.org_id)
+        .limit(1)
+        .execute()
+    )
+    if not asset.data:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Content asset not found")
+
     async def _gen():
         last_id = request.headers.get("Last-Event-ID", "0-0")
         async for msg_id, data in read_events_since("content", asset_id, last_id):

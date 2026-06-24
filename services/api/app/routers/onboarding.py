@@ -14,7 +14,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
-from app.deps.auth import verify_supabase_jwt, verify_supabase_jwt_payload
+from app.deps.auth import verify_supabase_jwt, verify_supabase_jwt_payload, verify_supabase_jwt_payload_verified
 from app.services.document_ingestion import queue_text_document
 from app.services.audit import write_audit
 from app.services.auth_state import (
@@ -235,7 +235,7 @@ def onboarding_status(user_id: str = Depends(verify_supabase_jwt)) -> dict[str, 
 @router.post("/complete")
 def complete_onboarding(
     body: OnboardingCompleteBody,
-    claims: dict[str, Any] = Depends(verify_supabase_jwt_payload),
+    claims: dict[str, Any] = Depends(verify_supabase_jwt_payload_verified),
 ) -> dict[str, Any]:
     """Handles complete onboarding logic for the surrounding Stoa workflow.
 
