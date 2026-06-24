@@ -176,20 +176,23 @@ def verify_campaign(campaign_id: str) -> dict:
     return row
 
 
-def verify_content_asset(asset_id: str) -> dict:
+def verify_content_asset(asset_id: str, org_id: str | None = None) -> dict:
     """Loads and verifies a content asset resource.
 
     Args:
         asset_id (str): UUID of the content asset.
+        org_id (str | None): When set, assert the asset belongs to this org.
 
     Returns:
         dict: The content asset row from the database.
     """
     asset_id = _parse_uuid(asset_id, "asset_id")
+    if org_id is not None:
+        org_id = _parse_uuid(org_id, "org_id")
     sb = get_supabase_admin()
     res = (
         sb.table("content_assets")
-        .select("id, org_id, campaign_id, asset_type, prompt, config, status, reference_asset_id")
+        .select("id, org_id, campaign_id, asset_type, prompt, config, status, reference_asset_id, files")
         .eq("id", asset_id)
         .limit(1)
         .execute()
@@ -197,4 +200,6 @@ def verify_content_asset(asset_id: str) -> dict:
     row = (res.data or [None])[0]
     if not row:
         raise ValueError(f"Content asset not found: {asset_id}")
+    if org_id is not None and row.get("org_id") != org_id:
+        raise ValueError(f"Content asset {asset_id} does not belong to org {org_id}")
     return row

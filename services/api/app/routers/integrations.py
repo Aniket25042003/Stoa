@@ -13,13 +13,15 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import RedirectResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
+from app.deps.client_ip import trusted_client_ip
 from app.deps.org_scope import require_onboarded_scope
-from app.deps.rate_limit import check_rate_limit
+from app.deps.rate_limit import check_public_rate_limit, check_rate_limit
 from app.services.audit import write_audit
 from app.services.org_context import OrgScope, require_permission
 from app.tasks.integrations import sync_integration_source
 from stoa_core.config import get_settings
 from stoa_core.integrations.oauth_state import consume_oauth_state, create_oauth_state
+from stoa_core.integrations.hubspot_webhook import hubspot_portal_matches_metadata, verify_hubspot_signature_v3
 from stoa_core.integrations.registry import get_connector, list_providers
 from stoa_core.integrations.service import (
     create_connection,
@@ -343,6 +345,19 @@ async def integration_events(
         StreamingResponse: Result produced for the caller.
     """
     require_permission(scope, "data_sources:read")
+    from stoa_core.db.supabase import get_supabase_admin
+
+    sb = get_supabase_admin()
+    conn = (
+        sb.table("integration_connections")
+        .select("id")
+        .eq("id", connection_id)
+        .eq("org_id", scope.org_id)
+        .limit(1)
+        .execute()
+    )
+    if not conn.data:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Connection not found")
 
     async def _gen():
         """Asynchronously handles  gen logic for the surrounding Stoa workflow.
@@ -358,12 +373,38 @@ async def integration_events(
 
 
 @router.post("/webhooks/hubspot")
-async def hubspot_webhook(request: Request) -> dict[str, str]:
+async def hubspot_webhook(request: Request) -> dict[str, str | int]:
     """HubSpot webhook receiver — queues sync for matching portal."""
     from stoa_core.db.supabase import get_supabase_admin
 
+    check_public_rate_limit(trusted_client_ip(request), scope="hubspot_webhook", ip_limit_per_minute=120)
+
+    settings = get_settings()
+    body = await request.body()
+    secret = settings.hubspot_client_secret.strip()
+    # In local development only, allow unsigned webhooks when the client secret is unset.
+    if secret:
+        signature = request.headers.get("X-HubSpot-Signature-v3")
+        timestamp = request.headers.get("X-HubSpot-Request-Timestamp")
+        request_uri = str(request.url.path)
+        if request.url.query:
+            request_uri = f"{request_uri}?{request.url.query}"
+        if not verify_hubspot_signature_v3(
+            client_secret=secret,
+            method=request.method,
+            request_uri=request_uri,
+            body=body,
+            signature=signature,
+            timestamp=timestamp,
+        ):
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid HubSpot webhook signature")
+    elif not settings.is_development:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "HubSpot webhook signature required")
+
     try:
-        payload = await request.json()
+        import json
+
+        payload = json.loads(body.decode("utf-8") if body else "null")
     except Exception:
         return {"status": "ignored"}
 
@@ -380,12 +421,16 @@ async def hubspot_webhook(request: Request) -> dict[str, str]:
     sb = get_supabase_admin()
     res = (
         sb.table("integration_connections")
-        .select("id, org_id")
+        .select("id, org_id, provider_metadata")
         .eq("provider", "hubspot")
         .eq("status", "active")
-        .limit(10)
         .execute()
     )
-    for row in res.data or []:
+    matched = [
+        row
+        for row in (res.data or [])
+        if hubspot_portal_matches_metadata(portal_id, row.get("provider_metadata"))
+    ]
+    for row in matched:
         sync_integration_source.delay(row["id"], row["org_id"])
-    return {"status": "queued", "count": len(res.data or [])}
+    return {"status": "queued", "count": len(matched)}

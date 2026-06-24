@@ -19,6 +19,7 @@ from stoa_core.content.generate_video import generate_video
 from stoa_core.db.supabase import get_supabase_admin
 from stoa_core.rag.ingest import ingest_knowledge
 from stoa_core.redis.client import publish_event
+from stoa_core.security.client_errors import client_safe_error_message
 
 logger = logging.getLogger(__name__)
 
@@ -120,7 +121,7 @@ def generate_content_asset(self, asset_id: str) -> None:
             
             if ref_asset_id:
                 logger.info("Loading reference image for image-to-video from asset: %s", ref_asset_id)
-                ref_asset = verify_content_asset(ref_asset_id)
+                ref_asset = verify_content_asset(ref_asset_id, org_id)
                 ref_files = ref_asset.get("files") or []
                 if ref_files:
                     ref_path = ref_files[0]["storage_path"]
@@ -201,14 +202,13 @@ def generate_content_asset(self, asset_id: str) -> None:
         
     except Exception as exc:
         logger.exception("Content asset generation failed for asset_id=%s", asset_id)
-        # Update state to failed
-        error_msg = str(exc)
+        safe_error = client_safe_error_message(str(exc), context="content") or "Content generation failed."
         sb.table("content_assets").update({
             "status": "failed",
-            "error": error_msg[:1000],
+            "error": safe_error,
         }).eq("id", asset_id).execute()
-        
-        publish_event("content", asset_id, {"status": "failed", "error": error_msg})
+
+        publish_event("content", asset_id, {"status": "failed", "error": safe_error})
         
         # Retry with countdown
         raise self.retry(exc=exc, countdown=30) from exc

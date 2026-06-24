@@ -13,6 +13,7 @@ import pytest
 from app.services.task_context import (
     ALLOWED_CELERY_TASKS,
     assert_allowed_task,
+    verify_content_asset,
     verify_ingestion_job,
 )
 
@@ -43,3 +44,19 @@ def test_verify_ingestion_job_org_mismatch(mock_admin):
 
     with pytest.raises(ValueError, match="org mismatch"):
         verify_ingestion_job(job_id)
+
+
+@patch("app.services.task_context.get_supabase_admin")
+def test_verify_content_asset_org_mismatch(mock_admin):
+    asset_id = str(uuid.uuid4())
+    org_a = str(uuid.uuid4())
+    org_b = str(uuid.uuid4())
+
+    sb = MagicMock()
+    mock_admin.return_value = sb
+    sb.table.return_value.select.return_value.eq.return_value.limit.return_value.execute.return_value = MagicMock(
+        data=[{"id": asset_id, "org_id": org_b}]
+    )
+
+    with pytest.raises(ValueError, match="does not belong"):
+        verify_content_asset(asset_id, org_a)
