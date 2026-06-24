@@ -6,6 +6,7 @@
  */
 import { NextResponse } from "next/server";
 import { ACTIVE_ORG_COOKIE } from "@/lib/active-org";
+import { rejectIfCrossOrigin } from "@/lib/same-origin";
 import { proxyJsonResponse } from "@/lib/server-api";
 
 /**
@@ -15,6 +16,9 @@ import { proxyJsonResponse } from "@/lib/server-api";
  * @returns Rendered UI or completion signal for the workflow.
  */
 export async function POST(request: Request) {
+  const forbidden = rejectIfCrossOrigin(request);
+  if (forbidden) return forbidden;
+
   const upstream = await proxyJsonResponse(request, "/v1/orgs/switch");
   const text = await upstream.text();
   if (!upstream.ok) {

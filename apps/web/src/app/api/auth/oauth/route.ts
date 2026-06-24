@@ -6,7 +6,23 @@
  */
 import { NextResponse } from "next/server";
 import { safeNextPath } from "@/lib/auth-workflow";
+import { rejectIfCrossOrigin } from "@/lib/same-origin";
 import { createClient } from "@/lib/supabase/server";
+
+function isProductionRuntime(): boolean {
+  return (
+    process.env.VERCEL_ENV === "production" ||
+    (process.env.NODE_ENV === "production" && process.env.VERCEL_ENV !== "preview")
+  );
+}
+
+function oauthRedirectOrigin(request: Request): string | null {
+  if (isProductionRuntime()) {
+    const configured = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
+    return configured ?? null;
+  }
+  return request.headers.get("origin") ?? process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+}
 
 /**
  * Handles post behavior for this part of the Stoa application.
@@ -15,6 +31,9 @@ import { createClient } from "@/lib/supabase/server";
  * @returns Rendered UI or completion signal for the workflow.
  */
 export async function POST(request: Request) {
+  const crossOrigin = rejectIfCrossOrigin(request);
+  if (crossOrigin) return crossOrigin;
+
   let body: { provider?: string; next?: string };
   try {
     body = await request.json();
@@ -28,7 +47,10 @@ export async function POST(request: Request) {
   }
 
   const next = safeNextPath(body.next);
-  const origin = request.headers.get("origin") ?? process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const origin = oauthRedirectOrigin(request);
+  if (!origin) {
+    return NextResponse.json({ detail: "App URL is not configured." }, { status: 503 });
+  }
   const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(next)}`;
 
   const supabase = await createClient();

@@ -6,7 +6,9 @@
  */
 import { NextResponse } from "next/server";
 import { getServerApiBase } from "@/lib/server-api";
+import { trustedProxyHeadersFromHeaders } from "@/lib/proxy-headers";
 import { createClient } from "@/lib/supabase/server";
+import { headers } from "next/headers";
 
 /**
  * Handles get behavior for this part of the Stoa application.
@@ -14,6 +16,15 @@ import { createClient } from "@/lib/supabase/server";
  */
 export async function GET() {
   const supabase = await createClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (!user || userError) {
+    return NextResponse.json({ authenticated: false });
+  }
+
   const {
     data: { session },
   } = await supabase.auth.getSession();
@@ -26,19 +37,22 @@ export async function GET() {
   if (!apiBase) {
     return NextResponse.json({
       authenticated: true,
-      email: session.user.email ?? null,
+      email: user.email ?? null,
     });
   }
 
   try {
     const res = await fetch(`${apiBase}/v1/auth/session-state`, {
-      headers: { Authorization: `Bearer ${session.access_token}` },
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+        ...trustedProxyHeadersFromHeaders(await headers()),
+      },
       cache: "no-store",
     });
     if (!res.ok) {
       return NextResponse.json({
         authenticated: true,
-        email: session.user.email ?? null,
+        email: user.email ?? null,
       });
     }
     return NextResponse.json({
@@ -48,7 +62,7 @@ export async function GET() {
   } catch {
     return NextResponse.json({
       authenticated: true,
-      email: session.user.email ?? null,
+      email: user.email ?? null,
     });
   }
 }

@@ -8,6 +8,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
+import { isAllowedOAuthAuthorizeUrl } from "@/lib/integration-oauth-url";
 import { consumeSse } from "@/lib/sse";
 import { INTEGRATION_BENEFITS, groupProvidersByCategory } from "@/lib/integration-catalog";
 import {
@@ -141,8 +142,10 @@ export function ConnectionsPanel({ onConnected }: { onConnected?: () => void }) 
       return;
     }
     const body = await res.json();
-    if (body.authorize_url) {
+    if (body.authorize_url && isAllowedOAuthAuthorizeUrl(body.authorize_url)) {
       window.location.href = body.authorize_url;
+    } else if (body.authorize_url) {
+      showToast(`Invalid OAuth redirect for ${provider.name}`, "error");
     }
   }
 
