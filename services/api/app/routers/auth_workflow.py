@@ -184,7 +184,10 @@ def resend_verification(body: ResendVerificationBody, request: Request) -> dict[
     next_path = _safe_next_path(body.next)
     email_redirect_to = f"{origin}/auth/callback?next={quote(next_path, safe='')}"
     send_signup_confirmation_email(email=body.email, email_redirect_to=email_redirect_to)
-    return {"status": "sent"}
+    return {
+        "status": "sent",
+        "message": "If an account exists for this email, a verification link has been sent.",
+    }
 
 
 class RateLimitGateBody(BaseModel):
