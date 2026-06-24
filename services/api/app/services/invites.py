@@ -27,7 +27,7 @@ def invite_pepper() -> str:
     pepper = settings.invite_token_pepper.strip()
     if pepper:
         return pepper
-    if settings.is_production:
+    if not settings.is_development:
         raise HTTPException(500, "Invite configuration error")
     return "dev-only-insecure-pepper"
 

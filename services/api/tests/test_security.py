@@ -91,3 +91,19 @@ def test_auth_rate_limit_gate_rejects_bad_email():
 def test_roles_catalog_requires_auth():
     res = client.get("/v1/roles/catalog")
     assert res.status_code == 401
+
+
+def test_proxy_secret_required_outside_development(monkeypatch):
+    monkeypatch.setenv("STOA_ENV", "staging")
+    monkeypatch.setenv("INTERNAL_PROXY_SECRET", "proxy-test-secret")
+    from app.config import get_settings
+
+    get_settings.cache_clear()
+    denied = client.get("/v1/roles/catalog")
+    assert denied.status_code == 403
+    allowed = client.get(
+        "/v1/roles/catalog",
+        headers={"X-Stoa-Proxy-Secret": "proxy-test-secret"},
+    )
+    assert allowed.status_code == 401
+    get_settings.cache_clear()

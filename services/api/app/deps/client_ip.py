@@ -8,6 +8,8 @@ Dependencies: FastAPI
 
 from __future__ import annotations
 
+import secrets
+
 from fastapi import Request
 
 from app.config import get_settings
@@ -19,7 +21,7 @@ def trusted_client_ip(request: Request) -> str:
     proxy_secret = settings.internal_proxy_secret
     if proxy_secret:
         incoming = request.headers.get("x-stoa-proxy-secret", "")
-        if incoming == proxy_secret:
+        if secrets.compare_digest(incoming, proxy_secret):
             client_ip = request.headers.get("x-stoa-client-ip", "").strip()
             if client_ip:
                 return client_ip
