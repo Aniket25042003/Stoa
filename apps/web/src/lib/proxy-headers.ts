@@ -4,6 +4,13 @@
  * @description Provides shared client/server utility logic used across the Next.js app.
  * @dependencies standard library / local modules
  */
+function isProductionRuntime(): boolean {
+  return (
+    process.env.VERCEL_ENV === "production" ||
+    (process.env.NODE_ENV === "production" && process.env.VERCEL_ENV !== "preview")
+  );
+}
+
 export function clientIpFromRequest(request: Request): string {
   const forwarded = request.headers.get("x-forwarded-for");
   if (forwarded) {
@@ -22,10 +29,41 @@ export function clientIpFromRequest(request: Request): string {
  * @returns Result consumed by the caller or rendered by React.
  */
 export function trustedProxyHeaders(request: Request): Record<string, string> {
+  const secret = process.env.INTERNAL_PROXY_SECRET;
+  if (isProductionRuntime() && !secret) {
+    throw new Error("INTERNAL_PROXY_SECRET is required in production");
+  }
+
   const headers: Record<string, string> = {
     "X-Stoa-Client-IP": clientIpFromRequest(request),
   };
+  if (secret) {
+    headers["X-Stoa-Proxy-Secret"] = secret;
+  }
+  return headers;
+}
+
+function clientIpFromHeaderList(headerList: Headers): string {
+  const forwarded = headerList.get("x-forwarded-for");
+  if (forwarded) {
+    const part = forwarded.split(",")[0]?.trim();
+    if (part) return part;
+  }
+  const realIp = headerList.get("x-real-ip")?.trim();
+  if (realIp) return realIp;
+  return "unknown";
+}
+
+/** Trusted proxy headers for Server Components (no Request object). */
+export function trustedProxyHeadersFromHeaders(headerList: Headers): Record<string, string> {
   const secret = process.env.INTERNAL_PROXY_SECRET;
+  if (isProductionRuntime() && !secret) {
+    throw new Error("INTERNAL_PROXY_SECRET is required in production");
+  }
+
+  const headers: Record<string, string> = {
+    "X-Stoa-Client-IP": clientIpFromHeaderList(headerList),
+  };
   if (secret) {
     headers["X-Stoa-Proxy-Secret"] = secret;
   }

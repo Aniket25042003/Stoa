@@ -18,6 +18,7 @@ import {
 const PROTECTED_PREFIXES = [
   "/dashboard",
   "/data",
+  "/content",
   "/intelligence",
   "/competitive",
   "/campaigns",

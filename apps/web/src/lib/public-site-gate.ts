@@ -10,6 +10,7 @@
  * - Default: gated on Vercel production (and non-loopback prod builds).
  * - Open the full app: set NEXT_PUBLIC_APP_ENABLED=true on Vercel + redeploy.
  * - Force gate everywhere (e.g. staging): NEXT_PUBLIC_PRELAUNCH_MODE=true
+ * - Gate Vercel preview deployments by default; set NEXT_PUBLIC_PREVIEW_OPEN=true for QA
  */
 
 import { isLoopbackHost, resolveHostname } from "@/lib/host";
@@ -78,8 +79,10 @@ export function isPublicSiteOnlyMode(hostname?: string): boolean {
     return false;
   }
 
-  // Vercel preview deployments stay fully available for QA unless forced above.
-  if (process.env.VERCEL_ENV === "preview") return false;
+  // Preview deployments are gated by default; set NEXT_PUBLIC_PREVIEW_OPEN=true for QA.
+  if (process.env.VERCEL_ENV === "preview") {
+    return process.env.NEXT_PUBLIC_PREVIEW_OPEN !== "true";
+  }
 
   return true;
 }
