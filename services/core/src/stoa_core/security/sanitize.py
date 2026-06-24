@@ -20,6 +20,24 @@ ALLOWED_MIME = {
 }
 ALLOWED_EXTENSIONS = {".txt", ".csv", ".md", ".json"}
 
+_BINARY_SIGNATURES: tuple[tuple[bytes, str], ...] = (
+    (b"%PDF", "PDF"),
+    (b"\x89PNG", "PNG"),
+    (b"GIF87a", "GIF"),
+    (b"GIF89a", "GIF"),
+    (b"\xff\xd8\xff", "JPEG"),
+    (b"PK\x03\x04", "ZIP"),
+    (b"PK\x05\x06", "ZIP"),
+    (b"MZ", "PE executable"),
+    (b"\x7fELF", "ELF"),
+    (b"Rar!", "RAR"),
+    (b"7z\xbc\xaf\x27\x1c", "7z archive"),
+    (b"\xd0\xcf\x11\xe0", "OLE document"),
+    (b"RIFF", "RIFF container"),
+)
+
+_SNIFF_SAMPLE_BYTES = 8192
+
 DOC_TYPE_PATTERN = re.compile(r"^(call_transcript|review|crm_export|note)$")
 
 INJECTION_PATTERNS = [
@@ -58,7 +76,46 @@ def validate_doc_type(doc_type: str) -> None:
         raise UploadValidationError(f"Unsupported document type: {doc_type}")
 
 
-def validate_upload(filename: str, content_type: str | None, size: int, max_bytes: int) -> None:
+def _normalize_mime(content_type: str) -> str:
+    return content_type.split(";", 1)[0].strip().lower()
+
+
+def _detect_binary_signature(data: bytes) -> str | None:
+    for signature, label in _BINARY_SIGNATURES:
+        if data.startswith(signature):
+            return label
+    return None
+
+
+def validate_upload_content(content: bytes, *, ext: str) -> None:
+    """Reject binary payloads masquerading as text uploads."""
+    if not content:
+        return
+    head = content[:16]
+    binary_kind = _detect_binary_signature(head)
+    if binary_kind:
+        raise UploadValidationError(f"Binary content detected ({binary_kind})")
+    sample = content[:_SNIFF_SAMPLE_BYTES]
+    if b"\x00" in sample:
+        raise UploadValidationError("Binary content detected (null bytes)")
+    try:
+        sample.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise UploadValidationError("Upload must be valid UTF-8 text") from exc
+    if ext == ".json":
+        stripped = content.lstrip()
+        if stripped and stripped[:1] not in (b"{", b"["):
+            raise UploadValidationError("JSON upload must start with { or [")
+
+
+def validate_upload(
+    filename: str,
+    content_type: str | None,
+    size: int,
+    max_bytes: int,
+    *,
+    content: bytes | None = None,
+) -> None:
     """Handles validate upload logic for the surrounding Stoa workflow.
 
     Args:
@@ -66,14 +123,20 @@ def validate_upload(filename: str, content_type: str | None, size: int, max_byte
         content_type (str | None): Input value used by this workflow step.
         size (int): Input value used by this workflow step.
         max_bytes (int): Input value used by this workflow step.
+        content (bytes | None): Optional payload for magic-byte sniffing.
     """
     ext = "." + filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
     if ext not in ALLOWED_EXTENSIONS:
         raise UploadValidationError(f"Unsupported file type: {ext or filename}")
-    if content_type and content_type not in ALLOWED_MIME:
+    if not content_type or not content_type.strip():
+        raise UploadValidationError("Content-Type is required")
+    mime = _normalize_mime(content_type)
+    if mime not in ALLOWED_MIME:
         raise UploadValidationError(f"Unsupported MIME type: {content_type}")
     if size > max_bytes:
         raise UploadValidationError(f"File exceeds max size of {max_bytes} bytes")
+    if content is not None:
+        validate_upload_content(content, ext=ext)
 
 
 def sanitize_user_content(text: str) -> str:

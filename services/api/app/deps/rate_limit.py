@@ -18,7 +18,24 @@ _lock = Lock()
 _buckets: dict[str, list[float]] = defaultdict(list)
 _redis_available: bool | None = None
 
-SENSITIVE_SCOPES = frozenset({"auth_signup", "auth_resend", "auth_signin", "waitlist"})
+SENSITIVE_SCOPES = frozenset({"auth_signup", "auth_resend", "auth_signin", "waitlist", "hubspot_webhook"})
+EXPENSIVE_SCOPES = frozenset(
+    {
+        "ask",
+        "campaign_create",
+        "competitor_add",
+        "competitor_delete",
+        "competitor_scan",
+        "competitor_update",
+        "content_generation",
+        "document_update",
+        "icp_rebuild",
+        "insights_refresh",
+        "integrations",
+        "paste",
+        "upload",
+    }
+)
 
 
 def _memory_check(key: str, limit_per_minute: int) -> None:
@@ -76,6 +93,12 @@ def _use_redis() -> bool:
     return _redis_available
 
 
+def _is_development() -> bool:
+    from stoa_core.config import get_settings
+
+    return get_settings().is_development
+
+
 def _fail_closed_for_scope(scope: str) -> bool:
     """Handles  fail closed for scope logic for the surrounding Stoa workflow.
 
@@ -85,7 +108,13 @@ def _fail_closed_for_scope(scope: str) -> bool:
     Returns:
         bool: Result produced for the caller.
     """
-    return scope in SENSITIVE_SCOPES or scope.endswith(":email")
+    if scope.endswith(":email"):
+        return True
+    if scope in SENSITIVE_SCOPES:
+        return True
+    if scope in EXPENSIVE_SCOPES:
+        return not _is_development()
+    return False
 
 
 def check_rate_limit(user_id: str, limit_per_minute: int = 60, *, scope: str = "default") -> None:

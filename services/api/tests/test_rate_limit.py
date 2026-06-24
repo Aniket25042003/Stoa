@@ -10,7 +10,7 @@ from fastapi import HTTPException
 from starlette.requests import Request
 
 from app.deps.client_ip import trusted_client_ip
-from app.deps.rate_limit import SENSITIVE_SCOPES, check_public_rate_limit, check_rate_limit
+from app.deps.rate_limit import EXPENSIVE_SCOPES, SENSITIVE_SCOPES, check_public_rate_limit, check_rate_limit
 
 
 def _request(headers: dict[str, str] | None = None, client_host: str = "203.0.113.10") -> Request:
@@ -63,3 +63,26 @@ def test_public_rate_limit_applies_email_scope(monkeypatch):
     monkeypatch.setattr("app.deps.rate_limit._use_redis", lambda: False)
     with pytest.raises(HTTPException):
         check_public_rate_limit("203.0.113.1", email="user@example.com", scope="auth_signup")
+
+
+def test_expensive_scope_fails_closed_in_staging_without_redis(monkeypatch):
+    monkeypatch.setenv("STOA_ENV", "staging")
+    from app.config import get_settings
+
+    get_settings.cache_clear()
+    monkeypatch.setattr("app.deps.rate_limit._use_redis", lambda: False)
+    with pytest.raises(HTTPException) as exc:
+        check_rate_limit("user-1", 5, scope="upload")
+    assert exc.value.status_code == 503
+    assert "upload" in EXPENSIVE_SCOPES
+    get_settings.cache_clear()
+
+
+def test_expensive_scope_uses_memory_fallback_in_development(monkeypatch):
+    monkeypatch.setenv("STOA_ENV", "development")
+    from app.config import get_settings
+
+    get_settings.cache_clear()
+    monkeypatch.setattr("app.deps.rate_limit._use_redis", lambda: False)
+    check_rate_limit("user-1", 5, scope="upload")
+    get_settings.cache_clear()

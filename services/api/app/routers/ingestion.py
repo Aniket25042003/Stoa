@@ -110,7 +110,13 @@ async def upload_document(
                 raise UploadValidationError("File too large")
             chunks.append(chunk)
         content = b"".join(chunks)
-        validate_upload(file.filename or "upload.txt", file.content_type, len(content), settings.max_upload_bytes)
+        validate_upload(
+            file.filename or "upload.txt",
+            file.content_type,
+            len(content),
+            settings.max_upload_bytes,
+            content=content,
+        )
     except UploadValidationError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
 
