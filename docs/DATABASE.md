@@ -87,6 +87,8 @@ erDiagram
 | `competitive_alerts` | Change alerts       | `summary`, `severity`, `categories`                    |
 | `campaigns`          | Generated campaigns | `brief`, `brand_voice`, `assets` jsonb, `status`       |
 | `content_assets`     | Generated AI assets | `asset_type`, `prompt`, `files` jsonb, `status`        |
+| `analytics_metric_facts` | GA4/PostHog metrics | `dimension_type`, `dimension_value`, `metrics` jsonb |
+| `deal_stage_snapshots` | Deal stall tracking | `deal_id`, `stage`, `entered_at`                       |
 
 
 ### Integrations
