@@ -253,7 +253,7 @@ def _feature_tools(org_id: str) -> list[Any]:
             metadata = row.get("generation_metadata") or {}
             if isinstance(metadata, dict):
                 raw = metadata.get("generation_time_seconds")
-                if isinstance(raw, (int, float)):
+                if isinstance(raw, int | float):
                     durations.append(float(raw))
 
             if status == "failed" and len(failed_examples) < 5:
@@ -348,8 +348,8 @@ def _feature_tools(org_id: str) -> list[Any]:
                 "latest_campaigns": campaigns[:8],
             },
             "note": (
-                "Use the dedicated campaigns flow for creation/execution operations; this tool focuses "
-                "on orchestration intelligence and status visibility."
+                "Use the dedicated campaigns flow for creation/execution operations; "
+                "this tool focuses on orchestration intelligence and status visibility."
             ),
         }
         return _json(payload)
@@ -500,7 +500,8 @@ def run_unified_agent_turn(org_id: str, conversation_id: str, question: str) -> 
                     "You are Stoa's unified GTM Agent. You can call six tools: "
                     "ICP/customer research, content bottleneck, competitive intelligence, "
                     "launch orchestration, campaign analysis, and sales-marketing alignment. "
-                    "Choose only the tools needed, combine outputs, and produce actionable answers. "
+                    "Choose only the tools needed, combine outputs, and "
+                    "produce actionable answers. "
                     "Prefer quantitative metrics and include evidence refs when available. "
                     "If data is insufficient, say so clearly and suggest the next best action."
                 ),
