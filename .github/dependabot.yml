@@ -5,9 +5,28 @@ updates:
     schedule:
       interval: weekly
     groups:
-      web-dependencies:
+      web-patch-minor:
         patterns:
           - "*"
+        update-types:
+          - patch
+          - minor
+    ignore:
+      # Major framework bumps (Next, React, TS, ESLint) need a dedicated upgrade pass.
+      - dependency-name: "next"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "eslint-config-next"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "framer-motion"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "tailwind-merge"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "lucide-react"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: pip
     directory: /services/api
