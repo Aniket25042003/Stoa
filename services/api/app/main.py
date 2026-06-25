@@ -14,7 +14,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.config import get_settings
 from app.deps.proxy_gate import ProxySecretMiddleware
-from app.routers import auth_workflow, campaigns, competitive, content, conversations, dashboard, health, ingestion, integrations, intelligence, onboarding, orgs, roles, team, waitlist
+from app.routers import auth_workflow, alignment, campaign_analysis, campaigns, competitive, content, conversations, dashboard, health, ingestion, integrations, intelligence, onboarding, orgs, roles, team, waitlist
 from stoa_core.logging import setup_logging
 from stoa_core.redis.security import validate_redis_security
 from stoa_core.security.sanitize import UploadValidationError
@@ -92,6 +92,8 @@ app.include_router(intelligence.router)
 app.include_router(conversations.router)
 app.include_router(competitive.router)
 app.include_router(campaigns.router)
+app.include_router(campaign_analysis.router)
+app.include_router(alignment.router)
 app.include_router(content.router)
 app.include_router(team.router)
 app.include_router(waitlist.router)
