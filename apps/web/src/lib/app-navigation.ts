@@ -9,9 +9,7 @@ import {
   Building2,
   Cable,
   FileUp,
-  Image,
   LayoutDashboard,
-  Megaphone,
   Radar,
   Shield,
   Sparkles,
@@ -33,7 +31,13 @@ export type NavGroup = {
 };
 
 export type AppNavEntry =
-  | { type: "link"; href: string; label: string; perm: string; icon: LucideIcon }
+  | {
+      type: "link";
+      href: string;
+      label: string;
+      perm: string;
+      icon: LucideIcon;
+    }
   | { type: "group"; group: NavGroup };
 
 /** Single source of truth for sidebar, mobile nav, and breadcrumbs. */
@@ -52,10 +56,30 @@ export const APP_NAVIGATION: AppNavEntry[] = [
       label: "Workspace",
       icon: Building2,
       items: [
-        { href: "/data/profile", label: "Company profile", perm: "data_sources:read", icon: Building2 },
-        { href: "/data/sources", label: "Sources & uploads", perm: "data_sources:read", icon: FileUp },
-        { href: "/data/integrations", label: "Integrations", perm: "data_sources:read", icon: Cable },
-        { href: "/data/competitors", label: "Competitors", perm: "data_sources:read", icon: Radar },
+        {
+          href: "/data/profile",
+          label: "Company profile",
+          perm: "data_sources:read",
+          icon: Building2,
+        },
+        {
+          href: "/data/sources",
+          label: "Sources & uploads",
+          perm: "data_sources:read",
+          icon: FileUp,
+        },
+        {
+          href: "/data/integrations",
+          label: "Integrations",
+          perm: "data_sources:read",
+          icon: Cable,
+        },
+        {
+          href: "/data/competitors",
+          label: "Competitors",
+          perm: "data_sources:read",
+          icon: Radar,
+        },
       ],
     },
   },
@@ -66,10 +90,12 @@ export const APP_NAVIGATION: AppNavEntry[] = [
       label: "Intelligence",
       icon: Sparkles,
       items: [
-        { href: "/intelligence", label: "Customer intelligence", perm: "intelligence:read", icon: Sparkles },
-        { href: "/competitive", label: "Competitive", perm: "competitive:read", icon: Radar },
-        { href: "/campaigns", label: "Campaigns", perm: "campaigns:read", icon: Megaphone },
-        { href: "/content", label: "Content studio", perm: "content:read", icon: Image },
+        {
+          href: "/agent",
+          label: "GTM agent",
+          perm: "conversations:ask",
+          icon: Sparkles,
+        },
       ],
     },
   },
@@ -80,29 +106,82 @@ export const APP_NAVIGATION: AppNavEntry[] = [
       label: "Organization",
       icon: Users,
       items: [
-        { href: "/settings/team", label: "Team", perm: "team:read", icon: Users },
-        { href: "/settings/roles", label: "Roles & permissions", perm: "roles:manage", icon: Shield },
+        {
+          href: "/settings/team",
+          label: "Team",
+          perm: "team:read",
+          icon: Users,
+        },
+        {
+          href: "/settings/roles",
+          label: "Roles & permissions",
+          perm: "roles:manage",
+          icon: Shield,
+        },
       ],
     },
   },
 ];
 
 export const MOBILE_PRIMARY_TABS = [
-  { id: "home", href: "/dashboard", label: "Home", icon: LayoutDashboard, perm: "intelligence:read" },
-  { id: "data", href: "/data/profile", label: "Data", icon: Building2, perm: "data_sources:read" },
-  { id: "intel", href: "/intelligence", label: "Intel", icon: Sparkles, perm: "intelligence:read" },
+  {
+    id: "home",
+    href: "/dashboard",
+    label: "Home",
+    icon: LayoutDashboard,
+    perm: "intelligence:read",
+  },
+  {
+    id: "data",
+    href: "/data/profile",
+    label: "Data",
+    icon: Building2,
+    perm: "data_sources:read",
+  },
+  {
+    id: "intel",
+    href: "/agent",
+    label: "Agent",
+    icon: Sparkles,
+    perm: "conversations:ask",
+  },
 ] as const;
 
 export const DATA_SUBNAV: NavItem[] = [
-  { href: "/data/profile", label: "Company profile", perm: "data_sources:read", icon: Building2 },
-  { href: "/data/sources", label: "Sources & uploads", perm: "data_sources:read", icon: FileUp },
-  { href: "/data/integrations", label: "Integrations", perm: "data_sources:read", icon: Cable },
-  { href: "/data/competitors", label: "Competitors", perm: "data_sources:read", icon: Radar },
+  {
+    href: "/data/profile",
+    label: "Company profile",
+    perm: "data_sources:read",
+    icon: Building2,
+  },
+  {
+    href: "/data/sources",
+    label: "Sources & uploads",
+    perm: "data_sources:read",
+    icon: FileUp,
+  },
+  {
+    href: "/data/integrations",
+    label: "Integrations",
+    perm: "data_sources:read",
+    icon: Cable,
+  },
+  {
+    href: "/data/competitors",
+    label: "Competitors",
+    perm: "data_sources:read",
+    icon: Radar,
+  },
 ];
 
 export const SETTINGS_SUBNAV: NavItem[] = [
   { href: "/settings/team", label: "Team", perm: "team:read", icon: Users },
-  { href: "/settings/roles", label: "Roles & permissions", perm: "roles:manage", icon: Shield },
+  {
+    href: "/settings/roles",
+    label: "Roles & permissions",
+    perm: "roles:manage",
+    icon: Shield,
+  },
 ];
 
 /**
@@ -135,7 +214,12 @@ export function flattenNavItems(): NavItem[] {
 export function groupIdForPath(pathname: string): string | null {
   for (const entry of APP_NAVIGATION) {
     if (entry.type !== "group") continue;
-    if (entry.group.items.some((item) => pathname === item.href || pathname.startsWith(`${item.href}/`))) {
+    if (
+      entry.group.items.some(
+        (item) =>
+          pathname === item.href || pathname.startsWith(`${item.href}/`),
+      )
+    ) {
       return entry.group.id;
     }
   }
