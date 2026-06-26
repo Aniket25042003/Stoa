@@ -125,12 +125,16 @@ class Settings(BaseSettings):
     zendesk_client_secret: str = ""
     zendesk_subdomain: str = ""
 
-    # Reviews (Apify)
+    # Reviews + Reddit (Apify)
     apify_api_token: str = ""
 
-    # Reddit
-    reddit_access_token: str = ""
-    reddit_user_agent: str = "stoa-intelligence/1.0"
+    # Google OAuth (GA4 + Google Drive)
+    google_client_id: str = ""
+    google_client_secret: str = ""
+
+    # Slack OAuth
+    slack_client_id: str = ""
+    slack_client_secret: str = ""
 
     # Observability
     langsmith_tracing: bool = False
