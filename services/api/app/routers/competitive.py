@@ -17,6 +17,7 @@ from app.deps.rate_limit import check_rate_limit
 from app.services.audit import write_audit
 from app.services.org_context import OrgScope, require_permission
 from app.tasks.competitive import monitor_competitor
+from app.tasks.enrichment import enrich_competitor
 from stoa_core.db.supabase import get_supabase_admin
 from stoa_core.security.ssrf import assert_safe_fetch_url
 
@@ -133,6 +134,7 @@ def add_competitor(body: CompetitorCreate, scope: OrgScope = Depends(require_onb
     comp = (res.data or [None])[0]
     if comp:
         monitor_competitor.delay(comp["id"])
+        enrich_competitor.delay(scope.org_id, comp["id"], user_id=scope.user_id)
         write_audit(scope.org_id, scope.user_id, "competitor.added", "competitor", comp["id"])
     return {"competitor": comp}
 
@@ -180,6 +182,7 @@ def update_competitor(
     pricing_changed = "pricing_url" in updates and updates["pricing_url"] != existing.get("pricing_url")
     if url_changed or pricing_changed:
         monitor_competitor.delay(competitor_id)
+        enrich_competitor.delay(scope.org_id, competitor_id, user_id=scope.user_id)
 
     write_audit(scope.org_id, scope.user_id, "competitor.updated", "competitor", competitor_id)
     return {"competitor": comp}
@@ -256,4 +259,5 @@ def trigger_scan(competitor_id: str, scope: OrgScope = Depends(require_onboarded
     if not res.data:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Competitor not found")
     monitor_competitor.delay(competitor_id)
+    enrich_competitor.delay(scope.org_id, competitor_id, user_id=scope.user_id)
     return {"status": "queued"}

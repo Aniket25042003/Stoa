@@ -18,11 +18,14 @@ ALLOWED_CELERY_TASKS = frozenset(
         "intelligence.precompute_insights",
         "intelligence.rebuild_icp",
         "intelligence.answer_question",
+        "intelligence.schedule_precompute",
         "competitive.monitor",
         "campaigns.generate",
         "content.generate_asset",
         "knowledge.reembed_org",
         "integrations.sync_source",
+        "campaign_analysis.precompute",
+        "alignment.precompute",
     }
 )
 

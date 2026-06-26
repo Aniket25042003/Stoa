@@ -9,6 +9,7 @@
 import { productLabelClass } from "@/lib/product-typography";
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
+import { formatRoleLabel } from "@/lib/user-facing-copy";
 import {
   ProductButton,
   ProductCard,
@@ -108,7 +109,7 @@ export function TeamWorkspace() {
     setMessage(
       body.invite_url
         ? "Invite created. Share the link below if email delivery is delayed."
-        : "Invite created. Supabase will email the teammate when SMTP is configured."
+        : "Invite created. We'll email your teammate when delivery is available."
     );
     await load();
     event.currentTarget.reset();
@@ -180,7 +181,7 @@ export function TeamWorkspace() {
               {members.map((member) => (
                 <div key={member.id} className="rounded-sm border border-mkt-ink/[0.06] bg-mkt-ink/[0.02] p-4 space-y-2">
                   <p className="text-sm font-semibold text-mkt-ink">
-                    {member.profile?.full_name || member.profile?.email || member.user_id}
+                    {member.profile?.full_name || member.profile?.email || "Team member"}
                   </p>
                   <p className="text-sm text-mkt-muted">{member.profile?.email || "No profile email"}</p>
                   <ProductSelect
@@ -206,7 +207,8 @@ export function TeamWorkspace() {
                   <div key={invite.id} className="rounded-sm border border-mkt-ink/[0.06] bg-mkt-ink/[0.02] p-4">
                     <p className="text-sm font-semibold text-mkt-ink">{invite.email}</p>
                     <p className="text-sm text-mkt-muted">
-                      {(invite.org_roles?.name ?? invite.role)} · expires {new Date(invite.expires_at).toLocaleDateString()}
+                      {formatRoleLabel(invite.org_roles?.name ?? invite.role)} · expires{" "}
+                      {new Date(invite.expires_at).toLocaleDateString()}
                     </p>
                   </div>
                 ))}

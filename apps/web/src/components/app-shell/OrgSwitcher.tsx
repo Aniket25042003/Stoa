@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api";
+import { formatRoleLabel } from "@/lib/user-facing-copy";
 
 type OrgEntry = {
   org_id: string;
@@ -67,7 +68,7 @@ export function OrgSwitcher() {
         {orgs.length === 0 ? <option value="">No organization</option> : null}
         {orgs.map((org) => (
           <option key={org.org_id} value={org.org_id}>
-            {org.org?.name ?? org.org_id} ({org.role_name ?? org.role_key})
+            {org.org?.name ?? "Workspace"} ({formatRoleLabel(org.role_name ?? org.role_key)})
           </option>
         ))}
       </select>
