@@ -37,6 +37,29 @@ celery_app = Celery(
     ],
 )
 
+_beat_schedule = {
+    "competitive-rescan-daily": {
+        "task": "enrichment.schedule_competitor_rescans",
+        "schedule": 60 * 60 * 24,
+        "options": {"expires": 3600},
+    },
+    "stale-insight-refresh-weekly": {
+        "task": "intelligence.schedule_precompute",
+        "schedule": 60 * 60 * 24 * 7,
+        "options": {"expires": 3600},
+    },
+    "integration-sync-daily": {
+        "task": "integrations.schedule_syncs",
+        "schedule": 60 * 60 * 24,
+        "options": {"expires": 3600},
+    },
+    "enrichment-job-cleanup-daily": {
+        "task": "enrichment.cleanup_stale_jobs",
+        "schedule": 60 * 60 * 24,
+        "options": {"expires": 3600},
+    },
+}
+
 _conf: dict = {
     "task_serializer": "json",
     "accept_content": ["json"],
@@ -49,6 +72,7 @@ _conf: dict = {
     "broker_connection_retry_on_startup": True,
     "task_default_queue": "stoa",
     "task_create_missing_queues": True,
+    "beat_schedule": _beat_schedule,
 }
 
 _ssl = celery_broker_ssl_config(settings)
