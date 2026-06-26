@@ -16,8 +16,9 @@ from urllib.parse import urlencode
 import httpx
 
 from stoa_core.config import get_settings
-from stoa_core.integrations.base import BaseConnector, ProviderInfo, SyncResult
+from stoa_core.integrations.base import BaseConnector, ProviderInfo, ResourceListResult, SyncResult
 from stoa_core.integrations.registry import register_connector
+from stoa_core.integrations.resource_listers import list_zendesk_views
 from stoa_core.integrations.store import upsert_interaction
 
 logger = logging.getLogger(__name__)
@@ -47,21 +48,35 @@ class ZendeskConnector(BaseConnector):
             auth_type="oauth",
             description="Sync support tickets and conversation threads from Zendesk.",
             scopes=["read"],
+            supports_credential_auth=True,
+            resource_selection_mode="required",
+            resource_kinds=["view"],
         )
 
     @classmethod
-    def oauth_authorize_url(cls, state: str, redirect_uri: str) -> str:
-        """Handles oauth authorize url logic for the surrounding Stoa workflow.
+    def list_discoverable_resources(
+        cls,
+        *,
+        credentials: dict[str, Any],
+        metadata: dict[str, Any],
+        cursor: str | None = None,
+        query: str | None = None,
+    ) -> ResourceListResult:
+        return list_zendesk_views(credentials, metadata)
 
-        Args:
-            state (str): Input value used by this workflow step.
-            redirect_uri (str): Input value used by this workflow step.
-
-        Returns:
-            str: Result produced for the caller.
-        """
+    @classmethod
+    def oauth_authorize_url(
+        cls,
+        state: str,
+        redirect_uri: str,
+        *,
+        oauth_params: dict[str, Any] | None = None,
+    ) -> str | None:
         s = get_settings()
-        subdomain = s.zendesk_subdomain or "subdomain"
+        oauth_params = oauth_params or {}
+        subdomain = (oauth_params.get("subdomain") or s.zendesk_subdomain or "").strip()
+        if not subdomain or not s.zendesk_client_id.strip():
+            return None
         params = {
             "response_type": "code",
             "client_id": s.zendesk_client_id,
@@ -72,20 +87,28 @@ class ZendeskConnector(BaseConnector):
         return f"https://{subdomain}.zendesk.com/oauth/authorizations/new?{urlencode(params)}"
 
     @classmethod
-    def exchange_oauth_code(cls, code: str, redirect_uri: str) -> dict[str, Any]:
+    def exchange_oauth_code(
+        cls,
+        code: str,
+        redirect_uri: str,
+        *,
+        oauth_context: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """Handles exchange oauth code logic for the surrounding Stoa workflow.
 
         Args:
             code (str): Input value used by this workflow step.
             redirect_uri (str): Input value used by this workflow step.
+            oauth_context (dict[str, Any] | None): Values from OAuth state (subdomain, etc.).
 
         Returns:
             dict[str, Any]: Result produced for the caller.
         """
         s = get_settings()
-        subdomain = s.zendesk_subdomain
+        oauth_context = oauth_context or {}
+        subdomain = (oauth_context.get("subdomain") or s.zendesk_subdomain or "").strip()
         if not subdomain:
-            raise ValueError("ZENDESK_SUBDOMAIN is required")
+            raise ValueError("Zendesk subdomain is required")
         with httpx.Client(timeout=30) as client:
             res = client.post(
                 f"https://{subdomain}.zendesk.com/oauth/tokens",
@@ -169,6 +192,13 @@ class ZendeskConnector(BaseConnector):
         """
         result = SyncResult(cursor=dict(cursor))
         metadata = connection.get("provider_metadata") or {}
+        view_ids = metadata.get("view_ids") or []
+        sync_all = metadata.get("sync_all_tickets")
+        if not sync_all and not view_ids:
+            result.error = "No Zendesk views selected — configure access first"
+            return result
+        if view_ids and not sync_all:
+            return cls._sync_views(org_id, credentials, metadata, view_ids, result)
         base, auth = cls._auth(credentials, metadata)
         start_time = cursor.get("start_time", 0)
         page_url = cursor.get("next_page") or f"{base}/incremental/tickets.json?start_time={start_time}"
@@ -248,3 +278,52 @@ class ZendeskConnector(BaseConnector):
                 author = comment.get("author_id")
                 lines.append(f"[{author}]: {body}")
         return "\n".join(lines)
+
+    @classmethod
+    def _sync_views(
+        cls,
+        org_id: str,
+        credentials: dict[str, Any],
+        metadata: dict[str, Any],
+        view_ids: list[str],
+        result: SyncResult,
+    ) -> SyncResult:
+        base, auth = cls._auth(credentials, metadata)
+        try:
+            for view_id in view_ids[:10]:
+                if view_id == "__all__":
+                    continue
+                url = f"{base}/views/{view_id}/tickets.json"
+                with httpx.Client(timeout=60) as client:
+                    res = client.get(
+                        url,
+                        auth=auth if isinstance(auth, httpx.BasicAuth) else None,
+                        headers=auth if isinstance(auth, dict) else None,
+                    )
+                    if res.status_code >= 400:
+                        continue
+                    tickets = res.json().get("tickets") or []
+                result.records_fetched += len(tickets)
+                for ticket in tickets[:30]:
+                    ticket_id = str(ticket.get("id"))
+                    comments_text = cls._fetch_comments(base, auth, ticket_id)
+                    body_text = f"Subject: {ticket.get('subject', '')}\n\n{comments_text}"
+                    saved = upsert_interaction(
+                        org_id,
+                        {
+                            "external_source": SOURCE,
+                            "external_id": ticket_id,
+                            "interaction_type": "support_ticket",
+                            "occurred_at": ticket.get("created_at"),
+                            "title": ticket.get("subject") or f"Ticket {ticket_id}",
+                            "body_text": body_text,
+                            "raw_properties": ticket,
+                        },
+                    )
+                    if saved:
+                        result.records_written += 1
+            result.cursor = {"stage": "done"}
+        except Exception as exc:
+            logger.exception("Zendesk view sync failed")
+            result.error = str(exc)
+        return result

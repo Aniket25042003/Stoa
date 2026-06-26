@@ -14,8 +14,9 @@ from typing import Any
 
 import httpx
 
-from stoa_core.integrations.base import BaseConnector, ProviderInfo, SyncResult
+from stoa_core.integrations.base import BaseConnector, ProviderInfo, ResourceListResult, SyncResult
 from stoa_core.integrations.registry import register_connector
+from stoa_core.integrations.resource_listers import list_intercom_resources
 from stoa_core.integrations.store import upsert_contact, upsert_interaction
 
 logger = logging.getLogger(__name__)
@@ -45,7 +46,20 @@ class IntercomConnector(BaseConnector):
             name="Intercom",
             auth_type="api_key",
             description="Sync conversations and contacts from Intercom.",
+            resource_selection_mode="required",
+            resource_kinds=["tag", "team"],
         )
+
+    @classmethod
+    def list_discoverable_resources(
+        cls,
+        *,
+        credentials: dict[str, Any],
+        metadata: dict[str, Any],
+        cursor: str | None = None,
+        query: str | None = None,
+    ) -> ResourceListResult:
+        return list_intercom_resources(credentials, metadata)
 
     @classmethod
     def connect_with_credentials(cls, credentials: dict[str, Any]) -> dict[str, Any]:
@@ -66,9 +80,10 @@ class IntercomConnector(BaseConnector):
             base_url = "https://api.eu.intercom.io"
         elif region == "au":
             base_url = "https://api.au.intercom.io"
+        metadata: dict[str, Any] = {"base_url": base_url}
         return {
             "access_token": token,
-            "provider_metadata": {"base_url": base_url},
+            "provider_metadata": metadata,
         }
 
     @classmethod
@@ -101,6 +116,11 @@ class IntercomConnector(BaseConnector):
             "Accept": "application/json",
             "Intercom-Version": "2.11",
         }
+        tag_ids = {str(t) for t in (metadata.get("tag_ids") or [])}
+        team_ids = {str(t) for t in (metadata.get("team_ids") or [])}
+        if not tag_ids and not team_ids:
+            result.error = "No Intercom tags or teams selected — configure access first"
+            return result
         starting_after = cursor.get("starting_after")
 
         try:
@@ -117,6 +137,16 @@ class IntercomConnector(BaseConnector):
             result.records_fetched += len(conversations)
 
             for conv in conversations[:20]:
+                conv_tags = {
+                    str(t.get("id"))
+                    for t in (conv.get("tags") or {}).get("tags") or []
+                    if t.get("id") is not None
+                }
+                if tag_ids and not (conv_tags & tag_ids):
+                    continue
+                team_id = str(conv.get("team_assignee_id") or "")
+                if team_ids and team_id and team_id not in team_ids:
+                    continue
                 conv_id = str(conv.get("id"))
                 title = conv.get("title") or f"Conversation {conv_id}"
                 body_text = cls._conversation_text(conv)

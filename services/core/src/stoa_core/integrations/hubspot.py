@@ -17,8 +17,9 @@ import httpx
 
 from stoa_core.config import get_settings
 from stoa_core.integrations.attribution import extract_attribution
-from stoa_core.integrations.base import BaseConnector, ProviderInfo, SyncResult
+from stoa_core.integrations.base import BaseConnector, ProviderInfo, ResourceListResult, SyncResult
 from stoa_core.integrations.registry import register_connector
+from stoa_core.integrations.resource_listers import list_hubspot_resources
 from stoa_core.integrations.store import upsert_account, upsert_contact, upsert_deal
 
 logger = logging.getLogger(__name__)
@@ -68,10 +69,29 @@ class HubSpotConnector(BaseConnector):
             auth_type="oauth",
             description="Sync contacts, companies, and deals from HubSpot CRM.",
             scopes=HUBSPOT_SCOPES,
+            resource_selection_mode="required",
+            resource_kinds=["object_type", "pipeline"],
         )
 
     @classmethod
-    def oauth_authorize_url(cls, state: str, redirect_uri: str) -> str:
+    def list_discoverable_resources(
+        cls,
+        *,
+        credentials: dict[str, Any],
+        metadata: dict[str, Any],
+        cursor: str | None = None,
+        query: str | None = None,
+    ) -> ResourceListResult:
+        return list_hubspot_resources(credentials)
+
+    @classmethod
+    def oauth_authorize_url(
+        cls,
+        state: str,
+        redirect_uri: str,
+        *,
+        oauth_params: dict[str, Any] | None = None,
+    ) -> str:
         """Handles oauth authorize url logic for the surrounding Stoa workflow.
 
         Args:
@@ -91,7 +111,13 @@ class HubSpotConnector(BaseConnector):
         return f"https://app.hubspot.com/oauth/authorize?{urlencode(params)}"
 
     @classmethod
-    def exchange_oauth_code(cls, code: str, redirect_uri: str) -> dict[str, Any]:
+    def exchange_oauth_code(
+        cls,
+        code: str,
+        redirect_uri: str,
+        *,
+        oauth_context: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """Handles exchange oauth code logic for the surrounding Stoa workflow.
 
         Args:
@@ -228,6 +254,9 @@ class HubSpotConnector(BaseConnector):
             SyncResult: Result produced for the caller.
         """
         result = SyncResult(cursor=dict(cursor))
+        metadata = connection.get("provider_metadata") or {}
+        object_types = metadata.get("object_types") or ["companies", "contacts", "deals"]
+        pipeline_ids = {str(p) for p in (metadata.get("pipeline_ids") or [])}
         stage = cursor.get("stage") or "companies"
         after = cursor.get("after")
         pages_done = cursor.get("pages_done", 0)
@@ -251,9 +280,12 @@ class HubSpotConnector(BaseConnector):
             "hs_analytics_source",
         ]
 
-        stages = ["companies", "contacts", "deals"]
+        stages = [s for s in ["companies", "contacts", "deals"] if s in object_types]
+        if not stages:
+            result.error = "No HubSpot object types selected — configure access first"
+            return result
         if stage not in stages:
-            stage = "companies"
+            stage = stages[0]
 
         prop_map = {
             "companies": company_props,
@@ -305,6 +337,8 @@ class HubSpotConnector(BaseConnector):
                         if upsert_contact(org_id, row):
                             result.records_written += 1
                     elif stage == "deals":
+                        if pipeline_ids and str(props.get("pipeline")) not in pipeline_ids:
+                            continue
                         is_won = _parse_bool(props.get("hs_is_closed_won"))
                         attr = extract_attribution(props, external_source=SOURCE)
                         row = {
