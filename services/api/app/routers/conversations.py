@@ -16,6 +16,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from stoa_core.config import get_settings
 from stoa_core.db.supabase import get_supabase_admin
+from stoa_core.rag.conversation_memory import delete_conversation_memory
 from stoa_core.redis.sse import read_events_since
 from stoa_core.security.pii import redact_pii
 from stoa_core.security.sanitize import sanitize_user_content
