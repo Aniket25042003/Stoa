@@ -17,6 +17,7 @@ import {
 } from "@/components/product";
 import { apiFetch } from "@/lib/api";
 import { consumeSse } from "@/lib/sse";
+import { formatSignalKindLabel } from "@/lib/user-facing-copy";
 
 type Signal = { id: string; kind: string; content: string; confidence: number };
 type IcpProfile = { version: number; profile: Record<string, unknown>; signal_count: number };
@@ -37,16 +38,64 @@ type CrmStats = {
   top_loss_reasons?: { reason: string; count: number }[];
 };
 
-/**
- * Handles stat card behavior for this part of the Stoa application.
- * @returns Rendered UI or completion signal for the workflow.
- */
 function StatCard({ label, value }: { label: string; value: string | number }) {
   return (
     <ProductCard className="p-4">
       <p className="text-xs font-medium uppercase tracking-wider text-mkt-subtle">{label}</p>
       <p className="mt-1 text-2xl font-semibold text-mkt-ink">{value}</p>
     </ProductCard>
+  );
+}
+
+function IcpProfileSummary({ data }: { data: Record<string, unknown> }) {
+  const summary = typeof data.summary === "string" ? data.summary : null;
+  const segments = Array.isArray(data.top_segments)
+    ? (data.top_segments as Array<{ name?: string }>)
+    : [];
+  const painPoints = Array.isArray(data.top_pain_points)
+    ? (data.top_pain_points as Array<{ text?: string }>)
+    : [];
+  const objections = Array.isArray(data.top_objections)
+    ? (data.top_objections as Array<{ text?: string }>)
+    : [];
+
+  return (
+    <div className="mt-4 space-y-4 text-sm leading-relaxed text-mkt-muted">
+      {summary ? <p className="text-mkt-ink">{summary}</p> : null}
+      {segments.length > 0 ? (
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wider text-mkt-subtle">Top segments</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5">
+            {segments.slice(0, 5).map((segment, index) => (
+              <li key={index}>{segment.name ?? "Segment"}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {painPoints.length > 0 ? (
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wider text-mkt-subtle">Top pain points</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5">
+            {painPoints.slice(0, 5).map((item, index) => (
+              <li key={index}>{item.text ?? "Pain point"}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {objections.length > 0 ? (
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wider text-mkt-subtle">Top objections</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5">
+            {objections.slice(0, 5).map((item, index) => (
+              <li key={index}>{item.text ?? "Objection"}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {!summary && segments.length === 0 && painPoints.length === 0 && objections.length === 0 ? (
+        <p>Your ICP profile is being prepared from customer data.</p>
+      ) : null}
+    </div>
   );
 }
 
@@ -62,7 +111,6 @@ export function IntelligenceWorkspace() {
   const [crmStats, setCrmStats] = useState<CrmStats | null>(null);
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState<string | null>(null);
-  const [conversationId, setConversationId] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -119,7 +167,6 @@ export function IntelligenceWorkspace() {
     }
     const body = await res.json();
     const convId = body.conversation_id as string;
-    setConversationId(convId);
     const ctrl = new AbortController();
     try {
       await consumeSse(
@@ -171,7 +218,6 @@ export function IntelligenceWorkspace() {
         <CompleteDataPrompt
           title="Add customer data first"
           message="Connect HubSpot, import a CSV, or upload transcripts in the Data hub so we can prepare intelligence answers."
-          missing={["documents_or_integration"]}
         />
       ) : null}
 
@@ -317,9 +363,6 @@ export function IntelligenceWorkspace() {
                 {answer}
               </div>
             ) : null}
-            {conversationId ? (
-              <p className="text-xs text-mkt-muted">Conversation: {conversationId}</p>
-            ) : null}
           </ProductCard>
 
           <ProductCard>
@@ -329,10 +372,8 @@ export function IntelligenceWorkspace() {
                 Rebuild ICP
               </ProductButton>
             </div>
-            {profile ? (
-              <pre className="mt-4 max-h-64 overflow-auto rounded-sm border border-mkt-ink/[0.06] bg-mkt-ink/[0.02] p-4 font-mono text-xs text-mkt-ink">
-                {JSON.stringify(profile.profile, null, 2)}
-              </pre>
+            {profile?.profile ? (
+              <IcpProfileSummary data={profile.profile} />
             ) : (
               <p className="mt-4 text-sm text-mkt-muted">No ICP profile yet.</p>
             )}
@@ -345,7 +386,7 @@ export function IntelligenceWorkspace() {
             <ul className="mt-4 space-y-2 text-sm">
               {signals.slice(0, 10).map((s) => (
                 <li key={s.id} className="flex flex-wrap items-baseline gap-2 text-mkt-muted">
-                  <ProductBadge variant="accent">{s.kind}</ProductBadge>
+                  <ProductBadge variant="accent">{formatSignalKindLabel(s.kind)}</ProductBadge>
                   <span>{s.content}</span>
                 </li>
               ))}

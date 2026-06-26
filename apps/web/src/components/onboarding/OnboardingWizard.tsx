@@ -156,10 +156,14 @@ export function OnboardingWizard() {
       <ProductCard className="bg-mkt-dark-band text-mkt-dark-ink">
         <p className="text-xs font-medium uppercase tracking-wider text-mkt-subtle">Workspace setup</p>
         <h1 className="mt-4 text-3xl font-semibold leading-tight tracking-tight md:text-4xl">
-          Tell {BRAND_NAME} about {context.mode === "invitee_profile" ? "you" : "your company"}.
+          {createMode
+            ? "Create another workspace"
+            : `Tell ${BRAND_NAME} about ${context.mode === "invitee_profile" ? "you" : "your company"}.`}
         </h1>
         <p className="mt-4 font-dm-sans text-sm leading-relaxed text-mkt-dark-ink/70">
-          Complete this guided setup before entering the product.
+          {createMode
+            ? "Set up a new organization without leaving your current account."
+            : "Complete this guided setup before entering the product."}
         </p>
         <div className="mt-6">
           <div className="flex justify-between text-xs text-mkt-dark-ink/70">
@@ -227,6 +231,11 @@ export function OnboardingWizard() {
         ) : null}
 
         <div className="flex flex-wrap gap-3 pt-2">
+          {createMode && stepIndex === 0 ? (
+            <ProductButton variant="ghost" onClick={() => router.push("/dashboard")}>
+              Cancel
+            </ProductButton>
+          ) : null}
           {stepIndex > 0 ? (
             <ProductButton variant="secondary" onClick={() => setStepIndex((i) => i - 1)}>
               Back

@@ -15,6 +15,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
 from app.deps.auth import verify_supabase_jwt, verify_supabase_jwt_payload, verify_supabase_jwt_payload_verified
+from app.tasks.enrichment import enrich_company, seed_competitors_from_onboarding
 from app.services.document_ingestion import queue_text_document
 from app.services.audit import write_audit
 from app.services.auth_state import (
@@ -31,6 +32,7 @@ from app.services.org_summary import build_completeness_for_org
 from stoa_core.db.supabase import get_supabase_admin
 from stoa_core.org.roles import seed_system_roles_for_org
 from stoa_core.rag.ingest import ingest_knowledge, profile_to_knowledge_text
+from stoa_core.enrichment.jobs import pending_jobs_for_org
 from stoa_core.security.permissions import SYSTEM_ROLE_OWNER, SYSTEM_ROLE_VIEWER
 
 router = APIRouter(prefix="/v1/onboarding", tags=["onboarding"])
@@ -223,12 +225,16 @@ def onboarding_status(user_id: str = Depends(verify_supabase_jwt)) -> dict[str, 
         .execute()
     )
     jobs_pending = (pending_jobs.count or 0) > 0
+    enrichment_pending = pending_jobs_for_org(target_org) > 0
 
+    partial_ready = bool(item) and not jobs_pending
     return {
-        "ready": bool(item) and not jobs_pending,
+        "ready": partial_ready and not enrichment_pending,
+        "partial_ready": partial_ready,
         "org_id": target_org,
         "knowledge_item_id": item.get("id") if item else None,
         "pending_ingestion_jobs": pending_jobs.count or 0,
+        "pending_enrichment_jobs": pending_jobs_for_org(target_org),
     }
 
 
@@ -325,9 +331,14 @@ def complete_onboarding(
             title=f"{org.get('name', 'Company')} profile",
             text=profile_to_knowledge_text(org, user_profile=user_profile_context),
             feature_origin="onboarding",
-            uri=f"org_profile:{org_id}",
+            uri=f"org:{org_id}:company_profile",
             metadata={"source": "onboarding", **{k: v for k, v in user_profile_context.items() if v}},
         )
+        enrich_company.delay(org_id, user_id=user_id, idempotency_suffix="onboarding")
+
+        competitor_notes = profile_payload.get("known_competitors_notes")
+        if isinstance(competitor_notes, str) and competitor_notes.strip():
+            seed_competitors_from_onboarding.delay(org_id, competitor_notes.strip(), user_id=user_id)
 
         if body.seed_content and body.seed_content.strip():
             try:
