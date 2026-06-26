@@ -13,8 +13,9 @@ from typing import Any
 
 import httpx
 
-from stoa_core.integrations.base import BaseConnector, ProviderInfo, SyncResult
+from stoa_core.integrations.base import BaseConnector, ProviderInfo, ResourceListResult, SyncResult
 from stoa_core.integrations.registry import register_connector
+from stoa_core.integrations.resource_listers import list_jira_projects
 from stoa_core.integrations.store import upsert_interaction
 
 logger = logging.getLogger(__name__)
@@ -43,6 +44,8 @@ class JiraConnector(BaseConnector):
             name="Jira",
             auth_type="api_key",
             description="Import Jira issues and comments as customer feedback signals.",
+            resource_selection_mode="required",
+            resource_kinds=["project"],
         )
 
     @classmethod
@@ -58,15 +61,25 @@ class JiraConnector(BaseConnector):
         domain = credentials.get("domain", "").strip().rstrip("/")
         email = credentials.get("email", "").strip()
         api_token = credentials.get("api_token", "").strip()
-        jql = credentials.get("jql", "ORDER BY updated DESC")
         if not domain or not email or not api_token:
             raise ValueError("Jira domain, email, and api_token are required")
         return {
             "domain": domain,
             "email": email,
             "api_token": api_token,
-            "provider_metadata": {"domain": domain, "jql": jql},
+            "provider_metadata": {"domain": domain},
         }
+
+    @classmethod
+    def list_discoverable_resources(
+        cls,
+        *,
+        credentials: dict[str, Any],
+        metadata: dict[str, Any],
+        cursor: str | None = None,
+        query: str | None = None,
+    ) -> ResourceListResult:
+        return list_jira_projects(credentials, metadata)
 
     @classmethod
     def sync(
@@ -93,7 +106,15 @@ class JiraConnector(BaseConnector):
         result = SyncResult()
         metadata = connection.get("provider_metadata") or {}
         domain = metadata.get("domain") or credentials.get("domain")
-        jql = metadata.get("jql") or "ORDER BY updated DESC"
+        project_keys = metadata.get("project_keys") or []
+        jql = metadata.get("jql")
+        if not jql and project_keys:
+            quoted = ", ".join(f'"{k}"' for k in project_keys)
+            jql = f"project in ({quoted}) ORDER BY updated DESC"
+        if not jql:
+            result.error = "No Jira projects selected — configure access first"
+            return result
+        jql = jql or "ORDER BY updated DESC"
         auth = httpx.BasicAuth(credentials["email"], credentials["api_token"])
         start_at = int(cursor.get("start_at", 0))
 

@@ -16,8 +16,9 @@ from typing import Any
 import httpx
 
 from stoa_core.analytics.store import upsert_metric_facts_batch
-from stoa_core.integrations.base import BaseConnector, ProviderInfo, SyncResult
+from stoa_core.integrations.base import BaseConnector, ProviderInfo, ResourceListResult, SyncResult
 from stoa_core.integrations.registry import register_connector
+from stoa_core.integrations.resource_listers import list_posthog_projects
 from stoa_core.rag.ingest import ingest_knowledge
 
 logger = logging.getLogger(__name__)
@@ -43,19 +44,28 @@ class PosthogConnector(BaseConnector):
             name="PostHog",
             auth_type="api_key",
             description="Import aggregated product usage summaries from PostHog.",
+            resource_selection_mode="required",
+            resource_kinds=["project"],
         )
 
     @classmethod
     def connect_with_credentials(cls, credentials: dict[str, Any]) -> dict[str, Any]:
         api_key = credentials.get("api_key", "").strip()
-        project_id = credentials.get("project_id", "").strip()
-        if not api_key or not project_id:
-            raise ValueError("PostHog api_key and project_id are required")
+        if not api_key:
+            raise ValueError("PostHog api_key is required")
         host = credentials.get("host", "https://app.posthog.com").rstrip("/")
-        return {
-            "api_key": api_key,
-            "provider_metadata": {"project_id": project_id, "host": host},
-        }
+        return {"api_key": api_key, "provider_metadata": {"host": host}}
+
+    @classmethod
+    def list_discoverable_resources(
+        cls,
+        *,
+        credentials: dict[str, Any],
+        metadata: dict[str, Any],
+        cursor: str | None = None,
+        query: str | None = None,
+    ) -> ResourceListResult:
+        return list_posthog_projects(credentials, metadata)
 
     @classmethod
     def _fetch_trend(
@@ -96,6 +106,9 @@ class PosthogConnector(BaseConnector):
         result = SyncResult()
         metadata = connection.get("provider_metadata") or {}
         project_id = metadata.get("project_id")
+        if not project_id:
+            result.error = "No PostHog project selected — configure access first"
+            return result
         host = metadata.get("host", "https://app.posthog.com")
         connection_id = connection.get("id")
         headers = {"Authorization": f"Bearer {credentials['api_key']}"}

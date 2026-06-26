@@ -15,8 +15,15 @@ from typing import Any
 import httpx
 
 from stoa_core.analytics.store import upsert_metric_facts_batch
-from stoa_core.integrations.base import BaseConnector, ProviderInfo, SyncResult
+from stoa_core.integrations.base import BaseConnector, ProviderInfo, ResourceListResult, SyncResult
+from stoa_core.integrations.google_oauth import (
+    GA4_SCOPE,
+    exchange_google_code,
+    google_authorize_url,
+    google_oauth_configured,
+)
 from stoa_core.integrations.registry import register_connector
+from stoa_core.integrations.resource_listers import list_ga4_properties
 from stoa_core.rag.ingest import ingest_knowledge
 
 logger = logging.getLogger(__name__)
@@ -43,18 +50,52 @@ class Ga4Connector(BaseConnector):
             name="Google Analytics 4",
             auth_type="oauth",
             description="Import aggregated traffic and conversion summaries from GA4.",
+            scopes=[GA4_SCOPE],
+            supports_credential_auth=True,
+            resource_selection_mode="required",
+            resource_kinds=["property"],
         )
+
+    @classmethod
+    def oauth_authorize_url(
+        cls,
+        state: str,
+        redirect_uri: str,
+        *,
+        oauth_params: dict[str, Any] | None = None,
+    ) -> str | None:
+        if not google_oauth_configured():
+            return None
+        return google_authorize_url(state, redirect_uri, [GA4_SCOPE])
+
+    @classmethod
+    def exchange_oauth_code(
+        cls,
+        code: str,
+        redirect_uri: str,
+        *,
+        oauth_context: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        token_data = exchange_google_code(code, redirect_uri)
+        return token_data
 
     @classmethod
     def connect_with_credentials(cls, credentials: dict[str, Any]) -> dict[str, Any]:
         token = credentials.get("access_token", "").strip()
-        property_id = credentials.get("property_id", "").strip()
-        if not token or not property_id:
-            raise ValueError("GA4 access token and property_id are required")
-        return {
-            "access_token": token,
-            "provider_metadata": {"property_id": property_id},
-        }
+        if not token:
+            raise ValueError("GA4 access token is required")
+        return {"access_token": token, "provider_metadata": {}}
+
+    @classmethod
+    def list_discoverable_resources(
+        cls,
+        *,
+        credentials: dict[str, Any],
+        metadata: dict[str, Any],
+        cursor: str | None = None,
+        query: str | None = None,
+    ) -> ResourceListResult:
+        return list_ga4_properties(credentials)
 
     @classmethod
     def _run_report(
@@ -95,6 +136,9 @@ class Ga4Connector(BaseConnector):
         result = SyncResult()
         metadata = connection.get("provider_metadata") or {}
         property_id = metadata.get("property_id")
+        if not property_id:
+            result.error = "No GA4 property selected — configure access first"
+            return result
         connection_id = connection.get("id")
         headers = {"Authorization": f"Bearer {credentials['access_token']}"}
         period_end = date.today()
