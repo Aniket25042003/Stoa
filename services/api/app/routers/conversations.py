@@ -11,12 +11,13 @@ import json
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from stoa_core.config import get_settings
 from stoa_core.db.supabase import get_supabase_admin
 from stoa_core.rag.conversation_memory import delete_conversation_memory
+from stoa_core.redis.ask_idempotency import get_idempotent_ask, store_idempotent_ask
 from stoa_core.redis.sse import read_events_since
 from stoa_core.security.pii import redact_pii
 from stoa_core.security.sanitize import sanitize_user_content
@@ -68,7 +69,9 @@ def list_conversations(
 
 @router.post("/ask")
 def ask_question(
-    body: AskBody, scope: OrgScope = Depends(require_onboarded_scope)
+    body: AskBody,
+    scope: OrgScope = Depends(require_onboarded_scope),
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
 ) -> dict[str, Any]:
     """Handles ask question logic for the surrounding Stoa workflow.
 
@@ -83,6 +86,16 @@ def ask_question(
     check_rate_limit(scope.user_id, get_settings().rate_limit_per_minute, scope="ask")
     question = redact_pii(sanitize_user_content(body.question))
     sb = get_supabase_admin()
+
+    if idempotency_key:
+        cached = get_idempotent_ask(scope.org_id, scope.user_id, idempotency_key.strip())
+        if cached and cached.get("conversation_id"):
+            return {
+                "conversation_id": cached["conversation_id"],
+                "message": {"id": cached.get("user_message_id")},
+                "status": "processing",
+                "idempotent": True,
+            }
 
     if body.conversation_id:
         existing = (
@@ -119,7 +132,19 @@ def ask_question(
         .execute()
     )
     user_msg = (msg_res.data or [None])[0]
-    answer_intelligence_question.delay(conv_id, scope.org_id, question, scope.user_id)
+    user_message_id = (user_msg or {}).get("id") if isinstance(user_msg, dict) else None
+    if idempotency_key and user_message_id:
+        store_idempotent_ask(
+            scope.org_id,
+            scope.user_id,
+            idempotency_key.strip(),
+            question=question,
+            conversation_id=conv_id,
+            user_message_id=str(user_message_id),
+        )
+    answer_intelligence_question.delay(
+        conv_id, scope.org_id, question, scope.user_id, str(user_message_id) if user_message_id else None
+    )
     write_audit(
         scope.org_id, scope.user_id, "conversation.asked", "conversation", conv_id
     )

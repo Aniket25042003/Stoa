@@ -23,6 +23,9 @@ The platform does not run multi-agent LangGraph loops on each request. Instead, 
 | SSE progress events | Redis streams `stoa:{scope}:{id}:events` | 72h TTL, 10k maxlen |
 | Query embedding cache | Redis `stoa:kb:qemb:{org}:{hash}` | 1800s TTL |
 | Retrieval result cache | Redis `stoa:kb:result:{org}:{version}:{hash}` | 3600s TTL |
+| Query rewrite cache | Redis `stoa:kb:rewrite:{org}:{version}:{hash}` | 3600s TTL |
+| RAG answer cache | Redis `stoa:kb:answer:{org}:{version}:{hash}` | 1800s TTL |
+| Ask idempotency | Redis `stoa:ask:idempotency:{org}:{user}:{key}` | 24h TTL |
 | KB version counter | Redis `stoa:kb:version:{org}` | Bumped on ingest |
 | Enrichment job status | `enrichment_jobs` table | Permanent audit trail |
 | Company web research | `knowledge_chunks` (kind=company_web_research) | On onboarding / profile update |
@@ -34,22 +37,24 @@ The platform does not run multi-agent LangGraph loops on each request. Instead, 
 1. **Precomputed path** — Dashboard and intelligence pages read `precomputed_insights` directly (no LLM call).
 2. **Ad-hoc Q&A path**:
    - User message saved to `messages`
-   - Celery task `answer_intelligence_question` runs
-   - `retrieve_context(org_id, question, kinds=INTELLIGENCE_KINDS)` fetches ranked chunks
-   - `answer_question(question, context)` builds prompt with up to 30 context lines
+   - Celery task `answer_intelligence_question` runs (idempotent per user message)
+   - `classify_agent_route()` chooses `rag_only` vs `tools`
+   - `retrieve_context_prepared()` may rewrite the query, then fetches ranked chunks
+   - RAG-only: `answer_question()` with cached answers when applicable
+   - Tools route: LangChain agent with six precomputed feature tools (premium)
    - Assistant message inserted into `messages`
    - SSE event published for realtime UI update
 
 ### Context window management
 
-There is **no conversation history summarization or sliding window** in the active stack. Context management happens at retrieval time:
+The unified agent uses **short-term chat history** in the LangChain prompt (recent messages + compacted older turns). Long-term memory comes from `retrieve_context_prepared()`:
 
-1. **Hybrid search** returns ~40 candidates
-2. **Rerank + MMR** reduces to ~12 diverse chunks
-3. **Token budget** (`RETRIEVAL_TOKEN_BUDGET=2000`) trims total tokens
-4. **Answer prompt** uses top 30 context items max
-
-Prior conversation messages are stored but **not** injected into the RAG answer prompt today — each question is answered from retrieved KB context only.
+1. Optional cheap query rewrite for short / pronoun-heavy questions
+2. Hybrid search returns ~40 candidates per search query (multi-query merge when rewritten)
+3. **Rerank + MMR** reduces to ~12 diverse chunks
+4. **Token budget** (`RETRIEVAL_TOKEN_BUDGET=2000`) trims total tokens
+5. **Thread filter** on `conversation_memory` chunks when `conversation_id` is set
+6. Conversation checkpoints every 6 user turns via `maybe_checkpoint_conversation()`
 
 ## Architecture diagram
 
@@ -83,6 +88,8 @@ Prior conversation messages are stored but **not** injected into the RAG answer 
 ## Key code callouts
 
 - **`answer_intelligence_question`** — [`services/api/app/tasks/intelligence.py`](../services/api/app/tasks/intelligence.py) — Celery task orchestrating retrieve + answer.
+- **`run_unified_agent_turn()`** — [`services/core/src/stoa_core/agent/unified_agent.py`](../services/core/src/stoa_core/agent/unified_agent.py) — Route classification, prepared retrieval, tools vs RAG-only.
+- **`retrieve_context_prepared()`** — [`services/core/src/stoa_core/rag/query_prepare.py`](../services/core/src/stoa_core/rag/query_prepare.py) — Query rewrite + multi-query retrieval.
 - **`retrieve_context()`** — [`services/core/src/stoa_core/rag/retrieve.py`](../services/core/src/stoa_core/rag/retrieve.py) — Cached hybrid retrieval.
 - **`publish_event()`** — [`services/core/src/stoa_core/redis/client.py`](../services/core/src/stoa_core/redis/client.py) — Redis stream SSE events.
 - **`precompute_answers()`** — [`services/core/src/stoa_core/insights/common.py`](../services/core/src/stoa_core/insights/common.py) — Background insight generation.

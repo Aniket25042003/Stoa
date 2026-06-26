@@ -15,9 +15,9 @@ from stoa_core.insights.common import build_executive_summary, precompute_answer
 from stoa_core.intelligence.icp import build_icp_profile
 from stoa_core.intelligence.structured import aggregate_crm_stats
 from stoa_core.rag.answer import answer_question
-from stoa_core.rag.ingest import ingest_knowledge, json_artifact_to_text
 from stoa_core.rag.cache import get_kb_version
-from stoa_core.rag.retrieve import retrieve_context
+from stoa_core.rag.ingest import ingest_knowledge, json_artifact_to_text
+from stoa_core.redis.ask_idempotency import find_existing_assistant_reply
 from stoa_core.redis.client import publish_event
 from stoa_core.security.pii import redact_pii
 
@@ -265,6 +265,7 @@ def answer_intelligence_question(
     org_id: str,
     question: str,
     user_id: str | None = None,
+    user_message_id: str | None = None,
 ) -> None:
     """Handles answer intelligence question logic for the surrounding Stoa workflow.
 
@@ -276,6 +277,22 @@ def answer_intelligence_question(
     sb = get_supabase_admin()
     try:
         verify_conversation_org(conversation_id, org_id)
+
+        if user_message_id:
+            existing = find_existing_assistant_reply(
+                sb,
+                conversation_id=conversation_id,
+                user_message_id=user_message_id,
+            )
+            if existing:
+                answer = redact_pii(str(existing.get("content") or ""))
+                publish_event(
+                    "conversation",
+                    conversation_id,
+                    {"status": "completed", "answer": answer, "idempotent": True},
+                )
+                return
+
         publish_event(
             "conversation",
             conversation_id,
@@ -285,12 +302,16 @@ def answer_intelligence_question(
         safe_question = redact_pii(question)
         result = run_unified_agent_turn(org_id, conversation_id, safe_question)
 
-        # Agent fallback safety for empty outputs
+        fallback_context = result.retrieved_context or []
+        retrieval_status = "ok" if fallback_context else "no_matches"
         answer = redact_pii(
             result.answer
             or answer_question(
                 safe_question,
-                retrieve_context(org_id, safe_question, kinds=INTELLIGENCE_KINDS),
+                fallback_context,
+                org_id=org_id,
+                kinds=INTELLIGENCE_KINDS,
+                retrieval_status=retrieval_status,
             )
         )
 
