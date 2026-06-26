@@ -11,11 +11,12 @@ import json
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from stoa_core.config import get_settings
 from stoa_core.db.supabase import get_supabase_admin
+from stoa_core.rag.conversation_memory import delete_conversation_memory
 from stoa_core.redis.sse import read_events_since
 from stoa_core.security.pii import redact_pii
 from stoa_core.security.sanitize import sanitize_user_content
@@ -158,6 +159,47 @@ def get_conversation(
         .execute()
     )
     return {"conversation": conv.data[0], "messages": msgs.data or []}
+
+
+@router.delete("/{conversation_id}")
+def delete_conversation(
+    conversation_id: str,
+    delete_memory: bool = Query(False, description="Also remove long-term agent memory for this thread"),
+    scope: OrgScope = Depends(require_onboarded_scope),
+) -> dict[str, Any]:
+    """Delete a conversation thread; optionally purge its long-term memory."""
+    require_permission(scope, "conversations:ask")
+    sb = get_supabase_admin()
+    conv = (
+        sb.table("conversations")
+        .select("id")
+        .eq("id", conversation_id)
+        .eq("org_id", scope.org_id)
+        .limit(1)
+        .execute()
+    )
+    if not conv.data:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Conversation not found")
+
+    memory_items_deleted = 0
+    if delete_memory:
+        memory_items_deleted = delete_conversation_memory(scope.org_id, conversation_id)
+
+    sb.table("conversations").delete().eq("id", conversation_id).eq("org_id", scope.org_id).execute()
+    write_audit(
+        scope.org_id,
+        scope.user_id,
+        "conversation.deleted",
+        "conversation",
+        conversation_id,
+        metadata={"delete_memory": delete_memory, "memory_items_deleted": memory_items_deleted},
+    )
+    return {
+        "status": "deleted",
+        "conversation_id": conversation_id,
+        "memory_deleted": delete_memory,
+        "memory_items_deleted": memory_items_deleted,
+    }
 
 
 @router.get("/{conversation_id}/events")
