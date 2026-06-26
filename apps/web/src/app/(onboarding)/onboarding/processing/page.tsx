@@ -22,16 +22,20 @@ export default function OnboardingProcessingPage() {
   useEffect(() => {
     let cancelled = false;
     const poll = async () => {
-      for (let i = 0; i < 30; i++) {
+      for (let i = 0; i < 45; i++) {
         const res = await apiFetch("/v1/onboarding/status");
         if (res.ok) {
           const body = await res.json();
           if (body.ready) {
-            if (!cancelled) router.replace("/dashboard");
+            if (!cancelled) router.replace("/agent");
             return;
           }
-          if (body.pending_ingestion_jobs) {
-            setMessage(`Embedding ${body.pending_ingestion_jobs} seed document(s) into memory...`);
+          if (body.pending_enrichment_jobs) {
+            setMessage("Researching your company on the web…");
+          } else if (body.pending_ingestion_jobs) {
+            setMessage("Preparing your documents…");
+          } else if (body.partial_ready) {
+            setMessage("Company profile indexed. Finishing background research…");
           }
         }
         await new Promise((r) => setTimeout(r, 2000));
@@ -52,8 +56,8 @@ export default function OnboardingProcessingPage() {
         Preparing your workspace
       </h1>
       <p className="text-sm text-mkt-muted">{message}</p>
-      <ProductButton type="button" onClick={() => router.replace("/dashboard")}>
-        Go to dashboard
+      <ProductButton type="button" onClick={() => router.replace("/agent")}>
+        Open GTM Agent
       </ProductButton>
     </ProductCard>
   );
