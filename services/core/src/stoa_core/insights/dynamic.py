@@ -26,8 +26,12 @@ def generate_dynamic_insights_for_org(org_id: str) -> dict[str, Any]:
     org_name = (org_res.data or [{}])[0].get("name") or "your company"
 
     schema = '{"questions": [{"key": "...", "title": "...", "question": "..."}]}'
+    prompt = (
+        "Generate 2-3 marketing intelligence questions specific to this company. "
+        f"Return JSON: {schema}"
+    )
     parsed, _ = invoke_json(
-        "Generate 2-3 marketing intelligence questions specific to this company. Return JSON: " + schema,
+        prompt,
         {"company": org_name},
         task_name="summarize",
     )
@@ -35,12 +39,18 @@ def generate_dynamic_insights_for_org(org_id: str) -> dict[str, Any]:
         {
             "key": "competitive_positioning",
             "title": "How should we position against competitors?",
-            "question": f"How should {org_name} position against key competitors based on available evidence?",
+            "question": (
+                f"How should {org_name} position against key competitors "
+                "based on available evidence?"
+            ),
         },
         {
             "key": "icp_gaps",
             "title": "What ICP gaps should we address?",
-            "question": f"What gaps exist in {org_name}'s ideal customer profile based on current data?",
+            "question": (
+                f"What gaps exist in {org_name}'s ideal customer profile "
+                "based on current data?"
+            ),
         },
     ]
 

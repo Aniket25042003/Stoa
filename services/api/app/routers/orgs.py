@@ -15,6 +15,7 @@ from pydantic import BaseModel
 from app.deps.auth import verify_supabase_jwt, verify_supabase_jwt_payload
 from app.deps.org_scope import require_onboarded_scope
 from app.tasks.enrichment import enrich_company
+from app.services.audit import write_audit
 from app.services.auth_state import email_from_claims, filter_memberships_for_display
 from app.services.org_context import (
     OrgScope,

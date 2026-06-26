@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
-import sys
 
 from stoa_core.research.fetch import html_to_text
 from stoa_core.research.types import ResearchItem
@@ -18,8 +17,20 @@ def test_html_to_text_strips_tags():
 
 def test_dedupe_research_items():
     items = [
-        ResearchItem(source_type="web", title="A", raw_excerpt="x", summary="x", source_url="https://a.com"),
-        ResearchItem(source_type="web", title="A", raw_excerpt="x", summary="x", source_url="https://a.com"),
+        ResearchItem(
+            source_type="web",
+            title="A",
+            raw_excerpt="x",
+            summary="x",
+            source_url="https://a.com",
+        ),
+        ResearchItem(
+            source_type="web",
+            title="A",
+            raw_excerpt="x",
+            summary="x",
+            source_url="https://a.com",
+        ),
     ]
     assert len(_dedupe(items)) == 1
 
@@ -34,7 +45,12 @@ def test_research_web_tavily(mock_settings):
     mock_client = MagicMock()
     mock_client.search.return_value = {
         "results": [
-            {"url": "https://example.com", "title": "Example", "content": "Example company info", "score": 0.9}
+            {
+                "url": "https://example.com",
+                "title": "Example",
+                "content": "Example company info",
+                "score": 0.9,
+            }
         ]
     }
     mock_tavily = MagicMock()
@@ -53,7 +69,9 @@ def test_research_web_jina_fallback(mock_settings):
     mock_settings.return_value = settings
 
     mock_resp = MagicMock()
-    mock_resp.json.return_value = {"data": [{"url": "https://b.com", "title": "B", "content": "content"}]}
+    mock_resp.json.return_value = {
+        "data": [{"url": "https://b.com", "title": "B", "content": "content"}]
+    }
     mock_resp.raise_for_status = MagicMock()
     with patch("stoa_core.research.web.httpx.Client") as client_cls:
         client_cls.return_value.__enter__.return_value.get.return_value = mock_resp
