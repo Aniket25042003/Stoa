@@ -85,6 +85,15 @@ class Settings(BaseSettings):
     kb_rewrite_cache_ttl_seconds: int = 3600
     kb_answer_cache_ttl_seconds: int = 1800
 
+    # Agent tools / evidence
+    agent_evidence_conversation_ttl_seconds: int = 259200
+    agent_evidence_max_persist_per_turn: int = 8
+    agent_evidence_max_snippet_chars: int = 2000
+    agent_evidence_freshness_hours: int = 24
+    agent_live_search_per_org_per_hour: int = 20
+    agent_refresh_per_org_per_hour: int = 5
+    agent_web_search_per_org_per_day: int = 20
+
     # Chunking
     chunk_target_tokens: int = 600
     chunk_max_tokens: int = 800

@@ -21,7 +21,9 @@ CRM records, or a single domain (e.g. top customer, deal amounts, one competitor
 _TOOL_KEYWORDS = re.compile(
     r"(compare|across|alignment|misalign\w*|bottleneck|competitive|competitor|"
     r"campaign analysis|launch orchestr|content production|pipeline|funnel|"
-    r"channels?|conversion efficiency|sales and marketing)",
+    r"channels?|conversion efficiency|sales and marketing|"
+    r"latest|today|this week|refresh|live search|hubspot|salesforce|zendesk|gong|"
+    r"connected source|stale|sync)",
     re.IGNORECASE,
 )
 
