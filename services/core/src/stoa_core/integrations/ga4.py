@@ -218,3 +218,47 @@ class Ga4Connector(BaseConnector):
             result.error = str(exc)
 
         return result
+
+    @classmethod
+    def supports_agent_search(cls) -> bool:
+        return True
+
+    @classmethod
+    def agent_search(
+        cls,
+        org_id: str,
+        connection: dict[str, Any],
+        *,
+        credentials: dict[str, Any],
+        query: str,
+        entity_type: str | None = None,
+    ) -> list:
+        from stoa_core.integrations.agent_search import agent_search_hit
+        from stoa_core.integrations.base import AgentSearchHit
+
+        metadata = connection.get("provider_metadata") or {}
+        property_id = metadata.get("property_id")
+        if not property_id:
+            return []
+        headers = {"Authorization": f"Bearer {credentials['access_token']}"}
+        dimension = "sessionDefaultChannelGroup"
+        if entity_type in {"campaign", "campaigns"}:
+            dimension = "sessionCampaignName"
+        rows = cls._run_report(headers=headers, property_id=property_id, dimension_name=dimension)
+        hits: list[AgentSearchHit] = []
+        for row in rows[:15]:
+            dims = [d.get("value") for d in row.get("dimensionValues") or []]
+            metric_vals = [m.get("value") for m in row.get("metricValues") or []]
+            dim_value = dims[0] if dims else "unknown"
+            sessions = metric_vals[0] if metric_vals else "0"
+            conversions = metric_vals[1] if len(metric_vals) > 1 else "0"
+            hits.append(
+                agent_search_hit(
+                    id=dim_value.replace(" ", "_")[:80],
+                    title=f"GA4 {dimension}: {dim_value}",
+                    snippet=f"sessions={sessions}; conversions={conversions} (last 30 days)",
+                    provider=SOURCE,
+                    entity_type=entity_type,
+                )
+            )
+        return hits

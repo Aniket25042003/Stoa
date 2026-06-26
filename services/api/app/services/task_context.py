@@ -26,6 +26,11 @@ ALLOWED_CELERY_TASKS = frozenset(
         "integrations.sync_source",
         "campaign_analysis.precompute",
         "alignment.precompute",
+        "enrichment.enrich_competitor",
+        "enrichment.synthesize_crm_summary",
+        "enrichment.synthesize_review_themes",
+        "enrichment.checkpoint_conversation",
+        "integrations.schedule_syncs",
     }
 )
 

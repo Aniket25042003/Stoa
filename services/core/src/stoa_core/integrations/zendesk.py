@@ -327,3 +327,49 @@ class ZendeskConnector(BaseConnector):
             logger.exception("Zendesk view sync failed")
             result.error = str(exc)
         return result
+
+    @classmethod
+    def supports_agent_search(cls) -> bool:
+        return True
+
+    @classmethod
+    def agent_search(
+        cls,
+        org_id: str,
+        connection: dict[str, Any],
+        *,
+        credentials: dict[str, Any],
+        query: str,
+        entity_type: str | None = None,
+    ) -> list:
+        from stoa_core.integrations.agent_search import agent_search_hit
+        from stoa_core.integrations.base import AgentSearchHit
+
+        metadata = connection.get("provider_metadata") or {}
+        base, auth = cls._auth(credentials, metadata)
+        search_q = f"type:ticket {query}"[:200]
+        with httpx.Client(timeout=25) as client:
+            res = client.get(
+                f"{base}/search.json",
+                params={"query": search_q, "per_page": 15},
+                auth=auth if isinstance(auth, httpx.BasicAuth) else None,
+                headers=auth if isinstance(auth, dict) else None,
+            )
+            res.raise_for_status()
+            body = res.json()
+        hits: list[AgentSearchHit] = []
+        for item in body.get("results") or []:
+            if item.get("result_type") != "ticket":
+                continue
+            tid = str(item.get("id"))
+            subject = item.get("subject") or f"Ticket {tid}"
+            hits.append(
+                agent_search_hit(
+                    id=tid,
+                    title=str(subject),
+                    snippet=f"status={item.get('status')}; priority={item.get('priority')}",
+                    provider=SOURCE,
+                    entity_type="tickets",
+                )
+            )
+        return hits
