@@ -27,8 +27,12 @@ Document processing, embedding, ICP rebuilds, and competitive scans take seconds
 | `campaigns.generate` | `tasks/campaigns.py` | `POST /v1/campaigns` | Retrieve context + generate assets | On demand |
 | `knowledge.reembed_org` | `tasks/knowledge.py` | Admin/backfill | Re-ingest all org documents + profiles | On demand |
 | `integrations.sync_source` | `tasks/integrations.py` | Integration sync button/webhook | Pull CRM/call data → canonical tables + KB | On demand |
+| `campaign_analysis.precompute` | `tasks/campaign_analysis.py` | Post GA4/PostHog sync, manual refresh | Channel/campaign aggregations + insight synthesis | On demand |
+| `alignment.precompute` | `tasks/alignment.py` | Post CRM sync, manual refresh | Lead quality + revenue attribution + friction | On demand |
 
-No cron/beat schedule is configured — all tasks are event-driven.
+Celery Beat runs via `services/api/scripts/render_start_beat.sh` (separate Render service).
+
+Previously: no cron/beat — now Beat handles scheduled memory maintenance; user-triggered enrichment remains event-driven.
 
 ## Architecture diagram
 

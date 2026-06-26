@@ -60,7 +60,6 @@ export function CompetitiveWorkspace() {
         <CompleteDataPrompt
           title="Add competitors in Data hub"
           message="Add competitor names and websites in the Data hub to start monitoring changes."
-          missing={["competitors"]}
         />
       ) : null}
 
