@@ -15,7 +15,8 @@ def test_agent_memory_kinds_includes_search_evidence():
 @patch("stoa_core.agent.tools.memory.get_supabase_admin")
 def test_build_agent_tools_includes_tiers(mock_sb, mock_settings):
     mock_settings.return_value.disable_external_research = True
-    mock_sb.return_value.table.return_value.select.return_value.eq.return_value.execute.return_value.data = []
+    chain = mock_sb.return_value.table.return_value.select.return_value.eq.return_value
+    chain.execute.return_value.data = []
     tools = build_agent_tools("org-1", "conv-1", include_web=True)
     names = {t.name for t in tools}
     assert "search_workspace_memory" in names
