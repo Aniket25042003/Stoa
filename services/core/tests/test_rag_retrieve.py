@@ -9,6 +9,8 @@ from unittest.mock import patch
 
 from stoa_core.rag.retrieve import (
     _apply_token_budget,
+    _filter_conversation_memory,
+    _filter_low_vector_similarity,
     _mmr_dedup,
     _to_context_items,
     retrieve_context,
@@ -52,6 +54,32 @@ def test_to_context_items_shape():
     ctx = _to_context_items([_cand("hello world")])
     assert ctx[0]["ref"].startswith("kb:document:")
     assert ctx[0]["text"] == "hello world"
+
+
+def test_filter_low_vector_similarity_drops_weak_vector_only():
+    candidates = [
+        {"vector_rank": 35, "text_rank": None, "content": "weak"},
+        {"vector_rank": 3, "text_rank": None, "content": "strong"},
+        {"vector_rank": 40, "text_rank": 5, "content": "fts match"},
+    ]
+    out = _filter_low_vector_similarity(candidates, min_similarity=0.7, candidate_k=40)
+    refs = [c["content"] for c in out]
+    assert "weak" not in refs
+    assert "strong" in refs
+    assert "fts match" in refs
+
+
+def test_filter_conversation_memory_by_thread():
+    candidates = [
+        {"kind": "conversation_memory", "metadata": {"conversation_id": "c1"}, "content": "a"},
+        {"kind": "conversation_memory", "metadata": {"conversation_id": "c2"}, "content": "b"},
+        {"kind": "document", "metadata": {}, "content": "c"},
+    ]
+    out = _filter_conversation_memory(candidates, "c1")
+    contents = [c["content"] for c in out]
+    assert "a" in contents
+    assert "b" not in contents
+    assert "c" in contents
 
 
 @patch("stoa_core.rag.retrieve.cache_retrieval_result")

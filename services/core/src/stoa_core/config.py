@@ -82,6 +82,8 @@ class Settings(BaseSettings):
     cohere_rerank_model: str = "rerank-v3.5"
     kb_cache_ttl_seconds: int = 3600
     kb_query_cache_ttl_seconds: int = 1800
+    kb_rewrite_cache_ttl_seconds: int = 3600
+    kb_answer_cache_ttl_seconds: int = 1800
 
     # Chunking
     chunk_target_tokens: int = 600

@@ -14,7 +14,7 @@ from typing import Any
 
 from stoa_core.config import get_settings
 from stoa_core.db.supabase import get_supabase_admin
-from stoa_core.ingestion.embed import embed_query
+from stoa_core.ingestion.embed import EmbeddingUnavailableError, embed_query
 from stoa_core.rag.cache import (
     cache_query_embedding,
     cache_retrieval_result,
@@ -36,6 +36,48 @@ def _normalize_query(query: str) -> str:
         str: Result produced for the caller.
     """
     return re.sub(r"\s+", " ", query.strip().lower())
+
+
+def _filter_low_vector_similarity(
+    candidates: list[dict[str, Any]],
+    *,
+    min_similarity: float,
+    candidate_k: int,
+) -> list[dict[str, Any]]:
+    """Drop weak vector-only hits using vector rank as a similarity proxy."""
+    if min_similarity <= 0.0 or not candidates:
+        return candidates
+    max_vector_rank = max(1, int((1.0 - min_similarity) * candidate_k))
+    filtered: list[dict[str, Any]] = []
+    for cand in candidates:
+        text_rank = cand.get("text_rank")
+        vector_rank = cand.get("vector_rank")
+        if text_rank:
+            filtered.append(cand)
+        elif vector_rank is None:
+            filtered.append(cand)
+        elif int(vector_rank) <= max_vector_rank:
+            filtered.append(cand)
+    return filtered if filtered else candidates
+
+
+def _filter_conversation_memory(
+    candidates: list[dict[str, Any]],
+    conversation_id: str | None,
+) -> list[dict[str, Any]]:
+    if not conversation_id:
+        return candidates
+    out: list[dict[str, Any]] = []
+    for cand in candidates:
+        kind = str(cand.get("kind") or "")
+        if kind != "conversation_memory":
+            out.append(cand)
+            continue
+        metadata = cand.get("metadata") or {}
+        meta_conv = metadata.get("conversation_id") if isinstance(metadata, dict) else None
+        if meta_conv is None or str(meta_conv) == conversation_id:
+            out.append(cand)
+    return out
 
 
 def _match_knowledge_rpc(
@@ -184,6 +226,7 @@ def retrieve_context(
     kinds: list[str] | None = None,
     k: int | None = None,
     token_budget: int | None = None,
+    conversation_id: str | None = None,
     use_cache: bool = True,
 ) -> list[dict[str, Any]]:
     """Retrieve ranked, token-budgeted context for an LLM call."""
@@ -191,15 +234,20 @@ def retrieve_context(
     final_k = k or settings.retrieval_final_k
     budget = token_budget or settings.retrieval_token_budget
     normalized = _normalize_query(query)
+    cache_scope = conversation_id or ""
 
     if use_cache:
-        cached = get_cached_retrieval_result(org_id, normalized, kinds)
+        cached = get_cached_retrieval_result(org_id, normalized, kinds, cache_scope=cache_scope)
         if cached is not None:
             return cached
 
     query_emb = get_cached_query_embedding(org_id, normalized) if use_cache else None
     if query_emb is None:
-        query_emb = embed_query(query)
+        try:
+            query_emb = embed_query(query)
+        except EmbeddingUnavailableError as exc:
+            logger.error("Query embedding unavailable for org %s: %s", org_id, exc)
+            return []
         if use_cache:
             cache_query_embedding(org_id, normalized, query_emb)
 
@@ -215,12 +263,22 @@ def retrieve_context(
     if not candidates:
         return []
 
+    candidates = _filter_conversation_memory(candidates, conversation_id)
+    candidates = _filter_low_vector_similarity(
+        candidates,
+        min_similarity=settings.retrieval_min_similarity,
+        candidate_k=settings.retrieval_candidate_k,
+    )
+
+    if not candidates:
+        return []
+
     reranked = rerank_candidates(query, candidates, top_k=final_k * 2)
     deduped = _mmr_dedup(reranked, max_items=final_k * 2)
     trimmed = _apply_token_budget(deduped, budget)
     context = _to_context_items(trimmed[:final_k])
 
     if use_cache:
-        cache_retrieval_result(org_id, normalized, kinds, context)
+        cache_retrieval_result(org_id, normalized, kinds, context, cache_scope=cache_scope)
 
     return context
