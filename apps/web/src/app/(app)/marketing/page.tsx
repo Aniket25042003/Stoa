@@ -11,5 +11,5 @@ import { redirect } from "next/navigation";
  * @returns Rendered UI or completion signal for the workflow.
  */
 export default function MarketingRedirectPage() {
-  redirect("/campaigns");
+  redirect("/assets?type=campaigns");
 }

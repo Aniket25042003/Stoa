@@ -1,16 +1,17 @@
 /**
  * @file apps/web/src/lib/app-navigation.ts
  * @layer Frontend Shared Utilities
- * @description Provides shared client/server utility logic used across the Next.js app.
- * @dependencies React
+ * @description Single source of truth for icon rail, mobile nav, and section subnavs.
  */
 import type { LucideIcon } from "lucide-react";
 import {
+  Archive,
   Building2,
   Cable,
   FileUp,
   LayoutDashboard,
   Radar,
+  Settings,
   Shield,
   Sparkles,
   Users,
@@ -23,218 +24,131 @@ export type NavItem = {
   icon?: LucideIcon;
 };
 
-export type NavGroup = {
+export type IconRailItem = {
   id: string;
+  href: string;
   label: string;
+  perm: string;
   icon: LucideIcon;
-  items: NavItem[];
+  /** Match pathname prefix for active state (defaults to href). */
+  matchPrefix?: string;
+  /** Show rail item if user has any of these permissions. */
+  altPerms?: string[];
 };
 
-export type AppNavEntry =
-  | {
-      type: "link";
-      href: string;
-      label: string;
-      perm: string;
-      icon: LucideIcon;
-    }
-  | { type: "group"; group: NavGroup };
-
-/** Single source of truth for sidebar, mobile nav, and breadcrumbs. */
-export const APP_NAVIGATION: AppNavEntry[] = [
-  {
-    type: "link",
-    href: "/dashboard",
-    label: "Dashboard",
-    perm: "intelligence:read",
-    icon: LayoutDashboard,
-  },
-  {
-    type: "group",
-    group: {
-      id: "workspace",
-      label: "Workspace",
-      icon: Building2,
-      items: [
-        {
-          href: "/data/profile",
-          label: "Company profile",
-          perm: "data_sources:read",
-          icon: Building2,
-        },
-        {
-          href: "/data/sources",
-          label: "Sources & uploads",
-          perm: "data_sources:read",
-          icon: FileUp,
-        },
-        {
-          href: "/data/integrations",
-          label: "Integrations",
-          perm: "data_sources:read",
-          icon: Cable,
-        },
-        {
-          href: "/data/competitors",
-          label: "Competitors",
-          perm: "data_sources:read",
-          icon: Radar,
-        },
-      ],
-    },
-  },
-  {
-    type: "group",
-    group: {
-      id: "intelligence",
-      label: "Intelligence",
-      icon: Sparkles,
-      items: [
-        {
-          href: "/agent",
-          label: "GTM agent",
-          perm: "conversations:ask",
-          icon: Sparkles,
-        },
-      ],
-    },
-  },
-  {
-    type: "group",
-    group: {
-      id: "organization",
-      label: "Organization",
-      icon: Users,
-      items: [
-        {
-          href: "/settings/team",
-          label: "Team",
-          perm: "team:read",
-          icon: Users,
-        },
-        {
-          href: "/settings/roles",
-          label: "Roles & permissions",
-          perm: "roles:manage",
-          icon: Shield,
-        },
-      ],
-    },
-  },
-];
-
-export const MOBILE_PRIMARY_TABS = [
+/** Primary icon rail — Home, Agent, Assets, Data, Settings. */
+export const ICON_RAIL_NAV: IconRailItem[] = [
   {
     id: "home",
     href: "/dashboard",
     label: "Home",
-    icon: LayoutDashboard,
     perm: "intelligence:read",
+    icon: LayoutDashboard,
+  },
+  {
+    id: "agent",
+    href: "/agent",
+    label: "Agent",
+    perm: "conversations:ask",
+    icon: Sparkles,
+    matchPrefix: "/agent",
+  },
+  {
+    id: "assets",
+    href: "/assets",
+    label: "Assets",
+    perm: "campaigns:read",
+    icon: Archive,
+    altPerms: ["content:read"],
+    matchPrefix: "/assets",
   },
   {
     id: "data",
     href: "/data/profile",
     label: "Data",
-    icon: Building2,
     perm: "data_sources:read",
+    icon: Building2,
+    matchPrefix: "/data",
   },
   {
-    id: "intel",
-    href: "/agent",
-    label: "Agent",
-    icon: Sparkles,
-    perm: "conversations:ask",
+    id: "settings",
+    href: "/settings/team",
+    label: "Settings",
+    perm: "team:read",
+    icon: Settings,
+    altPerms: ["roles:manage"],
+    matchPrefix: "/settings",
   },
+];
+
+export const MOBILE_PRIMARY_TABS = [
+  { id: "home", href: "/dashboard", label: "Home", icon: LayoutDashboard, perm: "intelligence:read" },
+  { id: "agent", href: "/agent", label: "Agent", icon: Sparkles, perm: "conversations:ask" },
+  { id: "assets", href: "/assets", label: "Assets", icon: Archive, perm: "campaigns:read", altPerms: ["content:read"] as const },
+  { id: "data", href: "/data/profile", label: "Data", icon: Building2, perm: "data_sources:read" },
 ] as const;
 
 export const DATA_SUBNAV: NavItem[] = [
-  {
-    href: "/data/profile",
-    label: "Company profile",
-    perm: "data_sources:read",
-    icon: Building2,
-  },
-  {
-    href: "/data/sources",
-    label: "Sources & uploads",
-    perm: "data_sources:read",
-    icon: FileUp,
-  },
-  {
-    href: "/data/integrations",
-    label: "Integrations",
-    perm: "data_sources:read",
-    icon: Cable,
-  },
-  {
-    href: "/data/competitors",
-    label: "Competitors",
-    perm: "data_sources:read",
-    icon: Radar,
-  },
+  { href: "/data/profile", label: "Company profile", perm: "data_sources:read", icon: Building2 },
+  { href: "/data/sources", label: "Sources & uploads", perm: "data_sources:read", icon: FileUp },
+  { href: "/data/integrations", label: "Integrations", perm: "data_sources:read", icon: Cable },
+  { href: "/data/competitors", label: "Competitors", perm: "data_sources:read", icon: Radar },
 ];
 
 export const SETTINGS_SUBNAV: NavItem[] = [
   { href: "/settings/team", label: "Team", perm: "team:read", icon: Users },
-  {
-    href: "/settings/roles",
-    label: "Roles & permissions",
-    perm: "roles:manage",
-    icon: Shield,
-  },
+  { href: "/settings/roles", label: "Roles & permissions", perm: "roles:manage", icon: Shield },
 ];
 
-/**
- * Handles flatten nav items behavior for this part of the Stoa application.
- * @returns Result consumed by the caller or rendered by React.
- */
-export function flattenNavItems(): NavItem[] {
-  const items: NavItem[] = [];
-  for (const entry of APP_NAVIGATION) {
-    if (entry.type === "link") {
-      items.push({
-        href: entry.href,
-        label: entry.label,
-        perm: entry.perm,
-        icon: entry.icon,
-      });
-    } else {
-      items.push(...entry.group.items);
-    }
-  }
-  return items;
-}
-
-/**
- * Handles group id for path behavior for this part of the Stoa application.
- *
- * @param pathname - Input value used to render UI or execute the workflow.
- * @returns Result consumed by the caller or rendered by React.
- */
-export function groupIdForPath(pathname: string): string | null {
-  for (const entry of APP_NAVIGATION) {
-    if (entry.type !== "group") continue;
-    if (
-      entry.group.items.some(
-        (item) =>
-          pathname === item.href || pathname.startsWith(`${item.href}/`),
-      )
-    ) {
-      return entry.group.id;
-    }
-  }
-  return null;
-}
+/** @deprecated Use ICON_RAIL_NAV — kept for breadcrumbs during migration. */
+export const APP_NAVIGATION = ICON_RAIL_NAV.map((item) => ({
+  type: "link" as const,
+  href: item.href,
+  label: item.label,
+  perm: item.perm,
+  icon: item.icon,
+}));
 
 /**
  * Handles is nav item active behavior for this part of the Stoa application.
- *
- * @param pathname - Input value used to render UI or execute the workflow.
- * @param href - Input value used to render UI or execute the workflow.
- * @returns Result consumed by the caller or rendered by React.
  */
-export function isNavItemActive(pathname: string, href: string): boolean {
+export function isNavItemActive(pathname: string, href: string, matchPrefix?: string): boolean {
+  const prefix = matchPrefix ?? href;
   if (pathname === href) return true;
   if (href === "/data/profile" && pathname === "/data") return true;
-  return pathname.startsWith(`${href}/`);
+  if (prefix === "/data" && pathname.startsWith("/data")) return true;
+  if (prefix === "/settings" && pathname.startsWith("/settings")) return true;
+  return pathname.startsWith(`${prefix}/`);
+}
+
+/**
+ * Returns page title for top bar from pathname.
+ */
+export function pageTitleForPath(pathname: string): string {
+  if (pathname.startsWith("/agent")) return "GTM Agent";
+  if (pathname.startsWith("/assets")) return "Assets";
+  if (pathname.startsWith("/data")) return "Data hub";
+  if (pathname.startsWith("/settings")) return "Settings";
+  if (pathname.startsWith("/dashboard")) return "Home";
+  return "Stoa";
+}
+
+/**
+ * Layout variant for route-aware shell width and height.
+ */
+export function layoutVariantForPath(pathname: string): "agent" | "assets" | "standard" {
+  if (pathname.startsWith("/agent")) return "agent";
+  if (pathname.startsWith("/assets")) return "assets";
+  return "standard";
+}
+
+export function flattenNavItems(): NavItem[] {
+  return [...DATA_SUBNAV, ...SETTINGS_SUBNAV];
+}
+
+/** @deprecated */
+export function groupIdForPath(pathname: string): string | null {
+  if (pathname.startsWith("/data")) return "workspace";
+  if (pathname.startsWith("/settings")) return "organization";
+  return null;
 }

@@ -40,6 +40,8 @@ Single source of truth for Marketing V3 and Product V3 styling in `apps/web`.
 
 **Use:** `mkt-`* tokens, `ProductCard`, `ProductButton`, `ProductInput`, Syne uppercase page headers, `rounded-sm` density.
 
+**App shell (Agent Command Center):** `--app-rail-width`, `--agent-sidebar-width`, `--agent-context-width`; `.agent-canvas`, `.agent-message-user`, `.agent-message-assistant`, `.icon-rail-item`.
+
 **Do not use in product:** pastel section cards, `StretchedHeroGrid`, indigo/orange MD3 tokens (`.btn-primary`, `.card-glass`, `--primary`).
 
 **Deprecated (legacy MD3/sand):** `--surface`, `--primary`, `.btn-primary`, `.card-glass` — do not add new usages.

@@ -1,24 +1,20 @@
 /**
  * @file apps/web/src/components/app-shell/AppShell.tsx
- * @layer Frontend Product UI
- * @description Implements a reusable React component used by the Stoa web experience.
- * @dependencies Next.js, React
  */
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import { AppIconRail } from "./AppIconRail";
 import { AppMobileNav } from "./AppMobileNav";
-import { AppSidebar } from "./AppSidebar";
 import { AppTopBar } from "./AppTopBar";
 import { useAppPermissions } from "./useAppPermissions";
 import { ProductShellFrame } from "@/components/product";
 import { BrandLogo } from "@/components/product/BrandLogo";
+import { layoutVariantForPath } from "@/lib/app-navigation";
+import { cn } from "@/lib/cn";
 
-/**
- * Handles app shell behavior for this part of the Stoa application.
- * @returns Rendered UI or completion signal for the workflow.
- */
 export function AppShell({
   email,
   displayName,
@@ -28,7 +24,9 @@ export function AppShell({
   displayName?: string | null;
   children: ReactNode;
 }) {
+  const pathname = usePathname();
   const { permissions, loaded } = useAppPermissions();
+  const variant = layoutVariantForPath(pathname);
 
   return (
     <ProductShellFrame>
@@ -39,20 +37,29 @@ export function AppShell({
         Skip to content
       </a>
 
-      <div className="flex min-h-screen flex-col lg:flex-row">
-        <div className="hidden lg:flex lg:w-60 lg:shrink-0 lg:flex-col">
-          <Link
-            href="/dashboard"
-            className="flex h-14 shrink-0 items-center border-b border-r border-mkt-ink/[0.06] px-4"
-          >
-            <BrandLogo variant="icon" size="sm" />
-          </Link>
-          <AppSidebar permissions={permissions} permissionsLoaded={loaded} />
-        </div>
+      <div className="flex min-h-screen flex-col">
+        <AppTopBar email={email} displayName={displayName} />
 
-        <div className="flex min-h-screen min-w-0 flex-1 flex-col pb-16 lg:pb-0">
-          <AppTopBar email={email} displayName={displayName} />
-          <main id="main-content" className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 md:px-6 md:py-8">
+        <div className="flex min-h-0 flex-1">
+          <div className="hidden shrink-0 flex-col border-r border-mkt-ink/[0.06] lg:flex">
+            <Link
+              href="/dashboard"
+              className="flex h-14 shrink-0 items-center justify-center border-b border-mkt-ink/[0.06]"
+            >
+              <BrandLogo variant="icon" size="sm" />
+            </Link>
+            <AppIconRail permissions={permissions} permissionsLoaded={loaded} />
+          </div>
+
+          <main
+            id="main-content"
+            className={cn(
+              "mx-auto w-full min-w-0 flex-1 pb-16 lg:pb-0",
+              variant === "agent" && "agent-canvas flex flex-col px-0 py-0",
+              variant === "assets" && "max-w-7xl px-4 py-6 md:px-6 md:py-8",
+              variant === "standard" && "max-w-6xl px-4 py-6 md:px-6 md:py-8",
+            )}
+          >
             {children}
           </main>
         </div>
