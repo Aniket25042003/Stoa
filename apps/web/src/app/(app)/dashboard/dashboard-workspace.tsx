@@ -3,65 +3,24 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
+import { ProductButton, ProductCard, ProductPageHeader } from "@/components/product";
+import { CapabilityStatus } from "@/components/dashboard/CapabilityStatus";
+import { CrmPipelineMini } from "@/components/dashboard/CrmPipelineMini";
+import { MemoryLayersDiagram } from "@/components/dashboard/MemoryLayersDiagram";
+import { MetricsBarChart } from "@/components/dashboard/MetricsBarChart";
+import { ReadinessGauge } from "@/components/dashboard/ReadinessGauge";
+import { SignalBreakdownChart } from "@/components/dashboard/SignalBreakdownChart";
+import type { DashboardSummary } from "@/components/dashboard/types";
 import {
-  ProductButton,
-  ProductCard,
-  ProductPageHeader,
-} from "@/components/product";
+  formatCompletenessMissingSentence,
+  formatRoleLabel,
+  resolveDisplayName,
+} from "@/lib/user-facing-copy";
 
-type CoreFeatureMetrics = {
-  icp_customer_research?: {
-    best_customer_segment?: string | null;
-    deals?: number;
-    win_rate_percent?: number | null;
-    underperforming_loss_reasons?: { reason: string; count: number }[];
-  };
-  content_bottleneck?: {
-    status_breakdown?: Record<string, number>;
-    avg_generation_time_seconds?: number | null;
-  };
-  competitive_intelligence?: {
-    tracked_competitors?: number;
-    recent_alerts?: number;
-    alerts_by_severity?: Record<string, number>;
-  };
-  launch_orchestration?: {
-    campaign_count?: number;
-    status_breakdown?: Record<string, number>;
-  };
-  campaign_analysis?: {
-    top_channel?: string | null;
-    top_campaign?: string | null;
-    has_data?: boolean;
-  };
-  sales_marketing_alignment?: {
-    top_lead_source?: string | null;
-    stall_points?: { stage: string; stalled_count: number }[];
-    top_friction_loss_reasons?: { reason: string; count: number }[];
-  };
-};
-
-type Summary = {
-  org: { id: string; name: string; industry?: string | null };
-  counts: {
-    documents: number;
-    signals: number;
-    competitors: number;
-    alerts: number;
-    campaigns: number;
-  };
-  signals_by_kind: Record<string, number>;
-  icp_version: number | null;
-  completeness: {
-    percent: number;
-    missing: string[];
-    ready_for_intelligence: boolean;
-    ready_for_competitive: boolean;
-    ready_for_campaigns: boolean;
-  };
-  executive_summary?: { content?: { summary?: string }; citations?: string[] };
-  insight_highlights?: Array<{ title: string; content?: { answer?: string } }>;
-  core_feature_metrics?: CoreFeatureMetrics;
+type ConversationSummary = {
+  id: string;
+  title: string;
+  updated_at: string;
 };
 
 type Props = {
@@ -72,21 +31,9 @@ type Props = {
 };
 
 const readinessLinks = [
-  {
-    href: "/data/profile",
-    label: "Complete company profile",
-    key: "ready_for_intelligence" as const,
-  },
-  {
-    href: "/data/competitors",
-    label: "Add competitors",
-    key: "ready_for_competitive" as const,
-  },
-  {
-    href: "/data/sources",
-    label: "Upload customer data",
-    key: "ready_for_campaigns" as const,
-  },
+  { href: "/data/profile", label: "Complete company profile", key: "ready_for_intelligence" as const },
+  { href: "/data/competitors", label: "Add competitors", key: "ready_for_competitive" as const },
+  { href: "/data/sources", label: "Upload customer data", key: "ready_for_campaigns" as const },
 ];
 
 export function DashboardWorkspace({ email, displayName, org, role }: Props) {
@@ -140,196 +87,148 @@ export function DashboardWorkspace({ email, displayName, org, role }: Props) {
       />
 
       {completeness ? (
-        <ProductCard className="bg-mkt-dark-band text-mkt-dark-ink">
-          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-            <div className="max-w-xl">
-              <p className="text-xs font-medium uppercase tracking-wider text-mkt-subtle">
-                Data readiness
-              </p>
-              <p className="mt-2 text-xl font-semibold tracking-tight">
-                {completeness.percent}% complete
-              </p>
-              {completeness.missing.length > 0 ? (
-                <p className="mt-2 text-sm text-mkt-dark-ink/70">
-                  Still needed: {completeness.missing.join(", ")}
+        <ProductCard className="overflow-hidden bg-mkt-dark-band p-0 text-mkt-dark-ink">
+          <div className="grid gap-0 lg:grid-cols-[auto_1fr]">
+            <div className="flex flex-col items-center justify-center border-b border-mkt-dark-ink/10 px-8 py-8 lg:border-b-0 lg:border-r">
+              <ReadinessGauge
+                percent={completeness.percent ?? 0}
+                size="lg"
+                label="Data readiness"
+                variant="dark"
+              />
+              {completeness.missing && completeness.missing.length > 0 ? (
+                <p className="mt-4 max-w-[220px] text-center text-xs leading-relaxed text-mkt-dark-ink/65">
+                  {formatCompletenessMissingSentence(completeness.missing)}
                 </p>
               ) : (
-                <p className="mt-2 text-sm text-mkt-dark-ink/70">
-                  Your workspace is ready for intelligence pipelines.
+                <p className="mt-4 max-w-[200px] text-center text-xs leading-relaxed text-mkt-dark-ink/65">
+                  Workspace is ready for agent queries across intelligence areas.
                 </p>
               )}
             </div>
-            <Link href="/data/profile">
-              <ProductButton variant="secondary" className="!text-mkt-ink">
-                Open data hub
-              </ProductButton>
-            </Link>
-          </div>
-          <div className="mt-5 h-2 rounded-sm bg-mkt-dark-ink/15">
-            <div
-              className="h-2 rounded-sm bg-mkt-accent transition-all"
-              style={{ width: `${completeness.percent}%` }}
-            />
+            <div className="p-6 lg:p-8">
+              <CapabilityStatus completeness={completeness} variant="dark" />
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Link href="/data/profile">
+                  <ProductButton variant="secondary" className="!text-mkt-ink">
+                    Open data hub
+                  </ProductButton>
+                </Link>
+                <Link href="/agent">
+                  <ProductButton variant="ghost" className="!text-mkt-dark-ink hover:!bg-mkt-dark-ink/10">
+                    Ask the agent
+                  </ProductButton>
+                </Link>
+              </div>
+            </div>
           </div>
         </ProductCard>
       ) : null}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        {[
-          { label: "Documents", value: counts?.documents ?? 0 },
-          { label: "Signals", value: counts?.signals ?? 0 },
-          { label: "Competitors", value: counts?.competitors ?? 0 },
-          { label: "Alerts", value: counts?.alerts ?? 0 },
-          { label: "Campaigns", value: counts?.campaigns ?? 0 },
-        ].map((tile) => (
-          <ProductCard key={tile.label} className="text-center">
-            <p className="text-3xl font-semibold text-mkt-ink">{tile.value}</p>
-            <p className="mt-1 text-xs font-medium uppercase tracking-wider text-mkt-muted">
-              {tile.label}
-            </p>
-          </ProductCard>
-        ))}
+      <div className="grid gap-6 lg:grid-cols-12">
+        <ProductCard className="lg:col-span-5">
+          <h2 className="text-sm font-semibold tracking-tight text-mkt-ink">Workspace volume</h2>
+          <p className="mt-1 text-xs text-mkt-muted">Relative scale across ingested intelligence sources</p>
+          <div className="mt-5">
+            <MetricsBarChart counts={summary?.counts} />
+          </div>
+        </ProductCard>
+
+        <ProductCard className="lg:col-span-4">
+          <h2 className="text-sm font-semibold tracking-tight text-mkt-ink">Signal mix</h2>
+          <p className="mt-1 text-xs text-mkt-muted">Distribution of extracted customer intelligence</p>
+          <div className="mt-5">
+            <SignalBreakdownChart signalsByKind={summary?.signals_by_kind} />
+          </div>
+        </ProductCard>
+
+        <ProductCard className="lg:col-span-3">
+          <h2 className="text-sm font-semibold tracking-tight text-mkt-ink">Memory stack</h2>
+          <p className="mt-1 text-xs text-mkt-muted">How evidence layers into agent context</p>
+          <div className="mt-5">
+            <MemoryLayersDiagram counts={summary?.counts} icpVersion={summary?.icp_version} />
+          </div>
+          <CrmPipelineMini crmStats={summary?.crm_stats} className="mt-4" />
+        </ProductCard>
       </div>
 
       {executiveSummary ? (
         <ProductCard>
-          <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">
-            Executive summary
-          </h2>
-          <p className="mt-3 text-sm leading-relaxed text-mkt-muted">
-            {summary.executive_summary.content.summary}
-          </p>
+          <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">Executive summary</h2>
+          <p className="mt-3 text-sm leading-relaxed text-mkt-muted">{executiveSummary}</p>
         </ProductCard>
       ) : null}
 
       {insightHighlights.length > 0 ? (
         <ProductCard>
-          <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">
-            Intelligence highlights
-          </h2>
-          <ul className="mt-4 space-y-3">
-            {summary.insight_highlights.slice(0, 3).map((item, i) => (
+          <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">Insight highlights</h2>
+          <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+            {insightHighlights.slice(0, 4).map((insight) => (
               <li
-                key={i}
+                key={insight.title}
                 className="rounded-sm border border-mkt-ink/[0.06] bg-mkt-ink/[0.02] p-4"
               >
-                <p className="text-sm font-semibold text-mkt-ink">
-                  {item.title}
-                </p>
-                <p className="mt-1 text-sm text-mkt-muted line-clamp-2">
-                  {item.content?.answer ?? ""}
-                </p>
+                <p className="text-sm font-medium text-mkt-ink">{insight.title}</p>
+                {insight.content?.answer ? (
+                  <p className="mt-2 line-clamp-3 text-xs leading-relaxed text-mkt-muted">
+                    {insight.content.answer}
+                  </p>
+                ) : null}
               </li>
             ))}
           </ul>
-          <Link href="/agent" className="mt-4 inline-block">
-            <ProductButton variant="secondary">
-              View prepared answers
-            </ProductButton>
-          </Link>
         </ProductCard>
       ) : null}
 
-      {summary?.core_feature_metrics ? (
+      <div className="grid gap-6 lg:grid-cols-2">
         <ProductCard>
-          <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">
-            Six-feature GTM snapshot
-          </h2>
-          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            <div className="rounded-sm border border-mkt-ink/[0.06] p-3 text-sm">
-              <p className="font-semibold text-mkt-ink">
-                ICP & customer research
-              </p>
-              <p className="mt-1 text-mkt-muted">
-                Best segment:{" "}
-                {summary.core_feature_metrics.icp_customer_research
-                  ?.best_customer_segment ?? "—"}
-              </p>
-              <p className="text-mkt-muted">
-                Deals:{" "}
-                {summary.core_feature_metrics.icp_customer_research?.deals ?? 0}
-              </p>
-            </div>
-            <div className="rounded-sm border border-mkt-ink/[0.06] p-3 text-sm">
-              <p className="font-semibold text-mkt-ink">Content bottleneck</p>
-              <p className="mt-1 text-mkt-muted">
-                Avg generation:{" "}
-                {summary.core_feature_metrics.content_bottleneck
-                  ?.avg_generation_time_seconds != null
-                  ? `${summary.core_feature_metrics.content_bottleneck?.avg_generation_time_seconds}s`
-                  : "—"}
-              </p>
-              <p className="text-mkt-muted">
-                Queued:{" "}
-                {summary.core_feature_metrics.content_bottleneck
-                  ?.status_breakdown?.queued ?? 0}
-              </p>
-            </div>
-            <div className="rounded-sm border border-mkt-ink/[0.06] p-3 text-sm">
-              <p className="font-semibold text-mkt-ink">
-                Competitive intelligence
-              </p>
-              <p className="mt-1 text-mkt-muted">
-                Tracked competitors:{" "}
-                {summary.core_feature_metrics.competitive_intelligence
-                  ?.tracked_competitors ?? 0}
-              </p>
-              <p className="text-mkt-muted">
-                Recent alerts:{" "}
-                {summary.core_feature_metrics.competitive_intelligence
-                  ?.recent_alerts ?? 0}
-              </p>
-            </div>
-            <div className="rounded-sm border border-mkt-ink/[0.06] p-3 text-sm">
-              <p className="font-semibold text-mkt-ink">Launch orchestration</p>
-              <p className="mt-1 text-mkt-muted">
-                Campaigns:{" "}
-                {summary.core_feature_metrics.launch_orchestration
-                  ?.campaign_count ?? 0}
-              </p>
-              <p className="text-mkt-muted">
-                Running:{" "}
-                {summary.core_feature_metrics.launch_orchestration
-                  ?.status_breakdown?.running ?? 0}
-              </p>
-            </div>
-            <div className="rounded-sm border border-mkt-ink/[0.06] p-3 text-sm">
-              <p className="font-semibold text-mkt-ink">Campaign analysis</p>
-              <p className="mt-1 text-mkt-muted">
-                Top channel:{" "}
-                {summary.core_feature_metrics.campaign_analysis?.top_channel ??
-                  "—"}
-              </p>
-              <p className="text-mkt-muted">
-                Top campaign:{" "}
-                {summary.core_feature_metrics.campaign_analysis?.top_campaign ??
-                  "—"}
-              </p>
-            </div>
-            <div className="rounded-sm border border-mkt-ink/[0.06] p-3 text-sm">
-              <p className="font-semibold text-mkt-ink">
-                Sales-marketing alignment
-              </p>
-              <p className="mt-1 text-mkt-muted">
-                Top lead source:{" "}
-                {summary.core_feature_metrics.sales_marketing_alignment
-                  ?.top_lead_source ?? "—"}
-              </p>
-              <p className="text-mkt-muted">
-                Stall points:{" "}
-                {summary.core_feature_metrics.sales_marketing_alignment
-                  ?.stall_points?.length ?? 0}
-              </p>
-            </div>
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">Recent agent threads</h2>
+            <Link href="/agent" className="text-xs font-medium text-mkt-accent hover:underline">
+              View all
+            </Link>
           </div>
+          {recentThreads.length === 0 ? (
+            <p className="mt-4 text-sm text-mkt-muted">No conversations yet.</p>
+          ) : (
+            <ul className="mt-4 space-y-2">
+              {recentThreads.map((thread) => (
+                <li key={thread.id}>
+                  <Link
+                    href={`/agent?c=${thread.id}`}
+                    className="block rounded-sm border border-mkt-ink/[0.06] px-4 py-3 text-sm transition-colors hover:border-mkt-accent/25 hover:bg-mkt-accent/[0.04]"
+                  >
+                    <span className="line-clamp-1 font-medium text-mkt-ink">{thread.title}</span>
+                    <span className="mt-1 block text-xs text-mkt-muted">
+                      {new Date(thread.updated_at).toLocaleDateString()}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
         </ProductCard>
-      ) : null}
+
+        <ProductCard>
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">Generated assets</h2>
+            <Link href="/assets" className="text-xs font-medium text-mkt-accent hover:underline">
+              Open library
+            </Link>
+          </div>
+          <p className="mt-4 text-sm text-mkt-muted">
+            {summary?.counts?.campaigns ?? 0} campaign packages in your library. Review outputs and download files
+            from Assets.
+          </p>
+          <Link href="/assets" className="mt-4 inline-block">
+            <ProductButton variant="secondary">Browse assets</ProductButton>
+          </Link>
+        </ProductCard>
+      </div>
 
       {completeness ? (
         <ProductCard>
-          <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">
-            Next steps
-          </h2>
+          <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">Next steps</h2>
           <ul className="mt-4 space-y-2">
             {readinessLinks.map((item) => {
               const ready = completeness[item.key];
@@ -340,9 +239,7 @@ export function DashboardWorkspace({ email, displayName, org, role }: Props) {
                     className="flex items-center justify-between rounded-sm border border-mkt-ink/[0.06] px-4 py-3 text-sm transition-colors hover:border-mkt-accent/25 hover:bg-mkt-accent/[0.04]"
                   >
                     <span className="text-mkt-ink">{item.label}</span>
-                    <span
-                      className={ready ? "text-emerald-600" : "text-mkt-muted"}
-                    >
+                    <span className={ready ? "text-emerald-600" : "text-mkt-muted"}>
                       {ready ? "Ready" : "Incomplete"}
                     </span>
                   </Link>
@@ -351,12 +248,6 @@ export function DashboardWorkspace({ email, displayName, org, role }: Props) {
             })}
           </ul>
         </ProductCard>
-      ) : null}
-
-      {summary?.icp_version ? (
-        <p className="text-sm text-mkt-muted">
-          Latest ICP profile: v{summary.icp_version}
-        </p>
       ) : null}
     </div>
   );
