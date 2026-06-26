@@ -10,7 +10,11 @@ from stoa_core.integrations.crypto import decrypt_credentials, encrypt_credentia
 from stoa_core.integrations.csv_structured import parse_csv_content
 from stoa_core.integrations.google_oauth import google_oauth_configured
 from stoa_core.integrations.oauth_refresh import maybe_refresh_credentials, refresh_salesforce_token
-from stoa_core.integrations.provider_capabilities import connectable_for, list_providers_for_api, oauth_available_for
+from stoa_core.integrations.provider_capabilities import (
+    connectable_for,
+    list_providers_for_api,
+    oauth_available_for,
+)
 from stoa_core.integrations.registry import get_connector, list_providers
 
 MARKETING_PROVIDER_IDS = {
