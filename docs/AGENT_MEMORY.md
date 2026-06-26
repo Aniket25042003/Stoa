@@ -24,6 +24,10 @@ The platform does not run multi-agent LangGraph loops on each request. Instead, 
 | Query embedding cache | Redis `stoa:kb:qemb:{org}:{hash}` | 1800s TTL |
 | Retrieval result cache | Redis `stoa:kb:result:{org}:{version}:{hash}` | 3600s TTL |
 | KB version counter | Redis `stoa:kb:version:{org}` | Bumped on ingest |
+| Enrichment job status | `enrichment_jobs` table | Permanent audit trail |
+| Company web research | `knowledge_chunks` (kind=company_web_research) | On onboarding / profile update |
+| Competitive research | `knowledge_chunks` (kind=competitive_snapshot, competitive_research) | On competitor add / scheduled rescan |
+| Conversation checkpoints | `knowledge_chunks` (kind=conversation_memory) | Every N user turns in a thread |
 
 ### How context reaches the LLM
 
