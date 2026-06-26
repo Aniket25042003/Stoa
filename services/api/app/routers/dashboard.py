@@ -62,6 +62,14 @@ def get_dashboard_summary(scope: OrgScope = Depends(require_onboarded_scope)) ->
     )
     executive = (exec_res.data or [None])[0]
     crm_stats = aggregate_crm_stats(org_id)
+    profile_res = (
+        sb.table("user_profiles")
+        .select("full_name, job_title")
+        .eq("user_id", scope.user_id)
+        .limit(1)
+        .execute()
+    )
+    profile = (profile_res.data or [{}])[0]
 
     return {
         "org": {"id": org_id, "name": org.get("name"), "industry": org.get("industry")},
@@ -72,6 +80,10 @@ def get_dashboard_summary(scope: OrgScope = Depends(require_onboarded_scope)) ->
         "completeness": completeness,
         "executive_summary": executive,
         "insight_highlights": insights_res.data or [],
-        "permissions": sorted(scope.permissions),
-        "role_name": scope.role_name,
+        "viewer": {
+            "display_name": profile.get("full_name"),
+            "job_title": profile.get("job_title"),
+            "role_name": scope.role_name,
+            "role_key": scope.role_key,
+        },
     }
