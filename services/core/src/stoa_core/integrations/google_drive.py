@@ -13,8 +13,15 @@ from typing import Any
 
 import httpx
 
-from stoa_core.integrations.base import BaseConnector, ProviderInfo, SyncResult
+from stoa_core.integrations.base import BaseConnector, ProviderInfo, ResourceListResult, SyncResult
+from stoa_core.integrations.google_oauth import (
+    DRIVE_SCOPE,
+    exchange_google_code,
+    google_authorize_url,
+    google_oauth_configured,
+)
 from stoa_core.integrations.registry import register_connector
+from stoa_core.integrations.resource_listers import list_google_drive_files
 from stoa_core.rag.ingest import ingest_knowledge
 
 logger = logging.getLogger(__name__)
@@ -43,8 +50,33 @@ class GoogleDriveConnector(BaseConnector):
             name="Google Drive",
             auth_type="oauth",
             description="Export Google Docs as text into the knowledge base.",
-            scopes=["https://www.googleapis.com/auth/drive.readonly"],
+            scopes=[DRIVE_SCOPE],
+            supports_credential_auth=True,
+            resource_selection_mode="required",
+            resource_kinds=["file"],
         )
+
+    @classmethod
+    def oauth_authorize_url(
+        cls,
+        state: str,
+        redirect_uri: str,
+        *,
+        oauth_params: dict[str, Any] | None = None,
+    ) -> str | None:
+        if not google_oauth_configured():
+            return None
+        return google_authorize_url(state, redirect_uri, [DRIVE_SCOPE])
+
+    @classmethod
+    def exchange_oauth_code(
+        cls,
+        code: str,
+        redirect_uri: str,
+        *,
+        oauth_context: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        return exchange_google_code(code, redirect_uri)
 
     @classmethod
     def connect_with_credentials(cls, credentials: dict[str, Any]) -> dict[str, Any]:
@@ -57,13 +89,20 @@ class GoogleDriveConnector(BaseConnector):
             dict[str, Any]: Result produced for the caller.
         """
         token = credentials.get("access_token", "").strip()
-        file_ids = credentials.get("file_ids") or []
         if not token:
             raise ValueError("Google Drive access token is required")
-        return {
-            "access_token": token,
-            "provider_metadata": {"file_ids": file_ids},
-        }
+        return {"access_token": token, "provider_metadata": {}}
+
+    @classmethod
+    def list_discoverable_resources(
+        cls,
+        *,
+        credentials: dict[str, Any],
+        metadata: dict[str, Any],
+        cursor: str | None = None,
+        query: str | None = None,
+    ) -> ResourceListResult:
+        return list_google_drive_files(credentials, cursor=cursor, query=query)
 
     @classmethod
     def sync(
@@ -90,10 +129,13 @@ class GoogleDriveConnector(BaseConnector):
         result = SyncResult()
         metadata = connection.get("provider_metadata") or {}
         file_ids = metadata.get("file_ids") or []
+        if not file_ids:
+            result.error = "No Google Drive files selected — configure access first"
+            return result
         headers = {"Authorization": f"Bearer {credentials['access_token']}"}
 
         try:
-            for file_id in file_ids[:10]:
+            for file_id in file_ids[:20]:
                 with httpx.Client(timeout=60) as client:
                     res = client.get(
                         f"https://www.googleapis.com/drive/v3/files/{file_id}/export",

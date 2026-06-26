@@ -13,8 +13,9 @@ from typing import Any
 
 import httpx
 
-from stoa_core.integrations.base import BaseConnector, ProviderInfo, SyncResult
+from stoa_core.integrations.base import BaseConnector, ProviderInfo, ResourceListResult, SyncResult
 from stoa_core.integrations.registry import register_connector
+from stoa_core.integrations.resource_listers import list_notion_resources
 from stoa_core.rag.ingest import ingest_knowledge
 
 logger = logging.getLogger(__name__)
@@ -43,6 +44,8 @@ class NotionConnector(BaseConnector):
             name="Notion",
             auth_type="api_key",
             description="Import Notion pages into the knowledge base.",
+            resource_selection_mode="required",
+            resource_kinds=["page", "database"],
         )
 
     @classmethod
@@ -56,13 +59,20 @@ class NotionConnector(BaseConnector):
             dict[str, Any]: Result produced for the caller.
         """
         token = credentials.get("access_token", "").strip()
-        page_ids = credentials.get("page_ids") or []
         if not token:
             raise ValueError("Notion integration token is required")
-        return {
-            "access_token": token,
-            "provider_metadata": {"page_ids": page_ids},
-        }
+        return {"access_token": token, "provider_metadata": {}}
+
+    @classmethod
+    def list_discoverable_resources(
+        cls,
+        *,
+        credentials: dict[str, Any],
+        metadata: dict[str, Any],
+        cursor: str | None = None,
+        query: str | None = None,
+    ) -> ResourceListResult:
+        return list_notion_resources(credentials, cursor=cursor, query=query)
 
     @classmethod
     def sync(
@@ -89,13 +99,17 @@ class NotionConnector(BaseConnector):
         result = SyncResult()
         metadata = connection.get("provider_metadata") or {}
         page_ids = metadata.get("page_ids") or []
+        database_ids = metadata.get("database_ids") or []
+        if not page_ids and not database_ids:
+            result.error = "No Notion pages or databases selected — configure access first"
+            return result
         headers = {
             "Authorization": f"Bearer {credentials['access_token']}",
             "Notion-Version": "2022-06-28",
         }
 
         try:
-            for page_id in page_ids[:10]:
+            for page_id in page_ids[:20]:
                 text = cls._fetch_page_text(page_id, headers)
                 if not text.strip():
                     continue
@@ -107,6 +121,21 @@ class NotionConnector(BaseConnector):
                     text=text,
                     feature_origin="integrations",
                     uri=f"notion:page:{page_id}",
+                    metadata={"source": SOURCE},
+                )
+                result.records_written += 1
+            for db_id in database_ids[:10]:
+                rows = cls._query_database(db_id, headers)
+                if not rows.strip():
+                    continue
+                result.records_fetched += 1
+                ingest_knowledge(
+                    org_id,
+                    kind="document",
+                    title=f"Notion database {db_id[:8]}",
+                    text=rows,
+                    feature_origin="integrations",
+                    uri=f"notion:database:{db_id}",
                     metadata={"source": SOURCE},
                 )
                 result.records_written += 1
@@ -146,6 +175,33 @@ class NotionConnector(BaseConnector):
                     text = _block_text(block)
                     if text:
                         lines.append(text)
+                if not body.get("has_more"):
+                    break
+                start_cursor = body.get("next_cursor")
+        return "\n".join(lines)
+
+    @classmethod
+    def _query_database(cls, database_id: str, headers: dict[str, str]) -> str:
+        lines: list[str] = []
+        start_cursor = None
+        with httpx.Client(timeout=60) as client:
+            while len(lines) < 200:
+                payload: dict[str, Any] = {"page_size": 50}
+                if start_cursor:
+                    payload["start_cursor"] = start_cursor
+                res = client.post(
+                    f"https://api.notion.com/v1/databases/{database_id}/query",
+                    headers=headers,
+                    json=payload,
+                )
+                if res.status_code >= 400:
+                    break
+                body = res.json()
+                for page in body.get("results") or []:
+                    for prop in (page.get("properties") or {}).values():
+                        if prop.get("type") == "title":
+                            title_bits = prop.get("title") or []
+                            lines.append("".join(t.get("plain_text", "") for t in title_bits))
                 if not body.get("has_more"):
                     break
                 start_cursor = body.get("next_cursor")

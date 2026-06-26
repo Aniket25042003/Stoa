@@ -10,16 +10,24 @@ from __future__ import annotations
 
 import logging
 from typing import Any
+from urllib.parse import urlencode
 
 import httpx
 
-from stoa_core.integrations.base import BaseConnector, ProviderInfo, SyncResult
+from stoa_core.config import get_settings
+from stoa_core.integrations.base import BaseConnector, ProviderInfo, ResourceListResult, SyncResult
 from stoa_core.integrations.registry import register_connector
+from stoa_core.integrations.resource_listers import list_slack_channels
 from stoa_core.rag.ingest import ingest_knowledge
 
 logger = logging.getLogger(__name__)
 
 SOURCE = "slack"
+SLACK_SCOPES = ["channels:history", "channels:read", "groups:history", "groups:read"]
+
+
+def _settings():
+    return get_settings()
 
 
 @register_connector
@@ -43,8 +51,65 @@ class SlackConnector(BaseConnector):
             name="Slack",
             auth_type="oauth",
             description="Import messages from selected Slack channels into the knowledge base.",
-            scopes=["channels:history", "channels:read", "groups:history", "groups:read"],
+            scopes=SLACK_SCOPES,
+            supports_credential_auth=True,
+            resource_selection_mode="required",
+            resource_kinds=["channel"],
         )
+
+    @classmethod
+    def oauth_authorize_url(
+        cls,
+        state: str,
+        redirect_uri: str,
+        *,
+        oauth_params: dict[str, Any] | None = None,
+    ) -> str | None:
+        s = _settings()
+        if not s.slack_client_id.strip() or not s.slack_client_secret.strip():
+            return None
+        params = {
+            "client_id": s.slack_client_id,
+            "scope": ",".join(SLACK_SCOPES),
+            "redirect_uri": redirect_uri,
+            "state": state,
+        }
+        return f"https://slack.com/oauth/v2/authorize?{urlencode(params)}"
+
+    @classmethod
+    def exchange_oauth_code(
+        cls,
+        code: str,
+        redirect_uri: str,
+        *,
+        oauth_context: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        s = _settings()
+        with httpx.Client(timeout=30) as client:
+            res = client.post(
+                "https://slack.com/api/oauth.v2.access",
+                data={
+                    "client_id": s.slack_client_id,
+                    "client_secret": s.slack_client_secret,
+                    "code": code,
+                    "redirect_uri": redirect_uri,
+                },
+            )
+            res.raise_for_status()
+            data = res.json()
+        if not data.get("ok"):
+            raise ValueError(data.get("error", "Slack OAuth failed"))
+        authed = data.get("authed_user") or {}
+        team = data.get("team") or {}
+        return {
+            "access_token": data.get("access_token"),
+            "refresh_token": data.get("refresh_token"),
+            "provider_metadata": {
+                "team_id": team.get("id"),
+                "team_name": team.get("name"),
+                "user_id": authed.get("id"),
+            },
+        }
 
     @classmethod
     def connect_with_credentials(cls, credentials: dict[str, Any]) -> dict[str, Any]:
@@ -57,13 +122,23 @@ class SlackConnector(BaseConnector):
             dict[str, Any]: Result produced for the caller.
         """
         token = credentials.get("access_token", "").strip()
-        channels = credentials.get("channel_ids") or []
         if not token:
             raise ValueError("Slack access token is required")
         return {
             "access_token": token,
-            "provider_metadata": {"channel_ids": channels},
+            "provider_metadata": {},
         }
+
+    @classmethod
+    def list_discoverable_resources(
+        cls,
+        *,
+        credentials: dict[str, Any],
+        metadata: dict[str, Any],
+        cursor: str | None = None,
+        query: str | None = None,
+    ) -> ResourceListResult:
+        return list_slack_channels(credentials, cursor=cursor, query=query)
 
     @classmethod
     def sync(
@@ -89,11 +164,14 @@ class SlackConnector(BaseConnector):
         """
         result = SyncResult()
         metadata = connection.get("provider_metadata") or {}
-        channel_ids = metadata.get("channel_ids") or credentials.get("channel_ids") or []
+        channel_ids = metadata.get("channel_ids") or []
+        if not channel_ids:
+            result.error = "No Slack channels selected — configure access first"
+            return result
         headers = {"Authorization": f"Bearer {credentials['access_token']}"}
 
         try:
-            for channel_id in channel_ids[:5]:
+            for channel_id in channel_ids[:20]:
                 with httpx.Client(timeout=60) as client:
                     res = client.get(
                         "https://slack.com/api/conversations.history",
