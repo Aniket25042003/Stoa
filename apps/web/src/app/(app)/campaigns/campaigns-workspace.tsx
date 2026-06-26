@@ -16,6 +16,7 @@ import {
   ProductTextarea,
 } from "@/components/product";
 import { apiFetch } from "@/lib/api";
+import { formatJobStatusLabel } from "@/lib/user-facing-copy";
 import { cn } from "@/lib/cn";
 
 type Campaign = {
@@ -54,8 +55,8 @@ export function CampaignsWorkspace() {
   const refresh = useCallback(async () => {
     const [campRes, orgRes] = await Promise.all([apiFetch("/v1/campaigns", {}), apiFetch("/v1/orgs/me", {})]);
     if (!campRes.ok && !orgRes.ok) {
-      const body = await campRes.json().catch(() => null);
-      setLoadError(typeof body?.detail === "string" ? body.detail : "Could not reach the API. Is the backend running?");
+      await campRes.json().catch(() => null);
+      setLoadError("We couldn't load campaigns right now. Please try again in a moment.");
       return;
     }
     setLoadError(null);
@@ -114,10 +115,9 @@ export function CampaignsWorkspace() {
       {loadError ? (
         <ProductCard className="border-mkt-accent-warm/25 bg-mkt-accent-warm/[0.06]">
           <p className="text-sm text-mkt-ink">{loadError}</p>
-          <p className="mt-2 text-xs text-mkt-muted">
-            Start the API with <code className="font-mono">pnpm dev:api</code> (or your usual FastAPI command), then
-            refresh this page.
-          </p>
+          <ProductButton variant="secondary" className="mt-3" onClick={() => void refresh()}>
+            Try again
+          </ProductButton>
         </ProductCard>
       ) : null}
 
@@ -173,12 +173,14 @@ export function CampaignsWorkspace() {
             {selected ? <ProductStatusPill status={selected.status} /> : null}
           </div>
           {selected?.assets && Object.keys(selected.assets).length > 0 ? (
-            <pre className="mt-4 max-h-[500px] overflow-auto rounded-sm border border-mkt-ink/[0.06] bg-mkt-ink/[0.02] p-4 font-mono text-xs text-mkt-ink">
-              {JSON.stringify(selected.assets, null, 2)}
-            </pre>
+            <p className="mt-4 text-sm text-mkt-muted">
+              Your campaign package is ready. Open the Assets library for the full set of generated materials.
+            </p>
           ) : (
             <p className="mt-4 text-sm text-mkt-muted">
-              {selected ? `Status: ${selected.status}` : "Select a campaign to view assets."}
+              {selected
+                ? `Campaign is ${formatJobStatusLabel(selected.status).toLowerCase()}. Assets will appear here when ready.`
+                : "Select a campaign to view assets."}
             </p>
           )}
         </ProductCard>

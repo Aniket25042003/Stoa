@@ -5,6 +5,7 @@
  * @dependencies React
  */
 import { cn } from "@/lib/cn";
+import { formatJobStatusLabel } from "@/lib/user-facing-copy";
 
 /**
  * Handles product badge behavior for this part of the Stoa application.
@@ -63,7 +64,7 @@ export function ProductStatusPill({
 
   return (
     <ProductBadge variant={variant} className={className}>
-      {status}
+      {formatJobStatusLabel(status)}
     </ProductBadge>
   );
 }

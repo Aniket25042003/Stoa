@@ -40,12 +40,17 @@ export default async function OnboardingLayout({ children }: { children: React.R
       if (res.ok) {
         const state = (await res.json()) as SessionState;
         if (state.needs_email_verification) redirect("/verify-email");
-        if (!state.needs_onboarding) redirect("/dashboard");
+        const onboardingMode = (await headers()).get("x-onboarding-mode");
+        const isCreateMode = onboardingMode === "create";
+        if (!state.needs_onboarding && !isCreateMode) redirect("/dashboard");
       }
     } catch {
       // continue
     }
   }
+
+  const onboardingMode = (await headers()).get("x-onboarding-mode");
+  const isCreateMode = onboardingMode === "create";
 
   return (
     <ProductShellFrame>
@@ -54,11 +59,20 @@ export default async function OnboardingLayout({ children }: { children: React.R
           <Link href="/" className="inline-flex items-center">
             <BrandLogo variant="logo" size="md" />
           </Link>
-          <form action="/api/auth/signout" method="post">
-            <ProductButton variant="secondary" type="submit">
-              Sign out
-            </ProductButton>
-          </form>
+          <div className="flex items-center gap-2">
+            {isCreateMode ? (
+              <Link href="/dashboard">
+                <ProductButton variant="secondary" type="button">
+                  Back to dashboard
+                </ProductButton>
+              </Link>
+            ) : null}
+            <form action="/api/auth/signout" method="post">
+              <ProductButton variant="secondary" type="submit">
+                Sign out
+              </ProductButton>
+            </form>
+          </div>
         </div>
       </header>
       <main className="mx-auto max-w-3xl px-4 py-8 md:px-6 md:py-12">{children}</main>

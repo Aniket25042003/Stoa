@@ -15,6 +15,11 @@
   --mkt-dark-band: #141414;
   --mkt-dark-ink: #F5F5F5;
 
+  /* App shell layout */
+  --app-rail-width: 64px;
+  --agent-sidebar-width: 260px;
+  --agent-context-width: 320px;
+
   /* @deprecated MD3/sand tokens — do not use in new V3 product/marketing code */
   --surface: #F5E6C8; /* Sand canvas backdrop */
   --surface-dim: #EADCBF;
@@ -809,6 +814,29 @@ html.dark {
 .product-v2 ::selection {
   background: rgb(10 10 10 / 12%);
   color: var(--mkt-ink);
+}
+
+.agent-canvas {
+  background-color: var(--mkt-surface);
+  min-height: calc(100vh - 3.5rem);
+  height: calc(100vh - 3.5rem);
+  overflow: hidden;
+}
+
+.agent-message-user {
+  background: var(--mkt-surface-elevated);
+  border: 1px solid var(--mkt-border);
+  border-radius: 0.125rem;
+}
+
+.agent-message-assistant {
+  background: rgb(10 10 10 / 2%);
+  border: 1px solid var(--mkt-border);
+  border-radius: 0.125rem;
+}
+
+.icon-rail-item {
+  position: relative;
 }
 
 /* Lenis Smooth Scroll Rules */

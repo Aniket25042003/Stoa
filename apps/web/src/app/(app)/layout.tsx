@@ -50,8 +50,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     }
   }
 
+  const displayName = user
+    ? ((user.user_metadata?.full_name as string | undefined) ??
+        (user.user_metadata?.name as string | undefined) ??
+        null)
+    : null;
+
   return user?.email ? (
-    <AppShell email={user.email}>{children}</AppShell>
+    <AppShell email={user.email} displayName={displayName}>
+      {children}
+    </AppShell>
   ) : (
     <div className="product-v2 min-h-screen">{children}</div>
   );

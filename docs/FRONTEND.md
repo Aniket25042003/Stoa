@@ -34,18 +34,18 @@ apps/web/src/
 | Group | Routes | Layout |
 |-------|--------|--------|
 | `(marketing)` | `/`, `/pricing`, `/faq`, `/how-it-works`, `/see-it-in-action`, `/waitlist` | Marketing navbar + footer |
-| `(app)` | `/dashboard`, `/data/*`, `/intelligence`, `/competitive`, `/campaigns`, `/settings/*` | `AppShell` with sidebar |
+| `(app)` | `/dashboard`, `/agent`, `/assets`, `/data/*`, `/settings/*` | `AppShell` with icon rail |
 | `(onboarding)` | `/onboarding`, `/onboarding/processing` | Minimal chrome |
 | Standalone | `/login`, `/verify-email`, `/invite/[token]` | Auth pages |
 
-Legacy redirect stubs: `/gtm` → `/intelligence`, `/marketing` → `/campaigns`, `/runs/*` → `/dashboard`.
+Legacy redirect stubs: `/gtm` → `/agent`, `/intelligence` → `/agent`, `/competitive` → `/agent`, `/campaigns` → `/assets`, `/content` → `/assets`, `/marketing` → `/assets`, `/runs/*` → `/dashboard`.
 
 ### Middleware
 
 [`apps/web/src/middleware.ts`](../apps/web/src/middleware.ts):
 
 - Supabase session refresh
-- Protected route prefixes (`/dashboard`, `/data`, `/intelligence`, etc.)
+- Protected route prefixes (`/dashboard`, `/agent`, `/assets`, `/data`, `/settings`, etc.)
 - Prelaunch public-site gate
 - CSP + security headers
 
