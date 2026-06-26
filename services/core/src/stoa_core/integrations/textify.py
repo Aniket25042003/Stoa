@@ -48,6 +48,10 @@ def contact_to_text(row: dict[str, Any]) -> str:
         lines.append(f"Email: {row['email']}")
     if row.get("title"):
         lines.append(f"Title: {row['title']}")
+    if row.get("lead_source"):
+        lines.append(f"Lead source: {row['lead_source']}")
+    if row.get("utm_campaign"):
+        lines.append(f"UTM campaign: {row['utm_campaign']}")
     if row.get("department"):
         lines.append(f"Department: {row['department']}")
     tags = row.get("persona_tags") or []
@@ -79,6 +83,10 @@ def deal_to_text(row: dict[str, Any]) -> str:
         lines.append(f"Closed: {row['is_closed']}")
     if row.get("loss_reason"):
         lines.append(f"Loss reason: {row['loss_reason']}")
+    if row.get("lead_source"):
+        lines.append(f"Lead source: {row['lead_source']}")
+    if row.get("utm_campaign"):
+        lines.append(f"UTM campaign: {row['utm_campaign']}")
     if row.get("owner_name"):
         lines.append(f"Owner: {row['owner_name']}")
     return "\n".join(lines)

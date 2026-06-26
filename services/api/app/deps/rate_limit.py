@@ -31,6 +31,8 @@ EXPENSIVE_SCOPES = frozenset(
         "document_update",
         "icp_rebuild",
         "insights_refresh",
+        "campaign_analysis_refresh",
+        "alignment_refresh",
         "integrations",
         "paste",
         "upload",
