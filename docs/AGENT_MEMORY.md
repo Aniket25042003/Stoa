@@ -31,6 +31,8 @@ The platform does not run multi-agent LangGraph loops on each request. Instead, 
 | Company web research | `knowledge_chunks` (kind=company_web_research) | On onboarding / profile update |
 | Competitive research | `knowledge_chunks` (kind=competitive_snapshot, competitive_research) | On competitor add / scheduled rescan |
 | Conversation checkpoints | `knowledge_chunks` (kind=conversation_memory) | Every N user turns in a thread |
+| Agent search evidence | `knowledge_chunks` (kind=agent_search_evidence) | Persisted end-of-turn from live/canonical/web tool hits |
+| Conversation evidence cache | Redis `stoa:agent:evidence:{org}:{conversation}:{hash}` | `agent_evidence_conversation_ttl_seconds` (default 72h) |
 
 ### How context reaches the LLM
 
@@ -41,7 +43,8 @@ The platform does not run multi-agent LangGraph loops on each request. Instead, 
    - `classify_agent_route()` chooses `rag_only` vs `tools`
    - `retrieve_context_prepared()` may rewrite the query, then fetches ranked chunks
    - RAG-only: `answer_question()` with cached answers when applicable
-   - Tools route: LangChain agent with six precomputed feature tools (premium)
+   - Tools route: LangChain agent with tiered tools (`build_agent_tools`: memory, live search, refresh, canonical, dashboard, optional web)
+   - End of turn: `persist_turn_evidence()` writes sanitized connector/web/canonical hits to KB
    - Assistant message inserted into `messages`
    - SSE event published for realtime UI update
 
@@ -55,6 +58,17 @@ The unified agent uses **short-term chat history** in the LangChain prompt (rece
 4. **Token budget** (`RETRIEVAL_TOKEN_BUDGET=2000`) trims total tokens
 5. **Thread filter** on `conversation_memory` chunks when `conversation_id` is set
 6. Conversation checkpoints every 6 user turns via `maybe_checkpoint_conversation()`
+
+### Agent evidence layer
+
+Search tools (`search_workspace_memory`, `search_connected_sources`, `lookup_canonical_records`, `search_public_web`) share `stoa_core.agent.evidence`:
+
+1. **Cache read** — identical query in the same conversation hits Redis before external I/O.
+2. **Sanitize** — `redact_pii` + `sanitize_user_content` on all cached/persisted text.
+3. **Turn accumulator** — dedupes hits by URI during one `run_unified_agent_turn`.
+4. **Persist** — after the answer, up to `agent_evidence_max_persist_per_turn` hits ingest as `agent_search_evidence` (URI `agent_evidence:{provider}:{id}`) for cross-thread retrieval.
+
+Prefer KB evidence newer than connector `last_sync_at` before live search; use `get_workspace_freshness` when unsure.
 
 ## Architecture diagram
 
