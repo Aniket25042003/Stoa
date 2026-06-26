@@ -11,7 +11,7 @@ import json
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -23,6 +23,7 @@ from app.tasks.intelligence import answer_intelligence_question
 from stoa_core.config import get_settings
 from stoa_core.db.supabase import get_supabase_admin
 from stoa_core.redis.sse import read_events_since
+from stoa_core.rag.conversation_memory import delete_conversation_memory
 from stoa_core.security.pii import redact_pii
 from stoa_core.security.sanitize import sanitize_user_content
 
@@ -36,6 +37,7 @@ class AskBody(BaseModel):
     pipelines can depend on a focused abstraction instead of duplicating logic.
     """
     question: str = Field(min_length=1, max_length=2000)
+    conversation_id: str | None = None
 
 
 @router.get("")
@@ -76,16 +78,34 @@ def ask_question(body: AskBody, scope: OrgScope = Depends(require_onboarded_scop
     check_rate_limit(scope.user_id, get_settings().rate_limit_per_minute, scope="ask")
     question = redact_pii(sanitize_user_content(body.question))
     sb = get_supabase_admin()
-    conv_id = str(uuid.uuid4())
-    sb.table("conversations").insert(
-        {"id": conv_id, "org_id": scope.org_id, "title": question[:120], "created_by": scope.user_id}
-    ).execute()
+
+    if body.conversation_id:
+        existing = (
+            sb.table("conversations")
+            .select("id")
+            .eq("id", body.conversation_id)
+            .eq("org_id", scope.org_id)
+            .limit(1)
+            .execute()
+        )
+        if not existing.data:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Conversation not found")
+        conv_id = body.conversation_id
+    else:
+        conv_id = str(uuid.uuid4())
+        sb.table("conversations").insert(
+            {"id": conv_id, "org_id": scope.org_id, "title": question[:120], "created_by": scope.user_id}
+        ).execute()
     msg_res = (
         sb.table("messages")
         .insert({"conversation_id": conv_id, "role": "user", "content": question, "org_id": scope.org_id})
         .execute()
     )
     user_msg = (msg_res.data or [None])[0]
+    if body.conversation_id:
+        sb.table("conversations").update({"updated_at": "now()"}).eq("id", conv_id).eq(
+            "org_id", scope.org_id
+        ).execute()
     answer_intelligence_question.delay(conv_id, scope.org_id, question)
     write_audit(scope.org_id, scope.user_id, "conversation.asked", "conversation", conv_id)
     return {"conversation_id": conv_id, "message": user_msg, "status": "processing"}
@@ -122,6 +142,47 @@ def get_conversation(conversation_id: str, scope: OrgScope = Depends(require_onb
         .execute()
     )
     return {"conversation": conv.data[0], "messages": msgs.data or []}
+
+
+@router.delete("/{conversation_id}")
+def delete_conversation(
+    conversation_id: str,
+    delete_memory: bool = Query(False, description="Also remove long-term agent memory for this thread"),
+    scope: OrgScope = Depends(require_onboarded_scope),
+) -> dict[str, Any]:
+    """Delete a conversation thread; optionally purge its long-term memory."""
+    require_permission(scope, "conversations:ask")
+    sb = get_supabase_admin()
+    conv = (
+        sb.table("conversations")
+        .select("id")
+        .eq("id", conversation_id)
+        .eq("org_id", scope.org_id)
+        .limit(1)
+        .execute()
+    )
+    if not conv.data:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Conversation not found")
+
+    memory_items_deleted = 0
+    if delete_memory:
+        memory_items_deleted = delete_conversation_memory(scope.org_id, conversation_id)
+
+    sb.table("conversations").delete().eq("id", conversation_id).eq("org_id", scope.org_id).execute()
+    write_audit(
+        scope.org_id,
+        scope.user_id,
+        "conversation.deleted",
+        "conversation",
+        conversation_id,
+        metadata={"delete_memory": delete_memory, "memory_items_deleted": memory_items_deleted},
+    )
+    return {
+        "status": "deleted",
+        "conversation_id": conversation_id,
+        "memory_deleted": delete_memory,
+        "memory_items_deleted": memory_items_deleted,
+    }
 
 
 @router.get("/{conversation_id}/events")
