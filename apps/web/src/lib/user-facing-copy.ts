@@ -93,3 +93,21 @@ const KNOWLEDGE_REF_LABELS: Record<string, string> = {
 export function formatKnowledgeRefKind(kind: string): string {
   return KNOWLEDGE_REF_LABELS[kind] ?? formatJobStatusLabel(kind);
 }
+
+const INTEGRATION_ERROR_PATTERNS: Array<{ pattern: RegExp; message: string }> = [
+  {
+    pattern: /APIFY_API_TOKEN/i,
+    message: "Reddit and review import are not enabled on this workspace yet.",
+  },
+  { pattern: /property_id/i, message: "Add your GA4 property ID when connecting." },
+  { pattern: /401|403|unauthorized/i, message: "Connection expired or credentials were rejected — try reconnecting." },
+  { pattern: /rate limit/i, message: "The provider rate-limited this sync — try again shortly." },
+];
+
+export function formatIntegrationError(raw?: string | null): string | null {
+  if (!raw?.trim()) return null;
+  for (const { pattern, message } of INTEGRATION_ERROR_PATTERNS) {
+    if (pattern.test(raw)) return message;
+  }
+  return raw.length > 160 ? `${raw.slice(0, 157)}…` : raw;
+}

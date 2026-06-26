@@ -22,27 +22,32 @@ from app.tasks.integrations import sync_integration_source
 from stoa_core.config import get_settings
 from stoa_core.integrations.oauth_state import consume_oauth_state, create_oauth_state
 from stoa_core.integrations.hubspot_webhook import hubspot_portal_matches_metadata, verify_hubspot_signature_v3
-from stoa_core.integrations.registry import get_connector, list_providers
+from stoa_core.integrations.registry import get_connector
+from stoa_core.integrations.provider_capabilities import list_providers_for_api
 from stoa_core.integrations.service import (
     create_connection,
+    get_connection_scope,
+    list_connection_resources,
     list_connections,
     list_sync_runs,
     oauth_redirect_uri_for,
     revoke_connection,
+    update_connection_scope,
 )
+from stoa_core.integrations.scope import scope_configured
 from stoa_core.redis.sse import read_events_since
 
 router = APIRouter(prefix="/v1/integrations", tags=["integrations"])
 
 
 class ConnectCredentialsBody(BaseModel):
-    """Manage ConnectCredentialsBody behavior within the Stoa application layer.
-
-    This class groups related state and operations so routes, workers, or core
-    pipelines can depend on a focused abstraction instead of duplicating logic.
-    """
     credentials: dict[str, Any] = Field(default_factory=dict)
     label: str | None = None
+
+
+class ScopePatchBody(BaseModel):
+    scope: dict[str, Any] = Field(default_factory=dict)
+    sync: bool = True
 
 
 class CsvImportBody(BaseModel):
@@ -56,6 +61,11 @@ class CsvImportBody(BaseModel):
     column_mapping: dict[str, str | None] | None = None
 
 
+def _maybe_enqueue_sync(connection_id: str, org_id: str, provider: str, metadata: dict[str, Any]) -> None:
+    if scope_configured(provider, metadata):
+        sync_integration_source.delay(connection_id, org_id, full_backfill=True)
+
+
 @router.get("/providers")
 def get_providers(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
     """Handles get providers logic for the surrounding Stoa workflow.
@@ -67,7 +77,7 @@ def get_providers(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[st
         dict[str, Any]: Result produced for the caller.
     """
     require_permission(scope, "data_sources:read")
-    return {"providers": [p.__dict__ for p in list_providers()]}
+    return {"providers": list_providers_for_api()}
 
 
 @router.get("/sources")
@@ -88,12 +98,18 @@ def get_sources(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str,
 def start_oauth(
     provider: str,
     scope: OrgScope = Depends(require_onboarded_scope),
+    subdomain: str | None = Query(None),
+    environment: str | None = Query(None),
+    property_id: str | None = Query(None),
 ) -> dict[str, str]:
     """Handles start oauth logic for the surrounding Stoa workflow.
 
     Args:
         provider (str): Input value used by this workflow step.
         scope (OrgScope): Input value used by this workflow step.
+        subdomain (str | None): Zendesk subdomain for OAuth.
+        environment (str | None): Salesforce environment (production | sandbox).
+        property_id (str | None): GA4 property ID to store on the connection.
 
     Returns:
         dict[str, str]: Result produced for the caller.
@@ -102,11 +118,22 @@ def start_oauth(
     check_rate_limit(scope.user_id, get_settings().rate_limit_per_minute, scope="integrations")
     connector = get_connector(provider)
     info = connector.provider_info()
-    if info.auth_type != "oauth":
+    if info.auth_type != "oauth" and not info.supports_credential_auth:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Provider does not use OAuth")
     redirect_uri = oauth_redirect_uri_for(provider)
-    state = create_oauth_state(scope.org_id, scope.user_id, provider)
-    url = connector.oauth_authorize_url(state, redirect_uri)
+    oauth_extra: dict[str, Any] = {}
+    oauth_params: dict[str, Any] = {}
+    if subdomain:
+        oauth_extra["subdomain"] = subdomain.strip()
+        oauth_params["subdomain"] = subdomain.strip()
+    if environment:
+        oauth_extra["environment"] = environment.strip()
+        oauth_params["environment"] = environment.strip()
+    if property_id:
+        oauth_extra["property_id"] = property_id.strip()
+        oauth_params["property_id"] = property_id.strip()
+    state = create_oauth_state(scope.org_id, scope.user_id, provider, extra=oauth_extra or None)
+    url = connector.oauth_authorize_url(state, redirect_uri, oauth_params=oauth_params or None)
     if not url:
         raise HTTPException(status.HTTP_501_NOT_IMPLEMENTED, "OAuth not configured for provider")
     return {"authorize_url": url}
@@ -115,43 +142,78 @@ def start_oauth(
 @router.get("/callback/{provider}")
 def oauth_callback(
     provider: str,
-    code: str = Query(...),
-    state: str = Query(...),
+    code: str | None = Query(None),
+    state: str | None = Query(None),
+    error: str | None = Query(None),
+    error_description: str | None = Query(None),
 ) -> RedirectResponse:
     """Handles oauth callback logic for the surrounding Stoa workflow.
 
     Args:
         provider (str): Input value used by this workflow step.
-        code (str): Input value used by this workflow step.
-        state (str): Input value used by this workflow step.
+        code (str | None): OAuth authorization code.
+        state (str | None): OAuth state token.
+        error (str | None): OAuth error code from provider.
+        error_description (str | None): Human-readable OAuth error.
 
     Returns:
         RedirectResponse: Result produced for the caller.
     """
+    app_url = get_settings().app_base_url.rstrip("/")
+    integrations_url = f"{app_url}/data/integrations"
+
+    if error:
+        from urllib.parse import quote
+
+        msg = error_description or error
+        return RedirectResponse(f"{integrations_url}?error={quote(msg)}&provider={provider}")
+
+    if not code or not state:
+        return RedirectResponse(f"{integrations_url}?error=missing_oauth_params&provider={provider}")
+
     oauth_state = consume_oauth_state(state)
     if not oauth_state or oauth_state.get("provider") != provider:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Invalid OAuth state")
-    org_id = oauth_state["org_id"]
-    user_id = oauth_state.get("user_id")
-    connector = get_connector(provider)
-    redirect_uri = oauth_redirect_uri_for(provider)
-    token_data = connector.exchange_oauth_code(code, redirect_uri)
-    credentials = {k: v for k, v in token_data.items() if k != "provider_metadata"}
-    metadata = token_data.get("provider_metadata") or {}
-    info = connector.provider_info()
-    conn = create_connection(
-        org_id,
-        provider,
-        user_id=user_id,
-        label=info.name,
-        credentials=credentials,
-        provider_metadata=metadata,
-        scopes=info.scopes,
-    )
-    write_audit(org_id, user_id or "", "integration.connected", "integration_connection", conn["id"])
-    sync_integration_source.delay(conn["id"], org_id, full_backfill=True)
-    app_url = get_settings().app_base_url.rstrip("/")
-    return RedirectResponse(f"{app_url}/data?connected={provider}")
+        return RedirectResponse(f"{integrations_url}?error=invalid_oauth_state&provider={provider}")
+
+    try:
+        org_id = oauth_state["org_id"]
+        user_id = oauth_state.get("user_id")
+        connector = get_connector(provider)
+        redirect_uri = oauth_redirect_uri_for(provider)
+        oauth_context = {
+            k: oauth_state[k]
+            for k in ("subdomain", "environment", "property_id")
+            if oauth_state.get(k)
+        }
+        token_data = connector.exchange_oauth_code(code, redirect_uri, oauth_context=oauth_context or None)
+        credentials = {k: v for k, v in token_data.items() if k != "provider_metadata"}
+        metadata = token_data.get("provider_metadata") or {}
+        for key in ("subdomain", "environment", "property_id"):
+            if oauth_state.get(key):
+                metadata[key] = oauth_state[key]
+        info = connector.provider_info()
+        conn = create_connection(
+            org_id,
+            provider,
+            user_id=user_id,
+            label=info.name,
+            credentials=credentials,
+            provider_metadata=metadata,
+            scopes=info.scopes,
+        )
+        write_audit(org_id, user_id or "", "integration.connected", "integration_connection", conn["id"])
+        _maybe_enqueue_sync(conn["id"], org_id, provider, metadata)
+        needs_scope = not scope_configured(provider, metadata)
+        return RedirectResponse(
+            f"{integrations_url}?connected={provider}&connection_id={conn['id']}"
+            + ("&configure_scope=1" if needs_scope else "")
+        )
+    except Exception as exc:
+        from urllib.parse import quote
+
+        return RedirectResponse(
+            f"{integrations_url}?error={quote(str(exc))}&provider={provider}"
+        )
 
 
 @router.post("/sources/{provider}/connect")
@@ -186,8 +248,8 @@ def connect_with_credentials(
         provider_metadata=metadata,
     )
     write_audit(scope.org_id, scope.user_id, "integration.connected", "integration_connection", conn["id"])
-    sync_integration_source.delay(conn["id"], scope.org_id, full_backfill=True)
-    return {"connection": conn}
+    _maybe_enqueue_sync(conn["id"], scope.org_id, provider, metadata)
+    return {"connection": conn, "needs_scope_configuration": not scope_configured(provider, metadata)}
 
 
 @router.post("/sources/{connection_id}/sync")
@@ -230,6 +292,54 @@ def disconnect(
     revoke_connection(connection_id, scope.org_id)
     write_audit(scope.org_id, scope.user_id, "integration.revoked", "integration_connection", connection_id)
     return {"status": "revoked"}
+
+
+@router.get("/sources/{connection_id}/scope")
+def get_scope(
+    connection_id: str,
+    scope: OrgScope = Depends(require_onboarded_scope),
+) -> dict[str, Any]:
+    require_permission(scope, "data_sources:read")
+    try:
+        return get_connection_scope(connection_id, scope.org_id)
+    except ValueError as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc)) from exc
+
+
+@router.get("/sources/{connection_id}/resources")
+def list_resources(
+    connection_id: str,
+    scope: OrgScope = Depends(require_onboarded_scope),
+    cursor: str | None = Query(None),
+    q: str | None = Query(None),
+) -> dict[str, Any]:
+    require_permission(scope, "data_sources:read")
+    check_rate_limit(scope.user_id, get_settings().rate_limit_per_minute, scope="integration_resources")
+    try:
+        return list_connection_resources(connection_id, scope.org_id, cursor=cursor, query=q)
+    except ValueError as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
+
+
+@router.patch("/sources/{connection_id}/scope")
+def patch_scope(
+    connection_id: str,
+    body: ScopePatchBody,
+    scope: OrgScope = Depends(require_onboarded_scope),
+) -> dict[str, Any]:
+    require_permission(scope, "data_sources:write")
+    check_rate_limit(scope.user_id, get_settings().rate_limit_per_minute, scope="integrations")
+    patch = dict(body.scope)
+    patch["scope_configured"] = True
+    try:
+        conn = update_connection_scope(connection_id, scope.org_id, patch)
+    except ValueError as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
+    write_audit(scope.org_id, scope.user_id, "integration.scope_updated", "integration_connection", connection_id)
+    if body.sync and conn:
+        meta = conn.get("provider_metadata") or {}
+        _maybe_enqueue_sync(connection_id, scope.org_id, conn.get("provider", ""), meta)
+    return {"connection": conn}
 
 
 @router.get("/sources/{connection_id}/runs")

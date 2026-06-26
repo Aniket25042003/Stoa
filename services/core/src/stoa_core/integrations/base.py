@@ -27,6 +27,23 @@ class SyncResult:
 
 
 @dataclass
+class ResourceOption:
+    """A selectable resource returned by list_discoverable_resources."""
+    id: str
+    label: str
+    kind: str
+    description: str | None = None
+    meta: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class ResourceListResult:
+    """Paginated discoverable resources for the scope picker UI."""
+    resources: list[ResourceOption] = field(default_factory=list)
+    next_cursor: str | None = None
+
+
+@dataclass
 class ProviderInfo:
     """Manage ProviderInfo behavior within the Stoa application layer.
 
@@ -38,6 +55,10 @@ class ProviderInfo:
     auth_type: str  # oauth | api_key | upload
     description: str
     scopes: list[str] = field(default_factory=list)
+    connection_mode: str = "user"  # user | platform
+    supports_credential_auth: bool = False
+    resource_selection_mode: str = "none"  # none | required | optional
+    resource_kinds: list[str] = field(default_factory=list)
 
 
 class BaseConnector(ABC):
@@ -59,12 +80,19 @@ class BaseConnector(ABC):
         ...
 
     @classmethod
-    def oauth_authorize_url(cls, state: str, redirect_uri: str) -> str | None:
+    def oauth_authorize_url(
+        cls,
+        state: str,
+        redirect_uri: str,
+        *,
+        oauth_params: dict[str, Any] | None = None,
+    ) -> str | None:
         """Handles oauth authorize url logic for the surrounding Stoa workflow.
 
         Args:
             state (str): Input value used by this workflow step.
             redirect_uri (str): Input value used by this workflow step.
+            oauth_params (dict[str, Any] | None): Provider-specific OAuth params (e.g. subdomain).
 
         Returns:
             str | None: Result produced for the caller.
@@ -72,12 +100,19 @@ class BaseConnector(ABC):
         return None
 
     @classmethod
-    def exchange_oauth_code(cls, code: str, redirect_uri: str) -> dict[str, Any]:
+    def exchange_oauth_code(
+        cls,
+        code: str,
+        redirect_uri: str,
+        *,
+        oauth_context: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """Handles exchange oauth code logic for the surrounding Stoa workflow.
 
         Args:
             code (str): Input value used by this workflow step.
             redirect_uri (str): Input value used by this workflow step.
+            oauth_context (dict[str, Any] | None): Values from OAuth state (subdomain, etc.).
 
         Returns:
             dict[str, Any]: Result produced for the caller.
@@ -88,6 +123,23 @@ class BaseConnector(ABC):
     def connect_with_credentials(cls, credentials: dict[str, Any]) -> dict[str, Any]:
         """Non-OAuth connect (API keys, etc.). Returns credentials + provider_metadata."""
         return credentials
+
+    @classmethod
+    def list_discoverable_resources(
+        cls,
+        *,
+        credentials: dict[str, Any],
+        metadata: dict[str, Any],
+        cursor: str | None = None,
+        query: str | None = None,
+    ) -> ResourceListResult:
+        return ResourceListResult()
+
+    @classmethod
+    def validate_scope(cls, metadata: dict[str, Any]) -> list[str]:
+        from stoa_core.integrations.scope import validate_scope
+
+        return validate_scope(cls.provider, metadata)
 
     @classmethod
     @abstractmethod

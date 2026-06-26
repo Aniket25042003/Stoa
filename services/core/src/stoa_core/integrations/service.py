@@ -14,7 +14,16 @@ from typing import Any
 
 from stoa_core.db.supabase import get_supabase_admin
 from stoa_core.integrations.crypto import decrypt_credentials, encrypt_credentials
+from stoa_core.integrations.oauth_refresh import maybe_refresh_credentials
 from stoa_core.integrations.registry import get_connector
+from stoa_core.integrations.scope import (
+    merge_scope_patch,
+    purge_knowledge_by_uri_prefixes,
+    removed_uri_prefixes,
+    scope_configured,
+    scope_summary,
+    validate_scope,
+)
 from stoa_core.redis.client import publish_event
 from stoa_core.security.client_errors import client_safe_error_message
 
@@ -192,6 +201,9 @@ def list_connections(org_id: str) -> list[dict[str, Any]]:
     for row in rows:
         if row.get("last_error"):
             row["last_error"] = client_safe_error_message(str(row["last_error"]), context="sync")
+        meta = row.get("provider_metadata") or {}
+        row["scope_configured"] = scope_configured(row.get("provider", ""), meta)
+        row["scope_summary"] = scope_summary(row.get("provider", ""), meta)
     return rows
 
 
@@ -206,6 +218,103 @@ def revoke_connection(connection_id: str, org_id: str) -> None:
     sb.table("integration_connections").update(
         {"status": "revoked", "credentials_encrypted": None}
     ).eq("id", connection_id).eq("org_id", org_id).execute()
+
+
+def get_connection_scope(connection_id: str, org_id: str) -> dict[str, Any]:
+    conn = get_connection(connection_id, org_id)
+    if not conn:
+        raise ValueError("Connection not found")
+    meta = conn.get("provider_metadata") or {}
+    provider = conn["provider"]
+    connector = get_connector(provider)
+    info = connector.provider_info()
+    return {
+        "connection_id": connection_id,
+        "provider": provider,
+        "scope_configured": scope_configured(provider, meta),
+        "scope_summary": scope_summary(provider, meta),
+        "metadata": {k: meta[k] for k in meta if k != "scope_labels" or True},
+        "resource_selection_mode": info.resource_selection_mode,
+        "resource_kinds": info.resource_kinds,
+        "validation_errors": validate_scope(provider, meta),
+    }
+
+
+def list_connection_resources(
+    connection_id: str,
+    org_id: str,
+    *,
+    cursor: str | None = None,
+    query: str | None = None,
+) -> dict[str, Any]:
+    conn = get_connection(connection_id, org_id)
+    if not conn:
+        raise ValueError("Connection not found")
+    if conn.get("status") == "revoked":
+        raise ValueError("Connection is revoked")
+    credentials = decrypt_credentials(conn.get("credentials_encrypted"))
+    metadata = conn.get("provider_metadata") or {}
+    credentials = maybe_refresh_credentials(conn["provider"], credentials, metadata=metadata)
+    connector = get_connector(conn["provider"])
+    result = connector.list_discoverable_resources(
+        credentials=credentials,
+        metadata=metadata,
+        cursor=cursor,
+        query=query,
+    )
+    return {
+        "resources": [
+            {
+                "id": r.id,
+                "label": r.label,
+                "kind": r.kind,
+                "description": r.description,
+                "meta": r.meta,
+            }
+            for r in result.resources
+        ],
+        "next_cursor": result.next_cursor,
+    }
+
+
+def update_connection_scope(
+    connection_id: str,
+    org_id: str,
+    scope_patch: dict[str, Any],
+) -> dict[str, Any]:
+    sb = get_supabase_admin()
+    conn = get_connection(connection_id, org_id)
+    if not conn:
+        raise ValueError("Connection not found")
+    if conn.get("status") == "revoked":
+        raise ValueError("Connection is revoked")
+    provider = conn["provider"]
+    old_meta = conn.get("provider_metadata") or {}
+    merged = merge_scope_patch(provider, old_meta, scope_patch)
+    prefixes = removed_uri_prefixes(provider, old_meta, merged)
+    if prefixes:
+        purge_knowledge_by_uri_prefixes(org_id, prefixes)
+    sb.table("integration_connections").update(
+        {
+            "provider_metadata": merged,
+            "sync_cursor": {},
+            "last_error": None,
+        }
+    ).eq("id", connection_id).eq("org_id", org_id).execute()
+    res = (
+        sb.table("integration_connections")
+        .select("id, org_id, provider, status, label, last_sync_at, last_error, provider_metadata")
+        .eq("id", connection_id)
+        .limit(1)
+        .execute()
+    )
+    row = (res.data or [None])[0]
+    safe = connection_for_client(row)
+    if safe:
+        meta = safe.get("provider_metadata") or {}
+        safe["scope_configured"] = scope_configured(provider, meta)
+        safe["scope_summary"] = scope_summary(provider, meta)
+    return safe or {}
 
 
 def run_sync(connection_id: str, org_id: str, *, full_backfill: bool = False) -> dict[str, Any]:
@@ -225,6 +334,9 @@ def run_sync(connection_id: str, org_id: str, *, full_backfill: bool = False) ->
         raise ValueError("Connection not found")
     if conn.get("status") == "revoked":
         raise ValueError("Connection is revoked")
+    metadata = conn.get("provider_metadata") or {}
+    if not scope_configured(conn["provider"], metadata):
+        raise ValueError("Configure integration access before syncing")
 
     run_res = (
         sb.table("integration_sync_runs")
@@ -244,6 +356,9 @@ def run_sync(connection_id: str, org_id: str, *, full_backfill: bool = False) ->
     publish_event("integration", connection_id, {"status": "running", "run_id": run_id})
 
     credentials = decrypt_credentials(conn.get("credentials_encrypted"))
+    original_credentials = dict(credentials)
+    metadata = conn.get("provider_metadata") or {}
+    credentials = maybe_refresh_credentials(conn["provider"], credentials, metadata=metadata)
     cursor = conn.get("sync_cursor") or {}
     connector = get_connector(conn["provider"])
 
@@ -262,7 +377,7 @@ def run_sync(connection_id: str, org_id: str, *, full_backfill: bool = False) ->
             "status": "error" if result.error else "active",
             "last_error": result.error,
         }
-        if credentials != decrypt_credentials(conn.get("credentials_encrypted")):
+        if credentials != original_credentials:
             update_payload["credentials_encrypted"] = encrypt_credentials(credentials)
 
         sb.table("integration_connections").update(update_payload).eq("id", connection_id).execute()

@@ -7,7 +7,12 @@
 const OAUTH_AUTHORIZE_HOSTS = new Set([
   "app.hubspot.com",
   "login.salesforce.com",
+  "test.salesforce.com",
   "app.gong.io",
+  "accounts.google.com",
+  "slack.com",
+  "api.intercom.io",
+  "www.notion.so",
 ]);
 
 const ZENDESK_HOST_PATTERN = /^[a-z0-9-]+\.zendesk\.com$/i;
