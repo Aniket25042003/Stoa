@@ -41,7 +41,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ detail: "Invalid request." }, { status: 400 });
   }
 
-  const provider = body.provider === "azure" ? "azure" : body.provider === "google" ? "google" : null;
+  const provider = body.provider === "google" ? "google" : null;
   if (!provider) {
     return NextResponse.json({ detail: "Unsupported provider." }, { status: 400 });
   }
@@ -56,12 +56,12 @@ export async function POST(request: Request) {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
-    options: provider === "azure" ? { redirectTo, scopes: "email" } : { redirectTo },
+    options: { redirectTo },
   });
 
   if (error || !data.url) {
     return NextResponse.json(
-      { detail: error?.message ?? `Could not start ${provider === "azure" ? "Microsoft" : "Google"} sign-in.` },
+      { detail: error?.message ?? "Could not start Google sign-in." },
       { status: 400 },
     );
   }

@@ -58,6 +58,21 @@ function LoginForm() {
     if (err) setMsg(err);
   }, [searchParams]);
 
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const res = await fetch("/api/auth/session", { cache: "no-store" });
+      if (!res.ok || cancelled) return;
+      const state = (await res.json()) as SessionState & { authenticated?: boolean };
+      if (state.authenticated) {
+        window.location.replace(routeForSessionState(state, next));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [next]);
+
   async function postAuthRoute() {
     const res = await fetch("/api/auth/session");
     if (!res.ok) return next;
@@ -66,18 +81,18 @@ function LoginForm() {
     return routeForSessionState(state, next);
   }
 
-  async function signInWithProvider(provider: "google" | "azure") {
+  async function signInWithGoogle() {
     setMsg(null);
     setLoading(true);
     const res = await fetch("/api/auth/oauth", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ provider, next }),
+      body: JSON.stringify({ provider: "google", next }),
     });
     const body = (await res.json().catch(() => null)) as { url?: string; detail?: string } | null;
     if (!res.ok || !body?.url) {
       setLoading(false);
-      setMsg(body?.detail || `Could not start ${provider === "azure" ? "Microsoft" : "Google"} sign-in. Try again.`);
+      setMsg(body?.detail || "Could not start Google sign-in. Try again.");
       return;
     }
     window.location.assign(body.url);
@@ -151,7 +166,7 @@ function LoginForm() {
             <DualToneHeadline primary="Know your market." secondary="Ship faster." as="h1" />
             <p className="mt-5 text-base leading-relaxed text-mkt-muted md:text-lg">{BRAND_SUBHEAD}</p>
             <p className="mt-4 text-sm leading-relaxed text-mkt-muted">
-              Sign in with Google, Microsoft, or your work email to open your {BRAND_NAME} workspace.
+              Sign in with Google or your work email to open your {BRAND_NAME} workspace.
             </p>
           </div>
         </>
@@ -162,20 +177,11 @@ function LoginForm() {
           <AuthCardHeader
             eyebrow="Authentication"
             title="Continue to dashboard"
-            description="Use SSO or email/password. Email accounts verify through your inbox before first sign-in."
+            description="Use Google SSO or email/password. Email accounts verify through your inbox before first sign-in."
           />
-          <AuthOutlineButton disabled={loading} onClick={() => void signInWithProvider("google")}>
+          <AuthOutlineButton disabled={loading} onClick={() => void signInWithGoogle()}>
             <GoogleIcon className="h-5 w-5 shrink-0" />
             {loading ? "Redirecting..." : "Continue with Google"}
-          </AuthOutlineButton>
-          <AuthOutlineButton className="mt-3" disabled={loading} onClick={() => void signInWithProvider("azure")}>
-            <span className="grid h-5 w-5 shrink-0 grid-cols-2 gap-0.5" aria-hidden>
-              <span className="bg-[#f25022]" />
-              <span className="bg-[#7fba00]" />
-              <span className="bg-[#00a4ef]" />
-              <span className="bg-[#ffb900]" />
-            </span>
-            {loading ? "Redirecting..." : "Continue with Microsoft"}
           </AuthOutlineButton>
           <AuthDivider label="Work email" />
           <form onSubmit={(event) => void submitEmail(event)} className="space-y-4">

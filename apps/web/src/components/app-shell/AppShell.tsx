@@ -19,7 +19,15 @@ import { BrandLogo } from "@/components/product/BrandLogo";
  * Handles app shell behavior for this part of the Stoa application.
  * @returns Rendered UI or completion signal for the workflow.
  */
-export function AppShell({ email, children }: { email: string; children: ReactNode }) {
+export function AppShell({
+  email,
+  displayName,
+  children,
+}: {
+  email: string;
+  displayName?: string | null;
+  children: ReactNode;
+}) {
   const { permissions, loaded } = useAppPermissions();
 
   return (
@@ -43,7 +51,7 @@ export function AppShell({ email, children }: { email: string; children: ReactNo
         </div>
 
         <div className="flex min-h-screen min-w-0 flex-1 flex-col pb-16 lg:pb-0">
-          <AppTopBar email={email} />
+          <AppTopBar email={email} displayName={displayName} />
           <main id="main-content" className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 md:px-6 md:py-8">
             {children}
           </main>
