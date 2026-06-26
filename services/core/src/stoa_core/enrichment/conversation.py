@@ -52,7 +52,7 @@ def maybe_checkpoint_conversation(org_id: str, conversation_id: str) -> dict[str
     summary, _ = invoke_text(
         "Summarize this conversation thread for long-term agent memory. "
         "Capture decisions, facts learned, and open questions.",
-        {"transcript": transcript[:12000]},
+        transcript[:12000],
         task_name="summarize",
     )
     summary = redact_pii((summary or "").strip())
