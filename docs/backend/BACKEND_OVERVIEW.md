@@ -72,7 +72,7 @@ Marketing intelligence workloads split naturally into synchronous API concerns (
 | Auth/security | `INVITE_TOKEN_PEPPER`, `INTEGRATION_CREDENTIALS_KEY`, `RATE_LIMIT_PER_MINUTE` | Invites, credential encryption, rate limits |
 | LLM | `LLM_PROVIDER`, `LLM_AUTO_FAILOVER`, `VERTEX_*`, `OPENAI_*`, `ANTHROPIC_*`, `STOA_LLM_*` | Provider routing |
 | Embeddings/RAG | `EMBED_*`, `RETRIEVAL_*`, `COHERE_*`, `KB_*_TTL_SECONDS`, `CHUNK_*` | Hybrid retrieval pipeline |
-| Integrations | `HUBSPOT_*`, `GONG_*`, `SALESFORCE_*`, `ZENDESK_*`, `APIFY_API_TOKEN`, `REDDIT_*` | OAuth and data connectors |
+| Integrations | `HUBSPOT_*`, `GONG_*`, `SALESFORCE_*`, `ZENDESK_*`, `APIFY_API_TOKEN` | OAuth and data connectors |
 
 Full template: [`services/api/.env.example`](../../services/api/.env.example).
 
