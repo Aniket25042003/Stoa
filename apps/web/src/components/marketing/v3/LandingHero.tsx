@@ -4,10 +4,8 @@ import { ArrowRight } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import { GlassButton, SolidButton } from "@/components/marketing/v3/Buttons";
 import { DualToneHeadline } from "@/components/marketing/v3/DualToneHeadline";
-import { getMarketingCta } from "@/lib/auth-entry";
+import { useMarketingAuthCta } from "@/lib/use-marketing-auth-cta";
 import { BRAND_SUBHEAD } from "@/lib/brand";
-
-const marketingCta = getMarketingCta();
 
 const PILLARS = ["Customer signals", "Campaign output", "Competitive intel"];
 
@@ -31,6 +29,7 @@ const heroItem = {
 
 export function LandingHero() {
   const reduce = useReducedMotion();
+  const marketingCta = useMarketingAuthCta();
 
   return (
     <section id="top" className="mkt-section mkt-section-pad-hero relative px-4 md:px-8">
@@ -73,7 +72,7 @@ export function LandingHero() {
             className="mt-8 flex flex-wrap items-center justify-center gap-3"
           >
             <SolidButton href={marketingCta.href} variant="dark">
-              {marketingCta.buttonLabel}
+              {marketingCta.loading ? "Loading..." : marketingCta.heroLabel}
               <ArrowRight className="h-4 w-4" />
             </SolidButton>
             <GlassButton href="#how-it-works" variant="glass">

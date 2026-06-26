@@ -7,6 +7,7 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { getAuthEntryPath, isLoginEnabled } from "@/lib/auth-entry";
+import { safeNextPath } from "@/lib/auth-workflow";
 import { buildContentSecurityPolicy } from "@/lib/csp";
 import {
   getPrelaunchLegacyRedirect,
@@ -17,6 +18,8 @@ import {
 
 const PROTECTED_PREFIXES = [
   "/dashboard",
+  "/agent",
+  "/assets",
   "/data",
   "/content",
   "/intelligence",
@@ -109,16 +112,21 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(dest);
   }
 
-  let response = NextResponse.next({ request: { headers: request.headers } });
-
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) {
     if (isProtectedPath(nextUrl.pathname)) {
       return prelaunchBlockedResponse(request);
     }
-    return applySecurityHeaders(response);
+    return applySecurityHeaders(NextResponse.next());
   }
+
+  const requestHeaders = new Headers(request.headers);
+  if (nextUrl.pathname.startsWith("/onboarding")) {
+    requestHeaders.set("x-onboarding-mode", nextUrl.searchParams.get("mode") ?? "");
+  }
+
+  let response = NextResponse.next({ request: { headers: requestHeaders } });
 
   const supabase = createServerClient(url, key, {
     cookies: {
@@ -127,7 +135,7 @@ export async function middleware(request: NextRequest) {
       },
       setAll(cookiesToSet: { name: string; value: string; options?: CookieOptions }[]) {
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-        response = NextResponse.next({ request });
+        response = NextResponse.next({ request: { headers: requestHeaders } });
         cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
       },
     },
@@ -136,6 +144,11 @@ export async function middleware(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  if (nextUrl.pathname === "/login" && user) {
+    const dest = safeNextPath(nextUrl.searchParams.get("next"));
+    return applySecurityHeaders(NextResponse.redirect(new URL(dest, request.url)));
+  }
 
   if (isProtectedPath(nextUrl.pathname) && !user) {
     return NextResponse.redirect(new URL(getAuthEntryPath({ hostname }), request.url));
