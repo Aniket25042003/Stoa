@@ -23,6 +23,8 @@ ALLOWED_CELERY_TASKS = frozenset(
         "content.generate_asset",
         "knowledge.reembed_org",
         "integrations.sync_source",
+        "campaign_analysis.precompute",
+        "alignment.precompute",
     }
 )
 

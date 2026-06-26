@@ -32,6 +32,8 @@ celery_app = Celery(
         "app.tasks.content",
         "app.tasks.knowledge",
         "app.tasks.integrations",
+        "app.tasks.campaign_analysis",
+        "app.tasks.alignment",
     ],
 )
 
