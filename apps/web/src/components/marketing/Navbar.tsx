@@ -5,12 +5,9 @@ import { usePathname } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { BrandLogo } from "@/components/product/BrandLogo";
 import { SolidButton } from "@/components/marketing/v3/Buttons";
-import { getAuthEntryPath, getMarketingCta, isLoginEnabled } from "@/lib/auth-entry";
+import { isLoginEnabled } from "@/lib/auth-entry";
+import { useMarketingAuthCta } from "@/lib/use-marketing-auth-cta";
 import { BRAND_NAME } from "@/lib/brand";
-
-const authEntry = getAuthEntryPath();
-const marketingCta = getMarketingCta();
-const loginEnabled = isLoginEnabled();
 
 const anchorNav = [
   { href: "#features", label: "Features" },
@@ -22,6 +19,8 @@ const anchorNav = [
 
 export function Navbar() {
   const pathname = usePathname();
+  const marketingCta = useMarketingAuthCta();
+  const loginEnabled = isLoginEnabled();
   const isLanding = pathname === "/";
   const navLinks = isLanding ? anchorNav : [{ href: "/", label: "Home" }, ...anchorNav];
 
@@ -47,14 +46,16 @@ export function Navbar() {
                 Early access
               </span>
             )}
-            {loginEnabled && (
-              <Link href={authEntry} className="hidden text-sm text-mkt-muted hover:text-mkt-ink sm:inline">
+            {loginEnabled && !marketingCta.authenticated && !marketingCta.loading && (
+              <Link href={marketingCta.href} className="hidden text-sm text-mkt-muted hover:text-mkt-ink sm:inline">
                 Log in
               </Link>
             )}
             <SolidButton href={marketingCta.href} className="px-3 py-2 text-sm sm:px-4" variant="dark">
-              <span className="hidden sm:inline">{marketingCta.navLabel}</span>
-              <span className="sm:hidden">Join</span>
+              <span className="hidden sm:inline">
+                {marketingCta.loading ? "Loading..." : marketingCta.navLabel}
+              </span>
+              <span className="sm:hidden">{marketingCta.authenticated ? "App" : "Join"}</span>
               <ArrowRight className="h-3.5 w-3.5" />
             </SolidButton>
           </div>

@@ -76,10 +76,12 @@ export function CompetitorsList({
 }) {
   const { permissions, loaded } = useAppPermissions();
   const canManage = loaded && permissions != null && permissions.includes("competitive:manage");
+  const canScan = loaded && permissions != null && permissions.includes("competitive:scan");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<EditDraft>({ name: "", website_url: "" });
   const [savingId, setSavingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [scanningId, setScanningId] = useState<string | null>(null);
 
   function startEdit(competitor: Competitor) {
     setEditingId(competitor.id);
@@ -132,6 +134,17 @@ export function CompetitorsList({
     }
     if (editingId === competitor.id) cancelEdit();
     onDeleted();
+  }
+
+  async function scanCompetitor(competitor: Competitor) {
+    setScanningId(competitor.id);
+    const res = await apiFetch(`/v1/competitive/competitors/${competitor.id}/scan`, { method: "POST" });
+    setScanningId(null);
+    if (!res.ok) {
+      onError("Could not queue competitor research");
+      return;
+    }
+    onUpdated();
   }
 
   return (
@@ -221,6 +234,16 @@ export function CompetitorsList({
                             >
                               Edit
                             </ProductButton>
+                            {canScan ? (
+                              <ProductButton
+                                variant="secondary"
+                                className="px-3 py-1.5 text-xs"
+                                onClick={() => void scanCompetitor(competitor)}
+                                disabled={scanningId === competitor.id}
+                              >
+                                {scanningId === competitor.id ? "Scanning…" : "Research"}
+                              </ProductButton>
+                            ) : null}
                             <ProductButton
                               variant="ghost"
                               className="px-3 py-1.5 text-xs"

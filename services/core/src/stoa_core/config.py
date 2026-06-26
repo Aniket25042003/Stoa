@@ -136,6 +136,19 @@ class Settings(BaseSettings):
     slack_client_id: str = ""
     slack_client_secret: str = ""
 
+    # Web research / enrichment
+    tavily_api_key: str = ""
+    jina_api_key: str = ""
+    serpapi_api_key: str = ""
+    enrichment_max_urls_per_job: int = 8
+    enrichment_timeout_seconds: float = 25.0
+    enrichment_max_jobs_per_org_per_day: int = 20
+    disable_external_research: bool = False
+
+    # Reddit
+    reddit_access_token: str = ""
+    reddit_user_agent: str = "stoa-intelligence/1.0"
+
     # Observability
     langsmith_tracing: bool = False
     langsmith_api_key: str | None = None

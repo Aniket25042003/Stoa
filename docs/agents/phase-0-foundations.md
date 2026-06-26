@@ -24,3 +24,10 @@
 - `services/core/src/stoa_core/`
 - `services/api/app/main.py`
 - `apps/web/src/app/login/page.tsx`
+
+## Agent memory enrichment (post Phase 0)
+
+- `stoa_core/research/` — Tavily/Jina/SerpAPI web research + SSRF-safe fetch
+- `stoa_core/enrichment/` — company/competitor pipelines, job tracking, conversation checkpoints
+- `enrichment_jobs` table + `GET /v1/enrichment/jobs`
+- Celery Beat (`render_start_beat.sh`) for scheduled rescans and insight refresh

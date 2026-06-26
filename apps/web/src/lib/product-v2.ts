@@ -22,6 +22,7 @@ export function isProductV2Route(pathname: string | null): boolean {
     pathname.startsWith("/onboarding") ||
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/data") ||
+    pathname.startsWith("/agent") ||
     pathname.startsWith("/intelligence") ||
     pathname.startsWith("/competitive") ||
     pathname.startsWith("/campaigns") ||

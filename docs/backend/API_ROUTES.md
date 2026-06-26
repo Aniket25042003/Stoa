@@ -179,6 +179,28 @@ Rate limit: `check_rate_limit` on `/ask`.
 
 ---
 
+## Campaign analysis — `/v1/campaign-analysis`
+
+| Method | Path | Permission | Returns |
+|--------|------|------------|---------|
+| GET | `/summary` | campaign_analysis:read | Metrics + precomputed insights |
+| GET | `/metrics` | campaign_analysis:read | Chart-ready channel/campaign data |
+| GET | `/compare` | campaign_analysis:read | Side-by-side campaign comparison (`?a=&b=`) |
+| POST | `/refresh` | campaign_analysis:refresh | Enqueue precompute |
+
+---
+
+## Alignment — `/v1/alignment`
+
+| Method | Path | Permission | Returns |
+|--------|------|------------|---------|
+| GET | `/summary` | alignment:read | Alignment metrics + friction + insights |
+| GET | `/pipeline` | alignment:read | Lead conversion + campaign revenue + stalls |
+| GET | `/friction` | alignment:read | Objections + loss reasons |
+| POST | `/refresh` | alignment:refresh | Enqueue precompute |
+
+---
+
 ## Waitlist — `/v1/waitlist`
 
 | Method | Path | Auth | Returns |

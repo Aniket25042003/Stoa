@@ -15,6 +15,7 @@ from urllib.parse import urlencode
 import httpx
 
 from stoa_core.config import get_settings
+from stoa_core.integrations.attribution import extract_attribution
 from stoa_core.integrations.base import BaseConnector, ProviderInfo, SyncResult
 from stoa_core.integrations.registry import register_connector
 from stoa_core.integrations.store import upsert_account, upsert_contact, upsert_deal
@@ -179,11 +180,12 @@ class SalesforceConnector(BaseConnector):
                 records = cls._query(
                     credentials,
                     metadata,
-                    "SELECT Id, FirstName, LastName, Email, Title, AccountId FROM Contact LIMIT 200",
+                    "SELECT Id, FirstName, LastName, Email, Title, AccountId, LeadSource FROM Contact LIMIT 200",
                 )
                 result.records_fetched += len(records)
                 for rec in records:
                     name = " ".join(p for p in [rec.get("FirstName"), rec.get("LastName")] if p)
+                    attr = extract_attribution(rec, external_source=SOURCE)
                     saved = upsert_contact(
                         org_id,
                         {
@@ -193,6 +195,7 @@ class SalesforceConnector(BaseConnector):
                             "name": name or None,
                             "title": rec.get("Title"),
                             "raw_properties": rec,
+                            **attr,
                         },
                     )
                     if saved:
@@ -203,10 +206,11 @@ class SalesforceConnector(BaseConnector):
                 records = cls._query(
                     credentials,
                     metadata,
-                    "SELECT Id, Name, Amount, StageName, CloseDate, IsWon, IsClosed FROM Opportunity LIMIT 200",
+                    "SELECT Id, Name, Amount, StageName, CloseDate, IsWon, IsClosed, LeadSource, CampaignId FROM Opportunity LIMIT 200",
                 )
                 result.records_fetched += len(records)
                 for rec in records:
+                    attr = extract_attribution(rec, external_source=SOURCE)
                     saved = upsert_deal(
                         org_id,
                         {
@@ -219,6 +223,7 @@ class SalesforceConnector(BaseConnector):
                             "is_won": rec.get("IsWon"),
                             "is_closed": rec.get("IsClosed"),
                             "raw_properties": rec,
+                            **attr,
                         },
                     )
                     if saved:

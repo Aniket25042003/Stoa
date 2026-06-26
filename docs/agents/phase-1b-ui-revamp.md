@@ -12,36 +12,37 @@ Unify authenticated Stoa surfaces (login through dashboard, data hub, intelligen
 - **Primitives:** `apps/web/src/components/product/` — `ProductButton`, `ProductCard`, `ProductInput`, `ProductPageHeader`, `ProductBadge`, `ProductStatusPill`, etc.
 - **Light-only:** Dark mode toggle removed from authenticated app (marketing remains light-only).
 
-## Navigation
+## Navigation (Agent Command Center — 2026 update)
 
 Single source of truth: `apps/web/src/lib/app-navigation.ts`.
 
-| Group | Routes |
-|-------|--------|
+| Rail | Routes |
+|------|--------|
 | Home | `/dashboard` |
-| Workspace | `/data/profile`, `/data/sources`, `/data/integrations`, `/data/competitors` |
-| Intelligence | `/intelligence`, `/competitive`, `/campaigns` |
-| Organization | `/settings/team`, `/settings/roles` |
+| Agent | `/agent` (default post-onboarding) |
+| Assets | `/assets` (campaign + content library) |
+| Data | `/data/profile`, `/data/sources`, `/data/integrations`, `/data/competitors` |
+| Settings | `/settings/team`, `/settings/roles` |
 
-- Permission filtering via `canReadNav()` — items hidden until session permissions load (no flash).
-- Data hub uses `SectionSubnav` in `data/layout.tsx`.
-- Settings uses `settings/layout.tsx` subnav (Team | Roles).
-- Legacy redirects preserved: `/gtm` → `/intelligence`, `/marketing` → `/campaigns`.
+- Icon rail (`AppIconRail`) replaces grouped accordion sidebar on desktop.
+- Agent route uses 3-pane layout: conversation threads, chat canvas, context rail.
+- Mobile: Home, Agent, Assets, Data tabs + More sheet (settings + sign out).
+- Legacy redirects: `/intelligence`, `/competitive`, `/gtm` → `/agent`; `/campaigns`, `/content`, `/marketing` → `/assets`.
 
 ## Shell components
 
-- `AppShell`, `AppSidebar`, `AppTopBar`, `AppMobileNav`
-- Sidebar collapse persisted in `localStorage` (`useSidebarCollapsed`)
-- Mobile: Home, Data, Intel tabs + More sheet (intelligence + org + sign out)
+- `AppShell`, `AppIconRail`, `AppTopBar`, `AppUserMenu`, `AppMobileNav`
+- Agent: `ConversationSidebar`, `AgentChatCanvas`, `ContextRail` in `components/agent/`
 
 ## Page migrations
 
 | Area | Status |
 |------|--------|
 | Login, verify-email, invite, onboarding | Product auth shell |
-| Dashboard | `ProductPageHeader`, stat cards, readiness band |
+| Dashboard | Home hub: readiness, metrics, recent threads, CTA → Agent |
+| Agent | 3-pane GTM agent workspace |
+| Assets | Unified campaign + content library |
 | Data hub | Sub-routes + shared `DataHubProvider` |
-| Intelligence, competitive, campaigns | Product theme |
 | Settings team/roles | Product tables + headers |
 
 ## Removed / deprecated

@@ -31,6 +31,7 @@ import {
 import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { safeStoragePublicUrl } from "@/lib/storage-url";
+import { formatKnowledgeRefKind } from "@/lib/user-facing-copy";
 
 type ContentFile = {
   storage_path: string;
@@ -121,9 +122,9 @@ export function ContentWorkspace() {
     if (!assetsRes.ok) {
       const body = await assetsRes.json().catch(() => null);
       setLoadError(
-        typeof body?.detail === "string"
+        typeof body?.detail === "string" && !body.detail.includes("_")
           ? body.detail
-          : "Could not reach the API. Is the backend running?"
+          : "We couldn't load content right now. Please try again in a moment."
       );
       return;
     }
@@ -268,9 +269,9 @@ export function ContentWorkspace() {
       {loadError ? (
         <ProductCard className="border-mkt-accent-warm/25 bg-mkt-accent-warm/[0.06]">
           <p className="text-sm text-mkt-ink">{loadError}</p>
-          <p className="mt-2 text-xs text-mkt-muted">
-            Start the API with <code className="font-mono">pnpm dev:api</code> (or your usual FastAPI command), then refresh this page.
-          </p>
+          <ProductButton variant="secondary" className="mt-3" onClick={() => void refresh()}>
+            Try again
+          </ProductButton>
         </ProductCard>
       ) : null}
 
@@ -807,8 +808,8 @@ export function ContentWorkspace() {
                             <span className="font-semibold text-mkt-ink truncate max-w-[120px]">
                               {ref.title}
                             </span>
-                            <span className="text-[8px] bg-mkt-ink/10 font-mono px-1 rounded-sm uppercase tracking-wider text-mkt-muted">
-                              {ref.kind.replace("_", " ")}
+                            <span className="text-[10px] bg-mkt-ink/10 px-1 rounded-sm uppercase tracking-wider text-mkt-muted">
+                              {formatKnowledgeRefKind(ref.kind)}
                             </span>
                           </div>
                         ))}

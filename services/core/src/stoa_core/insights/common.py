@@ -47,14 +47,22 @@ COMMON_QUESTIONS: list[dict[str, str]] = [
 INTELLIGENCE_KINDS = [
     "document",
     "company_profile",
+    "company_web_research",
     "icp_profile",
     "crm_account",
     "crm_contact",
     "crm_deal",
+    "crm_landscape",
     "call_transcript",
     "support_ticket",
     "review",
+    "review_themes",
     "product_analytics_summary",
+    "competitive_snapshot",
+    "competitive_research",
+    "conversation_memory",
+    "campaign_asset",
+    "content_asset",
 ]
 
 
