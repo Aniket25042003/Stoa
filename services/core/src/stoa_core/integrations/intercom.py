@@ -72,7 +72,6 @@ class IntercomConnector(BaseConnector):
             dict[str, Any]: Result produced for the caller.
         """
         token = credentials.get("access_token", "").strip()
-        tag_filter = credentials.get("tag_filter", "").strip()
         if not token:
             raise ValueError("Intercom access token is required")
         region = credentials.get("region", "us").strip().lower()
