@@ -16,6 +16,7 @@ from urllib.parse import urlencode
 import httpx
 
 from stoa_core.config import get_settings
+from stoa_core.integrations.attribution import extract_attribution
 from stoa_core.integrations.base import BaseConnector, ProviderInfo, ResourceListResult, SyncResult
 from stoa_core.integrations.registry import register_connector
 from stoa_core.integrations.resource_listers import list_hubspot_resources
@@ -261,7 +262,12 @@ class HubSpotConnector(BaseConnector):
         pages_done = cursor.get("pages_done", 0)
 
         company_props = ["name", "domain", "industry", "numberofemployees", "country", "lifecyclestage"]
-        contact_props = ["firstname", "lastname", "email", "jobtitle", "company"]
+        contact_props = [
+            "firstname", "lastname", "email", "jobtitle", "company",
+            "hs_analytics_source", "hs_analytics_source_data_1",
+            "hs_analytics_source_data_2", "hs_latest_source",
+            "utm_campaign", "utm_source", "utm_medium",
+        ]
         deal_props = [
             "dealname",
             "amount",
@@ -271,6 +277,7 @@ class HubSpotConnector(BaseConnector):
             "hs_is_closed_won",
             "closed_lost_reason",
             "hubspot_owner_id",
+            "hs_analytics_source",
         ]
 
         stages = [s for s in ["companies", "contacts", "deals"] if s in object_types]
@@ -317,6 +324,7 @@ class HubSpotConnector(BaseConnector):
                         name = " ".join(
                             p for p in [props.get("firstname"), props.get("lastname")] if p
                         ).strip()
+                        attr = extract_attribution(props, external_source=SOURCE)
                         row = {
                             "external_source": SOURCE,
                             "external_id": ext_id,
@@ -324,6 +332,7 @@ class HubSpotConnector(BaseConnector):
                             "name": name or None,
                             "title": props.get("jobtitle"),
                             "raw_properties": props,
+                            **attr,
                         }
                         if upsert_contact(org_id, row):
                             result.records_written += 1
@@ -331,6 +340,7 @@ class HubSpotConnector(BaseConnector):
                         if pipeline_ids and str(props.get("pipeline")) not in pipeline_ids:
                             continue
                         is_won = _parse_bool(props.get("hs_is_closed_won"))
+                        attr = extract_attribution(props, external_source=SOURCE)
                         row = {
                             "external_source": SOURCE,
                             "external_id": ext_id,
@@ -343,6 +353,7 @@ class HubSpotConnector(BaseConnector):
                             "is_closed": is_won is not None,
                             "loss_reason": props.get("closed_lost_reason"),
                             "raw_properties": props,
+                            **attr,
                         }
                         if upsert_deal(org_id, row):
                             result.records_written += 1

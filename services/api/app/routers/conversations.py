@@ -11,20 +11,21 @@ import json
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
+from stoa_core.config import get_settings
+from stoa_core.db.supabase import get_supabase_admin
+from stoa_core.rag.conversation_memory import delete_conversation_memory
+from stoa_core.redis.sse import read_events_since
+from stoa_core.security.pii import redact_pii
+from stoa_core.security.sanitize import sanitize_user_content
 
 from app.deps.org_scope import require_onboarded_scope
 from app.deps.rate_limit import check_rate_limit
 from app.services.audit import write_audit
 from app.services.org_context import OrgScope, require_permission
 from app.tasks.intelligence import answer_intelligence_question
-from stoa_core.config import get_settings
-from stoa_core.db.supabase import get_supabase_admin
-from stoa_core.redis.sse import read_events_since
-from stoa_core.security.pii import redact_pii
-from stoa_core.security.sanitize import sanitize_user_content
 
 router = APIRouter(prefix="/v1/conversations", tags=["conversations"])
 
@@ -35,11 +36,15 @@ class AskBody(BaseModel):
     This class groups related state and operations so routes, workers, or core
     pipelines can depend on a focused abstraction instead of duplicating logic.
     """
+
     question: str = Field(min_length=1, max_length=2000)
+    conversation_id: str | None = None
 
 
 @router.get("")
-def list_conversations(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+def list_conversations(
+    scope: OrgScope = Depends(require_onboarded_scope),
+) -> dict[str, Any]:
     """Handles list conversations logic for the surrounding Stoa workflow.
 
     Args:
@@ -62,7 +67,9 @@ def list_conversations(scope: OrgScope = Depends(require_onboarded_scope)) -> di
 
 
 @router.post("/ask")
-def ask_question(body: AskBody, scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+def ask_question(
+    body: AskBody, scope: OrgScope = Depends(require_onboarded_scope)
+) -> dict[str, Any]:
     """Handles ask question logic for the surrounding Stoa workflow.
 
     Args:
@@ -76,23 +83,53 @@ def ask_question(body: AskBody, scope: OrgScope = Depends(require_onboarded_scop
     check_rate_limit(scope.user_id, get_settings().rate_limit_per_minute, scope="ask")
     question = redact_pii(sanitize_user_content(body.question))
     sb = get_supabase_admin()
-    conv_id = str(uuid.uuid4())
-    sb.table("conversations").insert(
-        {"id": conv_id, "org_id": scope.org_id, "title": question[:120], "created_by": scope.user_id}
-    ).execute()
+
+    if body.conversation_id:
+        existing = (
+            sb.table("conversations")
+            .select("id")
+            .eq("id", body.conversation_id)
+            .eq("org_id", scope.org_id)
+            .limit(1)
+            .execute()
+        )
+        if not existing.data:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Conversation not found")
+        conv_id = body.conversation_id
+    else:
+        conv_id = str(uuid.uuid4())
+        sb.table("conversations").insert(
+            {
+                "id": conv_id,
+                "org_id": scope.org_id,
+                "title": question[:120],
+                "created_by": scope.user_id,
+            }
+        ).execute()
     msg_res = (
         sb.table("messages")
-        .insert({"conversation_id": conv_id, "role": "user", "content": question, "org_id": scope.org_id})
+        .insert(
+            {
+                "conversation_id": conv_id,
+                "role": "user",
+                "content": question,
+                "org_id": scope.org_id,
+            }
+        )
         .execute()
     )
     user_msg = (msg_res.data or [None])[0]
-    answer_intelligence_question.delay(conv_id, scope.org_id, question)
-    write_audit(scope.org_id, scope.user_id, "conversation.asked", "conversation", conv_id)
+    answer_intelligence_question.delay(conv_id, scope.org_id, question, scope.user_id)
+    write_audit(
+        scope.org_id, scope.user_id, "conversation.asked", "conversation", conv_id
+    )
     return {"conversation_id": conv_id, "message": user_msg, "status": "processing"}
 
 
 @router.get("/{conversation_id}")
-def get_conversation(conversation_id: str, scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
+def get_conversation(
+    conversation_id: str, scope: OrgScope = Depends(require_onboarded_scope)
+) -> dict[str, Any]:
     """Handles get conversation logic for the surrounding Stoa workflow.
 
     Args:
@@ -122,6 +159,47 @@ def get_conversation(conversation_id: str, scope: OrgScope = Depends(require_onb
         .execute()
     )
     return {"conversation": conv.data[0], "messages": msgs.data or []}
+
+
+@router.delete("/{conversation_id}")
+def delete_conversation(
+    conversation_id: str,
+    delete_memory: bool = Query(False, description="Also remove long-term agent memory for this thread"),
+    scope: OrgScope = Depends(require_onboarded_scope),
+) -> dict[str, Any]:
+    """Delete a conversation thread; optionally purge its long-term memory."""
+    require_permission(scope, "conversations:ask")
+    sb = get_supabase_admin()
+    conv = (
+        sb.table("conversations")
+        .select("id")
+        .eq("id", conversation_id)
+        .eq("org_id", scope.org_id)
+        .limit(1)
+        .execute()
+    )
+    if not conv.data:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Conversation not found")
+
+    memory_items_deleted = 0
+    if delete_memory:
+        memory_items_deleted = delete_conversation_memory(scope.org_id, conversation_id)
+
+    sb.table("conversations").delete().eq("id", conversation_id).eq("org_id", scope.org_id).execute()
+    write_audit(
+        scope.org_id,
+        scope.user_id,
+        "conversation.deleted",
+        "conversation",
+        conversation_id,
+        metadata={"delete_memory": delete_memory, "memory_items_deleted": memory_items_deleted},
+    )
+    return {
+        "status": "deleted",
+        "conversation_id": conversation_id,
+        "memory_deleted": delete_memory,
+        "memory_items_deleted": memory_items_deleted,
+    }
 
 
 @router.get("/{conversation_id}/events")
@@ -159,7 +237,9 @@ async def conversation_events(
         Returns:
             Any: Result produced for the caller.
         """
-        async for msg_id, data in read_events_since("conversation", conversation_id, last_id):
+        async for msg_id, data in read_events_since(
+            "conversation", conversation_id, last_id
+        ):
             payload = json.dumps({"id": msg_id, **data})
             yield f"data: {payload}\n\n"
 

@@ -129,7 +129,7 @@ export function RolesWorkspace() {
       <ProductPageHeader
         eyebrow="Organization"
         title="Roles & permissions"
-        lead="System roles are immutable defaults. Create custom roles with explicit resource:action permissions."
+        lead="System roles are fixed defaults. Create custom roles and choose what each role can access in the workspace."
       />
 
       <div className="grid gap-6 lg:grid-cols-[280px_1fr]">

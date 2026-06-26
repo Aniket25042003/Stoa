@@ -21,7 +21,10 @@ export default async function DashboardPage() {
   } = await supabase.auth.getSession();
   if (!session) redirect(getAuthEntryPath());
 
-  let orgData: { org?: { id: string; name: string; industry?: string | null }; membership?: { role: string } } | null = null;
+  let orgData: {
+    org?: { id: string; name: string; industry?: string | null };
+    membership?: { role: string; role_name?: string };
+  } | null = null;
   let loadError = false;
   try {
     const res = await apiFetchServer("/v1/orgs/me", { accessToken: session.access_token });
@@ -40,7 +43,7 @@ export default async function DashboardPage() {
     return (
       <div className="rounded-sm border border-mkt-ink/[0.06] bg-mkt-surface p-8 text-center shadow-sm">
         <p className="text-sm text-mkt-muted">
-          Could not load workspace. Check API connection and try again.
+          Could not load your workspace. Please try again in a moment.
         </p>
       </div>
     );
@@ -49,8 +52,13 @@ export default async function DashboardPage() {
   return (
     <DashboardWorkspace
       email={session.user.email ?? "your account"}
+      displayName={
+        (user.user_metadata?.full_name as string | undefined) ??
+        (user.user_metadata?.name as string | undefined) ??
+        null
+      }
       org={orgData?.org}
-      role={orgData?.membership?.role ?? "viewer"}
+      role={orgData?.membership?.role_name ?? orgData?.membership?.role ?? "viewer"}
     />
   );
 }
