@@ -9,77 +9,62 @@ Dependencies: stoa_core
 from __future__ import annotations
 
 import logging
-from datetime import UTC
+from datetime import UTC, datetime
 from typing import Any
 
 import httpx
 
 from stoa_core.config import get_settings
-from stoa_core.integrations.base import BaseConnector, ProviderInfo, SyncResult
+from stoa_core.integrations.base import BaseConnector, ProviderInfo, ResourceListResult, SyncResult
 from stoa_core.integrations.registry import register_connector
+from stoa_core.integrations.resource_listers import guided_reddit_subreddits
 from stoa_core.integrations.store import upsert_interaction
 
 logger = logging.getLogger(__name__)
 
 SOURCE = "reddit"
+APIFY_ACTOR = "clearpath/reddit-search-scraper"
 
 
 @register_connector
 class RedditConnector(BaseConnector):
-    """Manage RedditConnector behavior within the Stoa application layer.
+    """Monitor Reddit mentions via Apify (platform-managed APIFY_API_TOKEN)."""
 
-    This class groups related state and operations so routes, workers, or core
-    pipelines can depend on a focused abstraction instead of duplicating logic.
-    """
     provider = "reddit"
 
     @classmethod
     def provider_info(cls) -> ProviderInfo:
-        """Handles provider info logic for the surrounding Stoa workflow.
-
-        Returns:
-            ProviderInfo: Result produced for the caller.
-        """
         return ProviderInfo(
             id="reddit",
             name="Reddit",
             auth_type="api_key",
             description="Monitor subreddits for brand and product mentions.",
+            connection_mode="platform",
+            resource_selection_mode="required",
+            resource_kinds=["subreddit", "query"],
         )
 
     @classmethod
+    def list_discoverable_resources(
+        cls,
+        *,
+        credentials: dict[str, Any],
+        metadata: dict[str, Any],
+        cursor: str | None = None,
+        query: str | None = None,
+    ) -> ResourceListResult:
+        return guided_reddit_subreddits()
+
+    @classmethod
     def connect_with_credentials(cls, credentials: dict[str, Any]) -> dict[str, Any]:
-        """Handles connect with credentials logic for the surrounding Stoa workflow.
-
-        Args:
-            credentials (dict[str, Any]): Input value used by this workflow step.
-
-        Returns:
-            dict[str, Any]: Result produced for the caller.
-        """
         query = credentials.get("search_query", "").strip()
         subreddits = credentials.get("subreddits") or []
-        if not query:
-            raise ValueError("Reddit search_query is required")
         return {
             "search_query": query,
             "provider_metadata": {
-                "search_query": query,
                 "subreddits": subreddits,
+                "max_results": credentials.get("max_results", 50),
             },
-        }
-
-    @classmethod
-    def _reddit_headers(cls) -> dict[str, str]:
-        """Handles  reddit headers logic for the surrounding Stoa workflow.
-
-        Returns:
-            dict[str, str]: Result produced for the caller.
-        """
-        s = get_settings()
-        return {
-            "User-Agent": s.reddit_user_agent or "stoa-intelligence/1.0",
-            "Authorization": f"Bearer {s.reddit_access_token}" if s.reddit_access_token else "",
         }
 
     @classmethod
@@ -92,53 +77,63 @@ class RedditConnector(BaseConnector):
         cursor: dict[str, Any],
         full_backfill: bool = False,
     ) -> SyncResult:
-        """Handles sync logic for the surrounding Stoa workflow.
-
-        Args:
-            org_id (str): Input value used by this workflow step.
-            connection (dict[str, Any]): Input value used by this workflow step.
-            credentials (dict[str, Any]): Input value used by this workflow step.
-            cursor (dict[str, Any]): Input value used by this workflow step.
-            full_backfill (bool): Input value used by this workflow step.
-
-        Returns:
-            SyncResult: Result produced for the caller.
-        """
         result = SyncResult()
         metadata = connection.get("provider_metadata") or {}
-        query = metadata.get("search_query") or credentials.get("search_query")
-        subreddits = metadata.get("subreddits") or ["all"]
-        after = cursor.get("after")
-
-        if not get_settings().reddit_access_token:
-            result.error = "REDDIT_ACCESS_TOKEN is not configured"
+        token = get_settings().apify_api_token
+        if not token:
+            result.error = "APIFY_API_TOKEN is not configured"
             return result
 
+        query = metadata.get("search_query") or credentials.get("search_query")
+        subreddits = metadata.get("subreddits") or []
+        max_results = int(metadata.get("max_results") or 50)
+
         try:
-            sub = subreddits[0] if subreddits else "all"
-            params: dict[str, Any] = {"q": query, "limit": 25, "sort": "new"}
-            if after:
-                params["after"] = after
+            actor_id = APIFY_ACTOR.replace("/", "~")
+            url = f"https://api.apify.com/v2/acts/{actor_id}/run-sync-get-dataset-items"
+            payload: dict[str, Any] = {
+                "query": query,
+                "maxResults": max_results,
+                "sort": "new",
+                "contentType": "posts",
+            }
+            if subreddits:
+                if len(subreddits) == 1:
+                    payload["subreddit"] = str(subreddits[0]).removeprefix("r/").strip()
+                else:
+                    payload["subreddits"] = [
+                        str(s).removeprefix("r/").strip() for s in subreddits if str(s).strip()
+                    ]
 
-            with httpx.Client(timeout=60) as client:
-                res = client.get(
-                    f"https://oauth.reddit.com/r/{sub}/search",
-                    headers=cls._reddit_headers(),
-                    params=params,
-                )
+            with httpx.Client(timeout=300) as client:
+                res = client.post(url, params={"token": token}, json=payload)
                 res.raise_for_status()
-                body = res.json()
+                items = res.json()
 
-            posts = body.get("data", {}).get("children") or []
-            result.records_fetched = len(posts)
+            if not isinstance(items, list):
+                items = []
 
-            for child in posts:
-                post = child.get("data") or {}
-                post_id = post.get("id")
-                if not post_id:
-                    continue
-                title = post.get("title") or f"Reddit post {post_id}"
-                body_text = f"{post.get('selftext', '')}\n\nURL: https://reddit.com{post.get('permalink', '')}"
+            result.records_fetched = len(items)
+            for idx, item in enumerate(items):
+                post_id = str(
+                    item.get("id")
+                    or item.get("postId")
+                    or item.get("post_id")
+                    or item.get("permalink")
+                    or idx
+                )
+                title = item.get("title") or item.get("postTitle") or f"Reddit post {post_id}"
+                body_parts = []
+                for key in ("selftext", "body", "text", "postBody"):
+                    if item.get(key):
+                        body_parts.append(str(item[key]))
+                permalink = item.get("permalink") or item.get("url") or ""
+                if permalink and not str(permalink).startswith("http"):
+                    permalink = f"https://reddit.com{permalink}"
+                if permalink:
+                    body_parts.append(f"URL: {permalink}")
+                body_text = "\n\n".join(body_parts).strip() or str(item)
+
                 saved = upsert_interaction(
                     org_id,
                     {
@@ -146,18 +141,15 @@ class RedditConnector(BaseConnector):
                         "external_id": post_id,
                         "interaction_type": "review",
                         "title": title,
-                        "body_text": body_text.strip(),
-                        "occurred_at": _ts(post.get("created_utc")),
-                        "raw_properties": post,
+                        "body_text": body_text,
+                        "occurred_at": _parse_occurred_at(item),
+                        "raw_properties": item,
                     },
                 )
                 if saved:
                     result.records_written += 1
 
-            result.cursor = {
-                "after": body.get("data", {}).get("after"),
-                "stage": "done" if not body.get("data", {}).get("after") else "continue",
-            }
+            result.cursor = {"stage": "done", "post_count": result.records_written}
 
         except Exception as exc:
             logger.exception("Reddit sync failed for org %s", org_id)
@@ -166,20 +158,16 @@ class RedditConnector(BaseConnector):
         return result
 
 
-def _ts(created_utc: Any) -> str | None:
-    """Handles  ts logic for the surrounding Stoa workflow.
-
-    Args:
-        created_utc (Any): Input value used by this workflow step.
-
-    Returns:
-        str | None: Result produced for the caller.
-    """
-    if created_utc is None:
-        return None
-    try:
-        from datetime import datetime
-
-        return datetime.fromtimestamp(float(created_utc), tz=UTC).isoformat()
-    except (TypeError, ValueError):
-        return None
+def _parse_occurred_at(item: dict[str, Any]) -> str | None:
+    for key in ("createdAt", "created_utc", "createdUtc", "timestamp", "date"):
+        value = item.get(key)
+        if value is None:
+            continue
+        if isinstance(value, int | float):
+            try:
+                return datetime.fromtimestamp(float(value), tz=UTC).isoformat()
+            except (TypeError, ValueError, OSError):
+                continue
+        if isinstance(value, str) and value.strip():
+            return value
+    return None
