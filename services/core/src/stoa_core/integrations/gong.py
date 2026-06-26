@@ -16,8 +16,9 @@ from urllib.parse import urlencode
 import httpx
 
 from stoa_core.config import get_settings
-from stoa_core.integrations.base import BaseConnector, ProviderInfo, SyncResult
+from stoa_core.integrations.base import BaseConnector, ProviderInfo, ResourceListResult, SyncResult
 from stoa_core.integrations.registry import register_connector
+from stoa_core.integrations.resource_listers import list_gong_workspaces
 from stoa_core.integrations.store import upsert_interaction
 
 logger = logging.getLogger(__name__)
@@ -47,10 +48,30 @@ class GongConnector(BaseConnector):
             auth_type="oauth",
             description="Sync call transcripts and metadata from Gong.",
             scopes=["api:calls:read:basic", "api:calls:read:transcript"],
+            supports_credential_auth=True,
+            resource_selection_mode="required",
+            resource_kinds=["workspace"],
         )
 
     @classmethod
-    def oauth_authorize_url(cls, state: str, redirect_uri: str) -> str:
+    def list_discoverable_resources(
+        cls,
+        *,
+        credentials: dict[str, Any],
+        metadata: dict[str, Any],
+        cursor: str | None = None,
+        query: str | None = None,
+    ) -> ResourceListResult:
+        return list_gong_workspaces(credentials, metadata)
+
+    @classmethod
+    def oauth_authorize_url(
+        cls,
+        state: str,
+        redirect_uri: str,
+        *,
+        oauth_params: dict[str, Any] | None = None,
+    ) -> str:
         """Handles oauth authorize url logic for the surrounding Stoa workflow.
 
         Args:
@@ -70,7 +91,13 @@ class GongConnector(BaseConnector):
         return f"https://app.gong.io/oauth2/authorize?{urlencode(params)}"
 
     @classmethod
-    def exchange_oauth_code(cls, code: str, redirect_uri: str) -> dict[str, Any]:
+    def exchange_oauth_code(
+        cls,
+        code: str,
+        redirect_uri: str,
+        *,
+        oauth_context: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """Handles exchange oauth code logic for the surrounding Stoa workflow.
 
         Args:
@@ -156,8 +183,12 @@ class GongConnector(BaseConnector):
         """
         result = SyncResult(cursor=dict(cursor))
         metadata = connection.get("provider_metadata") or {}
+        workspace_ids = metadata.get("workspace_ids") or []
+        if not workspace_ids and not metadata.get("from_date"):
+            result.error = "No Gong workspaces selected — configure access first"
+            return result
         base_url, auth = cls._client(credentials, metadata)
-        from_datetime = cursor.get("from_datetime") or "2020-01-01T00:00:00Z"
+        from_datetime = metadata.get("from_date") or cursor.get("from_datetime") or "2020-01-01T00:00:00Z"
         call_cursor = cursor.get("call_cursor")
 
         try:
