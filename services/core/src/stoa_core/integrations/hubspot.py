@@ -382,6 +382,101 @@ class HubSpotConnector(BaseConnector):
 
         return result
 
+    @classmethod
+    def supports_agent_search(cls) -> bool:
+        return True
+
+    @classmethod
+    def agent_search(
+        cls,
+        org_id: str,
+        connection: dict[str, Any],
+        *,
+        credentials: dict[str, Any],
+        query: str,
+        entity_type: str | None = None,
+    ) -> list:
+        from stoa_core.integrations.agent_search import agent_search_hit
+        from stoa_core.integrations.base import AgentSearchHit
+
+        metadata = connection.get("provider_metadata") or {}
+        object_types = metadata.get("object_types") or ["companies", "contacts", "deals"]
+        stage = entity_type or ("deals" if "deals" in object_types else object_types[0])
+        if stage not in object_types:
+            stage = object_types[0]
+
+        deal_props = [
+            "dealname", "amount", "dealstage", "pipeline", "closedate", "hs_is_closed_won",
+        ]
+        contact_props = ["firstname", "lastname", "email", "jobtitle", "company"]
+        company_props = ["name", "domain", "industry"]
+        prop_map = {
+            "deals": deal_props,
+            "contacts": contact_props,
+            "companies": company_props,
+        }
+        objects, _ = cls._fetch_objects(
+            credentials,
+            stage,
+            properties=prop_map.get(stage, deal_props),
+        )
+        q_lower = query.strip().lower()
+        hits: list[AgentSearchHit] = []
+
+        if stage == "deals":
+            ranked = []
+            for obj in objects:
+                props = obj.get("properties") or {}
+                amount = _parse_amount(props.get("amount")) or 0.0
+                ranked.append((amount, obj, props))
+            ranked.sort(key=lambda x: x[0], reverse=True)
+            for amount, obj, props in ranked[:12]:
+                name = props.get("dealname") or f"Deal {obj.get('id')}"
+                snippet = (
+                    f"Amount={amount}; stage={props.get('dealstage')}; "
+                    f"close={props.get('closedate')}; won={props.get('hs_is_closed_won')}"
+                )
+                hits.append(
+                    agent_search_hit(
+                        id=str(obj.get("id")),
+                        title=str(name),
+                        snippet=snippet,
+                        provider=SOURCE,
+                        entity_type=stage,
+                    )
+                )
+        else:
+            for obj in objects[:40]:
+                props = obj.get("properties") or {}
+                if stage == "contacts":
+                    name = " ".join(
+                        p for p in [props.get("firstname"), props.get("lastname")] if p
+                    ).strip()
+                    hay = f"{name} {props.get('email') or ''} {props.get('company') or ''}".lower()
+                    if q_lower and q_lower not in hay:
+                        continue
+                    title = name or props.get("email") or f"Contact {obj.get('id')}"
+                    snippet = f"email={props.get('email')}; title={props.get('jobtitle')}"
+                else:
+                    name = props.get("name") or f"Company {obj.get('id')}"
+                    hay = f"{name} {props.get('domain') or ''}".lower()
+                    if q_lower and q_lower not in hay:
+                        continue
+                    title = str(name)
+                    snippet = f"domain={props.get('domain')}; industry={props.get('industry')}"
+                hits.append(
+                    agent_search_hit(
+                        id=str(obj.get("id")),
+                        title=title,
+                        snippet=snippet,
+                        provider=SOURCE,
+                        entity_type=stage,
+                    )
+                )
+                if len(hits) >= 12:
+                    break
+        return hits
+
 
 def _employee_range(value: Any) -> str | None:
     """Handles  employee range logic for the surrounding Stoa workflow.

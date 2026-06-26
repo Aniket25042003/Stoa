@@ -275,3 +275,86 @@ class SalesforceConnector(BaseConnector):
             result.error = str(exc)
 
         return result
+
+    @classmethod
+    def supports_agent_search(cls) -> bool:
+        return True
+
+    @classmethod
+    def agent_search(
+        cls,
+        org_id: str,
+        connection: dict[str, Any],
+        *,
+        credentials: dict[str, Any],
+        query: str,
+        entity_type: str | None = None,
+    ) -> list:
+        from stoa_core.integrations.agent_search import agent_search_hit
+        from stoa_core.integrations.base import AgentSearchHit
+
+        metadata = connection.get("provider_metadata") or {}
+        objects = metadata.get("objects") or ["Account", "Contact", "Opportunity"]
+        stage = entity_type or "opportunities"
+        if stage in {"deals", "deal", "opportunity"}:
+            stage = "opportunities"
+        if stage == "accounts" and "Account" not in objects:
+            stage = "opportunities" if "Opportunity" in objects else "accounts"
+
+        hits: list[AgentSearchHit] = []
+        q = query.replace("'", "\\'")[:120]
+
+        if stage == "opportunities" and "Opportunity" in objects:
+            soql = (
+                "SELECT Id, Name, Amount, StageName, CloseDate, IsWon FROM Opportunity "
+                f"WHERE Name LIKE '%{q}%' OR Id != null ORDER BY Amount DESC NULLS LAST LIMIT 15"
+            )
+            records, _ = cls._query_all(credentials, metadata, soql)
+            for rec in records:
+                amount = rec.get("Amount")
+                hits.append(
+                    agent_search_hit(
+                        id=str(rec.get("Id")),
+                        title=str(rec.get("Name") or "Opportunity"),
+                        snippet=(
+                            f"Amount={amount}; stage={rec.get('StageName')}; "
+                            f"close={rec.get('CloseDate')}; won={rec.get('IsWon')}"
+                        ),
+                        provider=SOURCE,
+                        entity_type="opportunities",
+                    )
+                )
+        elif stage == "contacts" and "Contact" in objects:
+            soql = (
+                "SELECT Id, FirstName, LastName, Email, Title FROM Contact "
+                f"WHERE Name LIKE '%{q}%' OR Email LIKE '%{q}%' LIMIT 15"
+            )
+            records, _ = cls._query_all(credentials, metadata, soql)
+            for rec in records:
+                name = " ".join(p for p in [rec.get("FirstName"), rec.get("LastName")] if p)
+                hits.append(
+                    agent_search_hit(
+                        id=str(rec.get("Id")),
+                        title=name or str(rec.get("Email") or "Contact"),
+                        snippet=f"email={rec.get('Email')}; title={rec.get('Title')}",
+                        provider=SOURCE,
+                        entity_type="contacts",
+                    )
+                )
+        elif "Account" in objects:
+            soql = (
+                "SELECT Id, Name, Website, Industry FROM Account "
+                f"WHERE Name LIKE '%{q}%' OR Website LIKE '%{q}%' LIMIT 15"
+            )
+            records, _ = cls._query_all(credentials, metadata, soql)
+            for rec in records:
+                hits.append(
+                    agent_search_hit(
+                        id=str(rec.get("Id")),
+                        title=str(rec.get("Name") or "Account"),
+                        snippet=f"website={rec.get('Website')}; industry={rec.get('Industry')}",
+                        provider=SOURCE,
+                        entity_type="accounts",
+                    )
+                )
+        return hits

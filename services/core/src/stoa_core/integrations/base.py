@@ -44,6 +44,18 @@ class ResourceListResult:
 
 
 @dataclass
+class AgentSearchHit:
+    """Normalized hit from a live connector agent_search call."""
+    id: str
+    title: str
+    snippet: str
+    uri: str
+    provider: str
+    fetched_at: str
+    meta: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
 class ProviderInfo:
     """Manage ProviderInfo behavior within the Stoa application layer.
 
@@ -140,6 +152,22 @@ class BaseConnector(ABC):
         from stoa_core.integrations.scope import validate_scope
 
         return validate_scope(cls.provider, metadata)
+
+    @classmethod
+    def supports_agent_search(cls) -> bool:
+        return False
+
+    @classmethod
+    def agent_search(
+        cls,
+        org_id: str,
+        connection: dict[str, Any],
+        *,
+        credentials: dict[str, Any],
+        query: str,
+        entity_type: str | None = None,
+    ) -> list[AgentSearchHit]:
+        raise NotImplementedError(f"{cls.provider} does not support agent_search")
 
     @classmethod
     @abstractmethod
