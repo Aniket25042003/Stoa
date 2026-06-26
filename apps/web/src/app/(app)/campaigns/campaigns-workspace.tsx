@@ -55,7 +55,7 @@ export function CampaignsWorkspace() {
   const refresh = useCallback(async () => {
     const [campRes, orgRes] = await Promise.all([apiFetch("/v1/campaigns", {}), apiFetch("/v1/orgs/me", {})]);
     if (!campRes.ok && !orgRes.ok) {
-      const body = await campRes.json().catch(() => null);
+      await campRes.json().catch(() => null);
       setLoadError("We couldn't load campaigns right now. Please try again in a moment.");
       return;
     }

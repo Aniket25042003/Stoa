@@ -111,7 +111,6 @@ export function IntelligenceWorkspace() {
   const [crmStats, setCrmStats] = useState<CrmStats | null>(null);
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState<string | null>(null);
-  const [conversationId, setConversationId] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -168,7 +167,6 @@ export function IntelligenceWorkspace() {
     }
     const body = await res.json();
     const convId = body.conversation_id as string;
-    setConversationId(convId);
     const ctrl = new AbortController();
     try {
       await consumeSse(
