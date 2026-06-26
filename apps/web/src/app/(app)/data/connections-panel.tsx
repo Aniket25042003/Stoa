@@ -105,7 +105,19 @@ function usesCredentialForm(provider: Provider): boolean {
   return provider.auth_type === "api_key" || Boolean(API_KEY_PROVIDERS[provider.id]);
 }
 
-export function ConnectionsPanel({ onConnected }: { onConnected?: () => void }) {
+export function ConnectionsPanel({
+  onConnected,
+  oauthReturn: _oauthReturn,
+}: {
+  onConnected?: () => void;
+  oauthReturn?: {
+    connected?: string;
+    connectionId?: string;
+    error?: string;
+    provider?: string;
+    configureScope?: boolean;
+  };
+}) {
   const { showToast } = useDataHub();
   const [providers, setProviders] = useState<Provider[]>([]);
   const [connections, setConnections] = useState<Connection[]>([]);

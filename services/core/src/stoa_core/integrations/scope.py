@@ -257,8 +257,8 @@ def purge_knowledge_by_uri_prefixes(org_id: str, prefixes: list[str]) -> int:
     """Delete knowledge items (and chunks) whose uri starts with any prefix."""
     if not prefixes:
         return 0
-    from stoa_core.rag.cache import bump_kb_version
     from stoa_core.db.supabase import get_supabase_admin
+    from stoa_core.rag.cache import bump_kb_version
 
     sb = get_supabase_admin()
     deleted = 0
