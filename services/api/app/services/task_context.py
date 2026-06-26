@@ -18,11 +18,21 @@ ALLOWED_CELERY_TASKS = frozenset(
         "intelligence.precompute_insights",
         "intelligence.rebuild_icp",
         "intelligence.answer_question",
+        "intelligence.schedule_precompute",
         "competitive.monitor",
         "campaigns.generate",
         "content.generate_asset",
         "knowledge.reembed_org",
         "integrations.sync_source",
+        "integrations.schedule_syncs",
+        "enrichment.enrich_company",
+        "enrichment.enrich_competitor",
+        "enrichment.seed_competitors_from_onboarding",
+        "enrichment.checkpoint_conversation",
+        "enrichment.synthesize_crm_summary",
+        "enrichment.synthesize_review_themes",
+        "enrichment.schedule_competitor_rescans",
+        "enrichment.cleanup_stale_jobs",
     }
 )
 

@@ -14,7 +14,7 @@ from pydantic import BaseModel
 
 from app.deps.auth import verify_supabase_jwt, verify_supabase_jwt_payload
 from app.deps.org_scope import require_onboarded_scope
-from app.services.audit import write_audit
+from app.tasks.enrichment import enrich_company
 from app.services.auth_state import email_from_claims, filter_memberships_for_display
 from app.services.org_context import (
     OrgScope,
@@ -329,8 +329,11 @@ def update_my_org(body: OrgUpdate, scope: OrgScope = Depends(require_onboarded_s
             title=f"{updated_org.get('name', 'Company')} profile",
             text=profile_to_knowledge_text(updated_org),
             feature_origin="data",
-            uri=f"org_profile:{org_id}",
+            uri=f"org:{org_id}:company_profile",
         )
+        if any(k in updates for k in ("website_url", "industry", "name", "profile")):
+            suffix = str(hash(frozenset(updates.items())))[-8:]
+            enrich_company.delay(org_id, user_id=scope.user_id, idempotency_suffix=f"patch:{suffix}")
     completeness = build_completeness_for_org(org or current)
     return {"org": org or current, "completeness": completeness}
 

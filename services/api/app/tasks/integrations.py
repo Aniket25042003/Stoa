@@ -41,6 +41,10 @@ def sync_integration_source(
         if result.get("records_written", 0) > 0 and not result.get("error"):
             rebuild_icp_profile.delay(org_id)
             precompute_insights.delay(org_id, force=True)
+            from app.tasks.enrichment import enrich_crm_summary, enrich_review_themes
+
+            enrich_crm_summary.delay(org_id)
+            enrich_review_themes.delay(org_id)
         return result
     except Exception as exc:
         logger.exception("Integration sync task failed for %s", connection_id)

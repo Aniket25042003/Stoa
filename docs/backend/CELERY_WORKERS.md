@@ -27,8 +27,17 @@ Document processing, embedding, ICP rebuilds, and competitive scans take seconds
 | `campaigns.generate` | `tasks/campaigns.py` | `POST /v1/campaigns` | Retrieve context + generate assets | On demand |
 | `knowledge.reembed_org` | `tasks/knowledge.py` | Admin/backfill | Re-ingest all org documents + profiles | On demand |
 | `integrations.sync_source` | `tasks/integrations.py` | Integration sync button/webhook | Pull CRM/call data → canonical tables + KB | On demand |
+| `enrichment.enrich_company` | `tasks/enrichment.py` | Onboarding complete, org profile PATCH | Web research + KB ingest for company | On demand |
+| `enrichment.enrich_competitor` | `tasks/enrichment.py` | Competitor add/update/scan | Deep competitor research + KB ingest | On demand |
+| `enrichment.checkpoint_conversation` | `tasks/enrichment.py` | After agent answer (every N turns) | Conversation memory checkpoints | On demand |
+| `enrichment.schedule_competitor_rescans` | `tasks/enrichment.py` | Celery Beat (daily) | Re-scan all tracked competitors | Scheduled |
+| `intelligence.schedule_precompute` | `tasks/enrichment.py` | Celery Beat (weekly) | Refresh stale precomputed insights | Scheduled |
+| `integrations.schedule_syncs` | `tasks/enrichment.py` | Celery Beat (daily) | Re-sync active integrations | Scheduled |
+| `enrichment.cleanup_stale_jobs` | `tasks/enrichment.py` | Celery Beat (daily) | Fail stuck enrichment jobs | Scheduled |
 
-No cron/beat schedule is configured — all tasks are event-driven.
+Celery Beat runs via `services/api/scripts/render_start_beat.sh` (separate Render service).
+
+Previously: no cron/beat — now Beat handles scheduled memory maintenance; user-triggered enrichment remains event-driven.
 
 ## Architecture diagram
 

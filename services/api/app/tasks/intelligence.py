@@ -18,6 +18,7 @@ from stoa_core.intelligence.icp import build_icp_profile
 from stoa_core.intelligence.structured import aggregate_crm_stats
 from stoa_core.rag.answer import answer_question
 from stoa_core.rag.ingest import ingest_knowledge, json_artifact_to_text
+from stoa_core.rag.cache import get_kb_version
 from stoa_core.rag.retrieve import retrieve_context
 from stoa_core.redis.client import publish_event
 
@@ -26,14 +27,22 @@ logger = logging.getLogger(__name__)
 INTELLIGENCE_KINDS = [
     "document",
     "company_profile",
+    "company_web_research",
     "icp_profile",
     "crm_account",
     "crm_contact",
     "crm_deal",
+    "crm_landscape",
     "call_transcript",
     "support_ticket",
     "review",
+    "review_themes",
     "product_analytics_summary",
+    "competitive_snapshot",
+    "competitive_research",
+    "conversation_memory",
+    "campaign_asset",
+    "content_asset",
 ]
 
 
@@ -52,21 +61,12 @@ def _doc_count(org_id: str) -> int:
 
 
 def _should_skip_precompute(org_id: str, doc_count: int) -> bool:
-    """Handles  should skip precompute logic for the surrounding Stoa workflow.
-
-    Args:
-        org_id (str): Input value used by this workflow step.
-        doc_count (int): Input value used by this workflow step.
-
-    Returns:
-        bool: Result produced for the caller.
-    """
-    if doc_count == 0:
+    if doc_count == 0 and get_kb_version(org_id) <= 1:
         return True
     sb = get_supabase_admin()
     existing = (
         sb.table("precomputed_insights")
-        .select("source_document_count")
+        .select("source_document_count, updated_at")
         .eq("org_id", org_id)
         .eq("scope", "intelligence")
         .limit(1)
@@ -75,7 +75,22 @@ def _should_skip_precompute(org_id: str, doc_count: int) -> bool:
     if not existing.data:
         return False
     last_count = existing.data[0].get("source_document_count") or 0
-    return last_count == doc_count
+    if last_count != doc_count:
+        return False
+    insight_updated = existing.data[0].get("updated_at")
+    if insight_updated:
+        enrich_res = (
+            sb.table("enrichment_jobs")
+            .select("id")
+            .eq("org_id", org_id)
+            .eq("status", "completed")
+            .gt("completed_at", insight_updated)
+            .limit(1)
+            .execute()
+        )
+        if enrich_res.data:
+            return False
+    return True
 
 
 def _upsert_insight(
@@ -236,6 +251,9 @@ def answer_intelligence_question(self, conversation_id: str, org_id: str, questi
             }
         ).execute()
         publish_event("conversation", conversation_id, {"status": "completed", "answer": answer})
+        from app.tasks.enrichment import checkpoint_conversation
+
+        checkpoint_conversation.delay(org_id, conversation_id)
     except Exception as exc:
         logger.exception("Answer failed for conversation %s", conversation_id)
         publish_event("conversation", conversation_id, {"status": "failed", "error": "Answer generation failed"})
