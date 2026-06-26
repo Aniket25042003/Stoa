@@ -37,6 +37,8 @@ TASK_TIER_MAP: dict[str, TaskTier] = {
     "campaign_plan": "premium",
     "content_enrich": "standard",
     "content_describe": "cheap",
+    "query_rewrite": "cheap",
+    "needs_tools": "cheap",
 }
 
 

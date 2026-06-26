@@ -7,21 +7,21 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
+from stoa_core.agent.route import classify_agent_route
 from stoa_core.alignment.aggregate import build_alignment_summary
 from stoa_core.alignment.friction import collect_friction_signals
 from stoa_core.analytics.aggregate import build_summary_metrics
 from stoa_core.db.supabase import get_supabase_admin
+from stoa_core.enrichment.conversation import maybe_checkpoint_conversation
 from stoa_core.intelligence.structured import aggregate_crm_stats
-from stoa_core.llm.router import invoke_text, load_config
+from stoa_core.llm.router import load_config
 from stoa_core.rag.answer import answer_question
-from stoa_core.rag.ingest import ingest_knowledge
-from stoa_core.rag.retrieve import retrieve_context
+from stoa_core.rag.query_prepare import PreparedQuery, retrieve_context_prepared
 
 logger = logging.getLogger(__name__)
 
 SHORT_TERM_CHAR_BUDGET = 14000
 SHORT_TERM_RECENT_MESSAGES = 28
-CHECKPOINT_EVERY_USER_TURNS = 6
 
 CONVERSATION_MEMORY_KIND = "conversation_memory"
 
@@ -50,9 +50,12 @@ class UnifiedAgentResult:
     citations: list[str]
     used_tools: list[str]
     tool_events: list[dict[str, Any]]
+    route: str = "tools"
+    retrieved_context: list[dict[str, Any]] | None = None
+    prepared_query: PreparedQuery | None = None
 
 
-def _build_chat_model() -> Any | None:
+def _build_chat_model(task_tier: str = "premium") -> Any | None:
     cfg = load_config()
 
     try:
@@ -66,7 +69,7 @@ def _build_chat_model() -> Any | None:
         ChatOpenAI = None  # type: ignore[assignment]
 
     for provider in cfg.fallback_chain:
-        model = cfg.model_for(provider, "premium")
+        model = cfg.model_for(provider, task_tier)  # type: ignore[arg-type]
         try:
             if provider == "vertex" and ChatVertexAI is not None:
                 kwargs: dict[str, Any] = {
@@ -415,79 +418,140 @@ def _collect_citations(answer: str, long_term_context: list[dict[str, Any]]) -> 
     return sorted(refs)[:20]
 
 
-def _maybe_checkpoint_conversation(org_id: str, conversation_id: str) -> None:
-    sb = get_supabase_admin()
-    user_msg_count_res = (
-        sb.table("messages")
-        .select("id")
-        .eq("conversation_id", conversation_id)
-        .eq("org_id", org_id)
-        .eq("role", "user")
-        .limit(1000)
-        .execute()
+def _retrieve_for_turn(
+    org_id: str,
+    question: str,
+    conversation_id: str,
+    *,
+    message_rows: list[dict[str, Any]] | None = None,
+) -> tuple[list[dict[str, Any]], PreparedQuery, str]:
+    """Returns context, prepared query metadata, and retrieval_status."""
+    rows = message_rows if message_rows is not None else _load_messages(conversation_id)
+    try:
+        context, prepared = retrieve_context_prepared(
+            org_id,
+            question,
+            kinds=AGENT_MEMORY_KINDS,
+            k=8,
+            conversation_id=conversation_id,
+            history=rows,
+        )
+        status = "ok" if context else "no_matches"
+        return context, prepared, status
+    except Exception as exc:
+        from stoa_core.ingestion.embed import EmbeddingUnavailableError
+
+        if isinstance(exc, EmbeddingUnavailableError):
+            prepared = PreparedQuery(question, question, [question], False)
+            return [], prepared, "embedding_unavailable"
+        raise
+
+
+def _rag_only_answer(
+    org_id: str,
+    question: str,
+    context: list[dict[str, Any]],
+    *,
+    retrieval_status: str,
+    prepared: PreparedQuery,
+) -> UnifiedAgentResult:
+    answer = answer_question(
+        question,
+        context,
+        org_id=org_id,
+        kinds=AGENT_MEMORY_KINDS,
+        retrieval_status=retrieval_status,
     )
-    user_turns = len([row for row in (user_msg_count_res.data or []) if isinstance(row, dict)])
-    if user_turns == 0 or user_turns % CHECKPOINT_EVERY_USER_TURNS != 0:
-        return
-
-    recent = _load_messages(conversation_id, limit=24)
-    transcript = "\n".join(
-        f"{(m.get('role') or 'user').upper()}: {(m.get('content') or '')[:500]}" for m in recent
-    )
-
-    summary, _provider = invoke_text(
-        (
-            "Summarize this chat segment as durable long-term memory for a GTM assistant. "
-            "Keep key business facts, preferences, unresolved asks, and action items. "
-            "Be concise and factual."
-        ),
-        transcript,
-        task_name="summarize",
-    )
-    final_summary = summary or transcript[:3000]
-
-    _ = ingest_knowledge(
-        org_id,
-        kind=CONVERSATION_MEMORY_KIND,
-        title=f"Conversation memory checkpoint (turn {user_turns})",
-        text=final_summary,
-        feature_origin="agent",
-        uri=f"conversation:{conversation_id}:checkpoint:{user_turns}",
-        metadata={"conversation_id": conversation_id, "user_turn_count": user_turns},
-    )
-
-
-def _fallback_answer(org_id: str, question: str) -> UnifiedAgentResult:
-    context = retrieve_context(org_id, question, kinds=AGENT_MEMORY_KINDS)
-    answer = answer_question(question, context)
+    citations = [str(c.get("ref")) for c in context[:10] if isinstance(c.get("ref"), str)]
     return UnifiedAgentResult(
         answer=answer,
-        citations=[str(c.get("ref")) for c in context[:10] if isinstance(c.get("ref"), str)],
+        citations=citations,
         used_tools=[],
         tool_events=[],
+        route="rag_only",
+        retrieved_context=context,
+        prepared_query=prepared,
+    )
+
+
+def _fallback_answer(
+    org_id: str,
+    question: str,
+    conversation_id: str,
+    *,
+    context: list[dict[str, Any]] | None = None,
+    prepared: PreparedQuery | None = None,
+    retrieval_status: str = "ok",
+) -> UnifiedAgentResult:
+    if context is None or prepared is None:
+        context, prepared, retrieval_status = _retrieve_for_turn(org_id, question, conversation_id)
+    return _rag_only_answer(
+        org_id,
+        question,
+        context,
+        retrieval_status=retrieval_status,
+        prepared=prepared,
     )
 
 
 def run_unified_agent_turn(org_id: str, conversation_id: str, question: str) -> UnifiedAgentResult:
+    message_rows = _load_messages(conversation_id)
+    long_term_context, prepared, retrieval_status = _retrieve_for_turn(
+        org_id, question, conversation_id, message_rows=message_rows
+    )
+
+    route = classify_agent_route(question, history=message_rows)
+    if route == "rag_only":
+        result = _rag_only_answer(
+            org_id,
+            question,
+            long_term_context,
+            retrieval_status=retrieval_status,
+            prepared=prepared,
+        )
+        maybe_checkpoint_conversation(org_id, conversation_id)
+        logger.info(
+            "agent_turn org=%s conversation=%s route=rag_only rewrite=%s queries=%s context=%d",
+            org_id,
+            conversation_id,
+            prepared.rewrite_used,
+            len(prepared.search_queries),
+            len(long_term_context),
+        )
+        return result
+
     try:
         from langchain.agents import AgentExecutor, create_tool_calling_agent
         from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
     except Exception as exc:
         logger.warning("LangChain agent unavailable; using fallback answer path: %s", exc)
-        result = _fallback_answer(org_id, question)
-        _maybe_checkpoint_conversation(org_id, conversation_id)
+        result = _fallback_answer(
+            org_id,
+            question,
+            conversation_id,
+            context=long_term_context,
+            prepared=prepared,
+            retrieval_status=retrieval_status,
+        )
+        maybe_checkpoint_conversation(org_id, conversation_id)
         return result
 
-    llm = _build_chat_model()
+    llm = _build_chat_model("premium")
     if llm is None:
         logger.warning("No available tool-capable chat model; using fallback answer path")
-        result = _fallback_answer(org_id, question)
-        _maybe_checkpoint_conversation(org_id, conversation_id)
+        result = _fallback_answer(
+            org_id,
+            question,
+            conversation_id,
+            context=long_term_context,
+            prepared=prepared,
+            retrieval_status=retrieval_status,
+        )
+        maybe_checkpoint_conversation(org_id, conversation_id)
         return result
 
     tools = _feature_tools(org_id)
     chat_history = _build_short_term_history(conversation_id)
-    long_term_context = retrieve_context(org_id, question, kinds=AGENT_MEMORY_KINDS, k=8)
     long_term_block = "\n".join(
         f"[{c.get('ref')}] {c.get('text', '')[:260]}" for c in long_term_context
     )
@@ -554,15 +618,33 @@ def run_unified_agent_turn(org_id: str, conversation_id: str, question: str) -> 
                 continue
 
         citations = _collect_citations(answer, long_term_context)
-        _maybe_checkpoint_conversation(org_id, conversation_id)
+        maybe_checkpoint_conversation(org_id, conversation_id)
+        logger.info(
+            "agent_turn org=%s conversation=%s route=tools rewrite=%s tools=%s context=%d",
+            org_id,
+            conversation_id,
+            prepared.rewrite_used,
+            sorted(set(used_tools)),
+            len(long_term_context),
+        )
         return UnifiedAgentResult(
             answer=answer,
             citations=citations,
             used_tools=sorted(set(used_tools)),
             tool_events=tool_events,
+            route="tools",
+            retrieved_context=long_term_context,
+            prepared_query=prepared,
         )
     except Exception as exc:
         logger.exception("Unified agent execution failed; falling back: %s", exc)
-        result = _fallback_answer(org_id, question)
-        _maybe_checkpoint_conversation(org_id, conversation_id)
+        result = _fallback_answer(
+            org_id,
+            question,
+            conversation_id,
+            context=long_term_context,
+            prepared=prepared,
+            retrieval_status=retrieval_status,
+        )
+        maybe_checkpoint_conversation(org_id, conversation_id)
         return result

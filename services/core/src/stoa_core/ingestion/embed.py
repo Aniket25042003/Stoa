@@ -16,6 +16,10 @@ from stoa_core.config import get_settings
 logger = logging.getLogger(__name__)
 
 
+class EmbeddingUnavailableError(RuntimeError):
+    """Raised when no embedding provider can produce a query vector."""
+
+
 def embed_texts(
     texts: list[str],
     *,
@@ -56,7 +60,12 @@ def embed_query(text: str) -> list[float]:
     """
     settings = get_settings()
     result = embed_texts([text], task_type=settings.embed_task_query)
-    return result[0] if result else _zero_vector(settings.embed_dimensions)
+    if not result:
+        raise EmbeddingUnavailableError("No embedding returned for query")
+    vector = result[0]
+    if not vector or all(v == 0.0 for v in vector):
+        raise EmbeddingUnavailableError("Embedding providers returned a zero vector")
+    return vector
 
 
 def _embed_batch(texts: list[str], *, task_type: str, dimensions: int) -> list[list[float]]:
@@ -76,8 +85,8 @@ def _embed_batch(texts: list[str], *, task_type: str, dimensions: int) -> list[l
     openai = _openai_embed(texts, dimensions=dimensions)
     if openai is not None:
         return openai
-    logger.warning("No embedding provider available; returning zero vectors")
-    return _zero_vectors(len(texts), dimensions)
+    logger.warning("No embedding provider available for batch of %d texts", len(texts))
+    raise EmbeddingUnavailableError("No embedding provider available")
 
 
 def _vertex_embed(texts: list[str], *, task_type: str, dimensions: int) -> list[list[float]] | None:

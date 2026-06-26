@@ -18,6 +18,8 @@ from stoa_core.redis.client import get_redis_sync
 KB_VERSION_PREFIX = "stoa:kb:version:"
 KB_QUERY_EMB_PREFIX = "stoa:kb:qemb:"
 KB_RESULT_PREFIX = "stoa:kb:result:"
+KB_REWRITE_PREFIX = "stoa:kb:rewrite:"
+KB_ANSWER_PREFIX = "stoa:kb:answer:"
 
 
 def kb_version_key(org_id: str) -> str:
@@ -110,6 +112,8 @@ def cache_retrieval_result(
     query: str,
     kinds: list[str] | None,
     results: list[dict[str, Any]],
+    *,
+    cache_scope: str = "",
 ) -> None:
     """Handles cache retrieval result logic for the surrounding Stoa workflow.
 
@@ -123,7 +127,7 @@ def cache_retrieval_result(
     r = get_redis_sync()
     version = get_kb_version(org_id)
     kind_key = ",".join(sorted(kinds or []))
-    key = f"{KB_RESULT_PREFIX}{org_id}:{version}:{_hash_key(query, kind_key)}"
+    key = f"{KB_RESULT_PREFIX}{org_id}:{version}:{_hash_key(query, kind_key, cache_scope)}"
     r.setex(key, settings.kb_cache_ttl_seconds, json.dumps(results))
 
 
@@ -131,6 +135,8 @@ def get_cached_retrieval_result(
     org_id: str,
     query: str,
     kinds: list[str] | None,
+    *,
+    cache_scope: str = "",
 ) -> list[dict[str, Any]] | None:
     """Handles get cached retrieval result logic for the surrounding Stoa workflow.
 
@@ -145,7 +151,7 @@ def get_cached_retrieval_result(
     r = get_redis_sync()
     version = get_kb_version(org_id)
     kind_key = ",".join(sorted(kinds or []))
-    key = f"{KB_RESULT_PREFIX}{org_id}:{version}:{_hash_key(query, kind_key)}"
+    key = f"{KB_RESULT_PREFIX}{org_id}:{version}:{_hash_key(query, kind_key, cache_scope)}"
     raw = r.get(key)
     if not raw:
         return None
@@ -154,3 +160,69 @@ def get_cached_retrieval_result(
         return data if isinstance(data, list) else None
     except json.JSONDecodeError:
         return None
+
+
+def cache_query_rewrite(
+    org_id: str,
+    query: str,
+    history_key: str,
+    payload: dict[str, Any],
+) -> None:
+    settings = get_settings()
+    r = get_redis_sync()
+    version = get_kb_version(org_id)
+    key = f"{KB_REWRITE_PREFIX}{org_id}:{version}:{_hash_key(query, history_key)}"
+    r.setex(key, settings.kb_rewrite_cache_ttl_seconds, json.dumps(payload))
+
+
+def get_cached_query_rewrite(
+    org_id: str,
+    query: str,
+    history_key: str,
+) -> dict[str, Any] | None:
+    r = get_redis_sync()
+    version = get_kb_version(org_id)
+    key = f"{KB_REWRITE_PREFIX}{org_id}:{version}:{_hash_key(query, history_key)}"
+    raw = r.get(key)
+    if not raw:
+        return None
+    try:
+        data = json.loads(raw)
+        return data if isinstance(data, dict) else None
+    except json.JSONDecodeError:
+        return None
+
+
+def cache_answer(
+    org_id: str,
+    question: str,
+    kinds: list[str] | None,
+    answer: str,
+) -> None:
+    settings = get_settings()
+    r = get_redis_sync()
+    version = get_kb_version(org_id)
+    kind_key = ",".join(sorted(kinds or []))
+    key = f"{KB_ANSWER_PREFIX}{org_id}:{version}:{_hash_key(question, kind_key)}"
+    r.setex(key, settings.kb_answer_cache_ttl_seconds, json.dumps({"answer": answer}))
+
+
+def get_cached_answer(
+    org_id: str,
+    question: str,
+    kinds: list[str] | None,
+) -> str | None:
+    r = get_redis_sync()
+    version = get_kb_version(org_id)
+    kind_key = ",".join(sorted(kinds or []))
+    key = f"{KB_ANSWER_PREFIX}{org_id}:{version}:{_hash_key(question, kind_key)}"
+    raw = r.get(key)
+    if not raw:
+        return None
+    try:
+        data = json.loads(raw)
+        if isinstance(data, dict) and isinstance(data.get("answer"), str):
+            return data["answer"]
+    except json.JSONDecodeError:
+        return None
+    return None
