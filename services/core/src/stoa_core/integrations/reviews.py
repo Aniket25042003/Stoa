@@ -14,8 +14,9 @@ from typing import Any
 import httpx
 
 from stoa_core.config import get_settings
-from stoa_core.integrations.base import BaseConnector, ProviderInfo, SyncResult
+from stoa_core.integrations.base import BaseConnector, ProviderInfo, ResourceListResult, SyncResult
 from stoa_core.integrations.registry import register_connector
+from stoa_core.integrations.resource_listers import guided_reviews_resources
 from stoa_core.integrations.store import upsert_interaction
 
 logger = logging.getLogger(__name__)
@@ -45,7 +46,21 @@ class ReviewsConnector(BaseConnector):
             name="Product Reviews",
             auth_type="api_key",
             description="Import reviews from G2, Capterra, and TrustRadius using a product URL or name.",
+            connection_mode="platform",
+            resource_selection_mode="required",
+            resource_kinds=["platform", "query"],
         )
+
+    @classmethod
+    def list_discoverable_resources(
+        cls,
+        *,
+        credentials: dict[str, Any],
+        metadata: dict[str, Any],
+        cursor: str | None = None,
+        query: str | None = None,
+    ) -> ResourceListResult:
+        return guided_reviews_resources()
 
     @classmethod
     def connect_with_credentials(cls, credentials: dict[str, Any]) -> dict[str, Any]:
@@ -58,13 +73,10 @@ class ReviewsConnector(BaseConnector):
             dict[str, Any]: Result produced for the caller.
         """
         query = credentials.get("product_query", "").strip()
-        if not query:
-            raise ValueError("Product URL or name is required for review import")
         platforms = credentials.get("platforms") or ["g2", "capterra", "trustradius"]
         return {
             "product_query": query,
             "provider_metadata": {
-                "product_query": query,
                 "platforms": platforms,
                 "max_results": credentials.get("max_results", 50),
             },
