@@ -222,11 +222,11 @@ def onboarding_needed_for_user(
     Returns:
         bool: Result produced for the caller.
     """
-    sb = get_supabase_admin()
     if profile is None:
         if claims:
             profile = get_or_create_user_profile(user_id, claims)
         else:
+            sb = get_supabase_admin()
             res = sb.table("user_profiles").select("*").eq("user_id", user_id).limit(1).execute()
             profile = (res.data or [None])[0] or {}
 
