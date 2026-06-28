@@ -31,21 +31,26 @@ create unique index if not exists idx_enrichment_jobs_idempotency
 create index if not exists idx_enrichment_jobs_org_status
   on public.enrichment_jobs (org_id, status, created_at desc);
 
+drop trigger if exists enrichment_jobs_updated_at on public.enrichment_jobs;
 create trigger enrichment_jobs_updated_at
   before update on public.enrichment_jobs
   for each row execute function public.set_updated_at();
 
 alter table public.enrichment_jobs enable row level security;
 
+drop policy if exists enrichment_jobs_select on public.enrichment_jobs;
 create policy enrichment_jobs_select on public.enrichment_jobs for select
   using (public.is_org_member(org_id));
 
+drop policy if exists enrichment_jobs_insert on public.enrichment_jobs;
 create policy enrichment_jobs_insert on public.enrichment_jobs for insert
   with check (public.has_permission_in_org(org_id, 'documents:write'));
 
+drop policy if exists enrichment_jobs_update on public.enrichment_jobs;
 create policy enrichment_jobs_update on public.enrichment_jobs for update
   using (public.has_permission_in_org(org_id, 'documents:write'))
   with check (public.is_org_member(org_id));
 
+drop policy if exists enrichment_jobs_delete on public.enrichment_jobs;
 create policy enrichment_jobs_delete on public.enrichment_jobs for delete
   using (public.has_permission_in_org(org_id, 'documents:delete'));

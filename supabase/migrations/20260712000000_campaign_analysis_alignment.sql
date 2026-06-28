@@ -55,9 +55,14 @@ alter table public.deal_stage_snapshots enable row level security;
 do $policy$
 declare
   t text;
+  p text;
 begin
   foreach t in array array['analytics_metric_facts', 'deal_stage_snapshots']
   loop
+    foreach p in array array['select', 'insert', 'update', 'delete']
+    loop
+      execute format('drop policy if exists %I on public.%I', t || '_' || p, t);
+    end loop;
     execute format(
       'create policy %I on public.%I for select using (org_id = public.current_org_id())',
       t || '_select', t
