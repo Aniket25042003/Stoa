@@ -161,3 +161,39 @@ class GoogleDriveConnector(BaseConnector):
             logger.exception("Google Drive sync failed for org %s", org_id)
             result.error = str(exc)
         return result
+
+    @classmethod
+    def supports_agent_search(cls) -> bool:
+        return True
+
+    @classmethod
+    def agent_search(
+        cls,
+        org_id: str,
+        connection: dict[str, Any],
+        *,
+        credentials: dict[str, Any],
+        query: str,
+        entity_type: str | None = None,
+    ) -> list:
+        from stoa_core.integrations.agent_search import agent_search_hit
+        from stoa_core.integrations.base import AgentSearchHit
+
+        metadata = connection.get("provider_metadata") or {}
+        listed = cls.list_discoverable_resources(
+            credentials=credentials,
+            metadata=metadata,
+            query=query,
+        )
+        hits: list[AgentSearchHit] = []
+        for opt in listed.resources[:15]:
+            hits.append(
+                agent_search_hit(
+                    id=opt.id,
+                    title=opt.label,
+                    snippet=opt.description or opt.kind,
+                    provider=SOURCE,
+                    entity_type=entity_type or opt.kind,
+                )
+            )
+        return hits

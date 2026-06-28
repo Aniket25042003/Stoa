@@ -192,3 +192,50 @@ class PosthogConnector(BaseConnector):
             result.error = str(exc)
 
         return result
+
+    @classmethod
+    def supports_agent_search(cls) -> bool:
+        return True
+
+    @classmethod
+    def agent_search(
+        cls,
+        org_id: str,
+        connection: dict[str, Any],
+        *,
+        credentials: dict[str, Any],
+        query: str,
+        entity_type: str | None = None,
+    ) -> list:
+        from stoa_core.integrations.agent_search import agent_search_hit
+        from stoa_core.integrations.base import AgentSearchHit
+
+        metadata = connection.get("provider_metadata") or {}
+        project_id = metadata.get("project_id")
+        if not project_id:
+            return []
+        host = metadata.get("host") or credentials.get("host") or "https://app.posthog.com"
+        host = str(host).rstrip("/")
+        api_key = credentials.get("api_key", "")
+        headers = {"Authorization": f"Bearer {api_key}"}
+        breakdown = "$utm_campaign" if entity_type in {"campaign", "campaigns"} else None
+        rows = cls._fetch_trend(
+            host=host,
+            project_id=str(project_id),
+            headers=headers,
+            breakdown=breakdown,
+        )
+        hits: list[AgentSearchHit] = []
+        for row in rows[:15]:
+            label = row.get("label") or row.get("breakdown_value") or "segment"
+            total = row.get("count") or row.get("aggregated_value") or 0
+            hits.append(
+                agent_search_hit(
+                    id=str(label).replace(" ", "_")[:80],
+                    title=f"PostHog: {label}",
+                    snippet=f"events={total} (last 30 days)",
+                    provider=SOURCE,
+                    entity_type=entity_type,
+                )
+            )
+        return hits

@@ -252,6 +252,56 @@ class GongConnector(BaseConnector):
         return result
 
     @classmethod
+    def supports_agent_search(cls) -> bool:
+        return True
+
+    @classmethod
+    def agent_search(
+        cls,
+        org_id: str,
+        connection: dict[str, Any],
+        *,
+        credentials: dict[str, Any],
+        query: str,
+        entity_type: str | None = None,
+    ) -> list:
+        from stoa_core.integrations.agent_search import agent_search_hit
+        from stoa_core.integrations.base import AgentSearchHit
+
+        metadata = connection.get("provider_metadata") or {}
+        base_url, auth = cls._client(credentials, metadata)
+        body: dict[str, Any] = {"filter": {"fromDateTime": metadata.get("from_date") or "2020-01-01T00:00:00Z"}}
+        with httpx.Client(timeout=25) as client:
+            calls_res = client.post(
+                f"{base_url}/v2/calls",
+                auth=auth if isinstance(auth, httpx.BasicAuth) else None,
+                headers=auth if isinstance(auth, dict) else None,
+                json=body,
+            )
+            calls_res.raise_for_status()
+            calls_body = calls_res.json()
+        q_lower = query.strip().lower()
+        hits: list[AgentSearchHit] = []
+        for call in calls_body.get("calls") or []:
+            call_id = str(call.get("id") or call.get("metaData", {}).get("id") or "")
+            title = call.get("title") or call.get("metaData", {}).get("title") or f"Call {call_id}"
+            if q_lower and q_lower not in str(title).lower():
+                continue
+            started = call.get("started") or call.get("metaData", {}).get("started")
+            hits.append(
+                agent_search_hit(
+                    id=call_id,
+                    title=str(title),
+                    snippet=f"started={started}",
+                    provider=SOURCE,
+                    entity_type="calls",
+                )
+            )
+            if len(hits) >= 12:
+                break
+        return hits
+
+    @classmethod
     def _fetch_transcript(cls, base_url: str, auth: Any, call_id: str) -> str:
         """Handles  fetch transcript logic for the surrounding Stoa workflow.
 

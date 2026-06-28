@@ -1,19 +1,16 @@
 from __future__ import annotations
 
-import json
 import logging
 import os
 import re
 from dataclasses import dataclass
 from typing import Any
 
+from stoa_core.agent.evidence import clear_turn_accumulator, persist_turn_evidence
 from stoa_core.agent.route import classify_agent_route
-from stoa_core.alignment.aggregate import build_alignment_summary
-from stoa_core.alignment.friction import collect_friction_signals
-from stoa_core.analytics.aggregate import build_summary_metrics
+from stoa_core.agent.tools.registry import AGENT_MEMORY_KINDS, build_agent_tools
 from stoa_core.db.supabase import get_supabase_admin
 from stoa_core.enrichment.conversation import maybe_checkpoint_conversation
-from stoa_core.intelligence.structured import aggregate_crm_stats
 from stoa_core.llm.router import load_config
 from stoa_core.rag.answer import answer_question
 from stoa_core.rag.query_prepare import PreparedQuery, retrieve_context_prepared
@@ -22,26 +19,6 @@ logger = logging.getLogger(__name__)
 
 SHORT_TERM_CHAR_BUDGET = 14000
 SHORT_TERM_RECENT_MESSAGES = 28
-
-CONVERSATION_MEMORY_KIND = "conversation_memory"
-
-AGENT_MEMORY_KINDS = [
-    "document",
-    "company_profile",
-    "icp_profile",
-    "crm_account",
-    "crm_contact",
-    "crm_deal",
-    "call_transcript",
-    "support_ticket",
-    "review",
-    "product_analytics_summary",
-    "competitive_snapshot",
-    "campaign_asset",
-    "campaign_metrics",
-    "content_asset",
-    CONVERSATION_MEMORY_KIND,
-]
 
 
 @dataclass
@@ -172,241 +149,21 @@ def _build_short_term_history(conversation_id: str) -> list[Any]:
     return history
 
 
-def _as_rows(data: Any) -> list[dict[str, Any]]:
-    if not isinstance(data, list):
-        return []
-    return [row for row in data if isinstance(row, dict)]
-
-
-def _get_precomputed_insights(org_id: str, scope: str, *, limit: int = 6) -> list[dict[str, Any]]:
-    sb = get_supabase_admin()
-    res = (
-        sb.table("precomputed_insights")
-        .select("key, title, content, citations, created_at")
-        .eq("org_id", org_id)
-        .eq("scope", scope)
-        .order("created_at", desc=True)
-        .limit(limit)
-        .execute()
+def _finalize_turn(
+    org_id: str,
+    conversation_id: str,
+    answer: str,
+    citations: list[str],
+) -> None:
+    acc = clear_turn_accumulator(org_id, conversation_id)
+    persist_turn_evidence(
+        org_id,
+        conversation_id,
+        acc,
+        used_refs=set(citations),
+        answer=answer,
     )
-    return _as_rows(res.data)
-
-
-def _json(data: dict[str, Any]) -> str:
-    return json.dumps(data, default=str)
-
-
-def _feature_tools(org_id: str) -> list[Any]:
-    from langchain_core.tools import StructuredTool
-
-    def icp_customer_research_tool(query: str) -> str:
-        """Answer ICP and customer research questions from CRM + intelligence insights."""
-        stats = aggregate_crm_stats(org_id)
-        insights = _get_precomputed_insights(org_id, "intelligence", limit=8)
-        best_segment = (stats.get("top_industries") or [{}])[0]
-        payload = {
-            "feature": "icp_customer_research",
-            "query": query,
-            "highlights": {
-                "best_customer_segment": best_segment.get("name"),
-                "total_deals": stats.get("total_deals", 0),
-                "win_rate_percent": stats.get("win_rate_percent"),
-                "top_loss_reasons": stats.get("top_loss_reasons", []),
-            },
-            "insights": [
-                {
-                    "key": i.get("key"),
-                    "title": i.get("title"),
-                    "answer": (i.get("content") or {}).get("answer"),
-                    "citations": i.get("citations") or [],
-                }
-                for i in insights
-            ],
-        }
-        return _json(payload)
-
-    def content_bottleneck_tool(query: str) -> str:
-        """Return content generation bottlenecks and throughput metrics."""
-        sb = get_supabase_admin()
-        rows = _as_rows(
-            (
-                sb.table("content_assets")
-                .select(
-                    "id, status, asset_type, generation_metadata, created_at, updated_at, error"
-                )
-                .eq("org_id", org_id)
-                .order("created_at", desc=True)
-                .limit(300)
-                .execute()
-            ).data
-        )
-
-        by_status: dict[str, int] = {}
-        by_type: dict[str, int] = {}
-        durations: list[float] = []
-        failed_examples: list[dict[str, Any]] = []
-
-        for row in rows:
-            status = str(row.get("status") or "unknown")
-            by_status[status] = by_status.get(status, 0) + 1
-
-            asset_type = str(row.get("asset_type") or "unknown")
-            by_type[asset_type] = by_type.get(asset_type, 0) + 1
-
-            metadata = row.get("generation_metadata") or {}
-            if isinstance(metadata, dict):
-                raw = metadata.get("generation_time_seconds")
-                if isinstance(raw, int | float):
-                    durations.append(float(raw))
-
-            if status == "failed" and len(failed_examples) < 5:
-                failed_examples.append(
-                    {
-                        "id": row.get("id"),
-                        "error": row.get("error"),
-                        "created_at": row.get("created_at"),
-                    }
-                )
-
-        avg_duration = round(sum(durations) / len(durations), 2) if durations else None
-        payload = {
-            "feature": "content_bottleneck",
-            "query": query,
-            "metrics": {
-                "total_assets": len(rows),
-                "status_breakdown": by_status,
-                "asset_type_breakdown": by_type,
-                "avg_generation_time_seconds": avg_duration,
-                "failed_examples": failed_examples,
-            },
-        }
-        return _json(payload)
-
-    def competitive_intelligence_tool(query: str) -> str:
-        """Return competitor coverage and latest competitive alerts."""
-        sb = get_supabase_admin()
-        competitors = _as_rows(
-            (
-                sb.table("competitors")
-                .select("id, name, website_url, pricing_url, last_scanned_at")
-                .eq("org_id", org_id)
-                .order("created_at", desc=True)
-                .limit(100)
-                .execute()
-            ).data
-        )
-        alerts = _as_rows(
-            (
-                sb.table("competitive_alerts")
-                .select("id, summary, severity, categories, created_at, competitor_id")
-                .eq("org_id", org_id)
-                .order("created_at", desc=True)
-                .limit(50)
-                .execute()
-            ).data
-        )
-
-        severity_counts: dict[str, int] = {}
-        for a in alerts:
-            sev = str(a.get("severity") or "unknown")
-            severity_counts[sev] = severity_counts.get(sev, 0) + 1
-
-        payload = {
-            "feature": "competitive_intelligence",
-            "query": query,
-            "metrics": {
-                "tracked_competitors": len(competitors),
-                "recent_alerts": len(alerts),
-                "alerts_by_severity": severity_counts,
-                "latest_alerts": alerts[:10],
-            },
-        }
-        return _json(payload)
-
-    def launch_orchestration_tool(query: str) -> str:
-        """Return launch orchestration status based on campaign pipeline state."""
-        sb = get_supabase_admin()
-        campaigns = _as_rows(
-            (
-                sb.table("campaigns")
-                .select("id, brief, status, created_at, updated_at, error")
-                .eq("org_id", org_id)
-                .order("created_at", desc=True)
-                .limit(120)
-                .execute()
-            ).data
-        )
-
-        status_counts: dict[str, int] = {}
-        for c in campaigns:
-            status = str(c.get("status") or "unknown")
-            status_counts[status] = status_counts.get(status, 0) + 1
-
-        payload = {
-            "feature": "launch_orchestration",
-            "query": query,
-            "metrics": {
-                "campaign_count": len(campaigns),
-                "status_breakdown": status_counts,
-                "latest_campaigns": campaigns[:8],
-            },
-            "note": (
-                "Use the dedicated campaigns flow for creation/execution operations; "
-                "this tool focuses on orchestration intelligence and status visibility."
-            ),
-        }
-        return _json(payload)
-
-    def campaign_analysis_tool(query: str) -> str:
-        """Return campaign/channel performance insights and comparisons."""
-        metrics = build_summary_metrics(org_id)
-        insights = _get_precomputed_insights(org_id, "campaign_analysis", limit=8)
-        payload = {
-            "feature": "campaign_analysis",
-            "query": query,
-            "metrics": metrics,
-            "insights": [
-                {
-                    "key": i.get("key"),
-                    "title": i.get("title"),
-                    "answer": (i.get("content") or {}).get("answer"),
-                    "citations": i.get("citations") or [],
-                }
-                for i in insights
-            ],
-        }
-        return _json(payload)
-
-    def sales_marketing_alignment_tool(query: str) -> str:
-        """Return sales-marketing alignment metrics, friction signals, and insights."""
-        summary = build_alignment_summary(org_id)
-        friction = collect_friction_signals(org_id)
-        insights = _get_precomputed_insights(org_id, "alignment", limit=8)
-        payload = {
-            "feature": "sales_marketing_alignment",
-            "query": query,
-            "alignment": summary,
-            "friction": friction,
-            "insights": [
-                {
-                    "key": i.get("key"),
-                    "title": i.get("title"),
-                    "answer": (i.get("content") or {}).get("answer"),
-                    "citations": i.get("citations") or [],
-                }
-                for i in insights
-            ],
-        }
-        return _json(payload)
-
-    return [
-        StructuredTool.from_function(icp_customer_research_tool),
-        StructuredTool.from_function(content_bottleneck_tool),
-        StructuredTool.from_function(competitive_intelligence_tool),
-        StructuredTool.from_function(launch_orchestration_tool),
-        StructuredTool.from_function(campaign_analysis_tool),
-        StructuredTool.from_function(sales_marketing_alignment_tool),
-    ]
+    maybe_checkpoint_conversation(org_id, conversation_id)
 
 
 def _collect_citations(answer: str, long_term_context: list[dict[str, Any]]) -> list[str]:
@@ -509,7 +266,7 @@ def run_unified_agent_turn(org_id: str, conversation_id: str, question: str) -> 
             retrieval_status=retrieval_status,
             prepared=prepared,
         )
-        maybe_checkpoint_conversation(org_id, conversation_id)
+        _finalize_turn(org_id, conversation_id, result.answer, result.citations)
         logger.info(
             "agent_turn org=%s conversation=%s route=rag_only rewrite=%s queries=%s context=%d",
             org_id,
@@ -533,7 +290,7 @@ def run_unified_agent_turn(org_id: str, conversation_id: str, question: str) -> 
             prepared=prepared,
             retrieval_status=retrieval_status,
         )
-        maybe_checkpoint_conversation(org_id, conversation_id)
+        _finalize_turn(org_id, conversation_id, result.answer, result.citations)
         return result
 
     llm = _build_chat_model("premium")
@@ -547,10 +304,10 @@ def run_unified_agent_turn(org_id: str, conversation_id: str, question: str) -> 
             prepared=prepared,
             retrieval_status=retrieval_status,
         )
-        maybe_checkpoint_conversation(org_id, conversation_id)
+        _finalize_turn(org_id, conversation_id, result.answer, result.citations)
         return result
 
-    tools = _feature_tools(org_id)
+    tools = build_agent_tools(org_id, conversation_id)
     chat_history = _build_short_term_history(conversation_id)
     long_term_block = "\n".join(
         f"[{c.get('ref')}] {c.get('text', '')[:260]}" for c in long_term_context
@@ -561,13 +318,15 @@ def run_unified_agent_turn(org_id: str, conversation_id: str, question: str) -> 
             (
                 "system",
                 (
-                    "You are Stoa's unified GTM Agent. You can call six tools: "
-                    "ICP/customer research, content bottleneck, competitive intelligence, "
-                    "launch orchestration, campaign analysis, and sales-marketing alignment. "
-                    "Choose only the tools needed, combine outputs, and "
-                    "produce actionable answers. "
-                    "Prefer quantitative metrics and include evidence refs when available. "
-                    "If data is insufficient, say so clearly and suggest the next best action."
+                    "You are Stoa's unified GTM Agent with tiered tools. "
+                    "Use get_workspace_freshness when data may be stale. "
+                    "Use search_workspace_memory for additional KB retrieval mid-turn. "
+                    "Use search_connected_sources for live connector data when memory "
+                    "is insufficient. "
+                    "Use lookup_canonical_records for exact CRM entity lookups. "
+                    "Use refresh_* tools to queue background syncs (disclose refresh-in-progress). "
+                    "Dashboard tools cover ICP, content, competitive, campaigns, and alignment. "
+                    "Prefer quantitative metrics and cite evidence refs when available."
                 ),
             ),
             (
@@ -588,7 +347,7 @@ def run_unified_agent_turn(org_id: str, conversation_id: str, question: str) -> 
             verbose=False,
             return_intermediate_steps=True,
             handle_parsing_errors=True,
-            max_iterations=6,
+            max_iterations=8,
         )
 
         raw = executor.invoke(
@@ -618,7 +377,7 @@ def run_unified_agent_turn(org_id: str, conversation_id: str, question: str) -> 
                 continue
 
         citations = _collect_citations(answer, long_term_context)
-        maybe_checkpoint_conversation(org_id, conversation_id)
+        _finalize_turn(org_id, conversation_id, answer, citations)
         logger.info(
             "agent_turn org=%s conversation=%s route=tools rewrite=%s tools=%s context=%d",
             org_id,
@@ -646,5 +405,5 @@ def run_unified_agent_turn(org_id: str, conversation_id: str, question: str) -> 
             prepared=prepared,
             retrieval_status=retrieval_status,
         )
-        maybe_checkpoint_conversation(org_id, conversation_id)
+        _finalize_turn(org_id, conversation_id, result.answer, result.citations)
         return result
