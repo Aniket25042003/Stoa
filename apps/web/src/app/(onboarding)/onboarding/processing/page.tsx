@@ -57,7 +57,7 @@ export default function OnboardingProcessingPage() {
       </h1>
       <p className="text-sm text-mkt-muted">{message}</p>
       <ProductButton type="button" onClick={() => router.replace("/agent")}>
-        Open GTM Agent
+        Open STOA
       </ProductButton>
     </ProductCard>
   );

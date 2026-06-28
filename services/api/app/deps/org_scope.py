@@ -8,13 +8,14 @@ Dependencies: FastAPI, Supabase
 
 from __future__ import annotations
 
+import uuid
 from typing import Any
 
 from fastapi import Depends, HTTPException, Request, status
 
 from app.deps.auth import verify_supabase_jwt, verify_supabase_jwt_payload_verified
 from app.services.auth_state import onboarding_needed_for_user
-from app.services.org_context import OrgScope, get_org_scope
+from app.services.org_context import OrgScope, _load_membership, get_org_scope
 
 
 def org_scope_dep(
@@ -63,7 +64,14 @@ def require_onboarded_scope(
         OrgScope: Result produced for the caller.
     """
     user_id = str(claims["sub"])
-    if onboarding_needed_for_user(user_id, claims):
+    active_membership = None
+    header = (request.headers.get("x-org-id") or "").strip()
+    if header:
+        try:
+            active_membership = _load_membership(user_id, str(uuid.UUID(header)))
+        except ValueError:
+            active_membership = None
+    if onboarding_needed_for_user(user_id, claims, membership=active_membership):
         raise HTTPException(
             status.HTTP_403_FORBIDDEN,
             detail={"code": "onboarding_required", "message": "Complete onboarding to access this resource."},

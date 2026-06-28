@@ -8,6 +8,7 @@ Dependencies: FastAPI, Supabase, Pydantic, stoa_core
 
 from __future__ import annotations
 
+import logging
 import uuid
 from typing import Any
 
@@ -30,12 +31,15 @@ from app.services.auth_state import (
 )
 from app.services.org_summary import build_completeness_for_org
 from stoa_core.db.supabase import get_supabase_admin
+from stoa_core.ingestion.embed import EmbeddingUnavailableError
 from stoa_core.org.roles import seed_system_roles_for_org
 from stoa_core.rag.ingest import ingest_knowledge, profile_to_knowledge_text
 from stoa_core.enrichment.jobs import pending_jobs_for_org
 from stoa_core.security.permissions import SYSTEM_ROLE_OWNER, SYSTEM_ROLE_VIEWER
 
 router = APIRouter(prefix="/v1/onboarding", tags=["onboarding"])
+
+logger = logging.getLogger(__name__)
 
 
 class ProfileHints(BaseModel):
@@ -325,15 +329,21 @@ def complete_onboarding(
             "job_title": body.job_title,
             "use_case": body.use_case,
         }
-        ingest_knowledge(
-            org_id,
-            kind="company_profile",
-            title=f"{org.get('name', 'Company')} profile",
-            text=profile_to_knowledge_text(org, user_profile=user_profile_context),
-            feature_origin="onboarding",
-            uri=f"org:{org_id}:company_profile",
-            metadata={"source": "onboarding", **{k: v for k, v in user_profile_context.items() if v}},
-        )
+        try:
+            ingest_knowledge(
+                org_id,
+                kind="company_profile",
+                title=f"{org.get('name', 'Company')} profile",
+                text=profile_to_knowledge_text(org, user_profile=user_profile_context),
+                feature_origin="onboarding",
+                uri=f"org:{org_id}:company_profile",
+                metadata={"source": "onboarding", **{k: v for k, v in user_profile_context.items() if v}},
+            )
+        except EmbeddingUnavailableError as exc:
+            logger.warning(
+                "Onboarding company profile KB ingest skipped (embeddings unavailable): %s",
+                exc,
+            )
         enrich_company.delay(org_id, user_id=user_id, idempotency_suffix="onboarding")
 
         competitor_notes = profile_payload.get("known_competitors_notes")

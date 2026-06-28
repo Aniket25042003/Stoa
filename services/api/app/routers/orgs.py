@@ -7,6 +7,9 @@ Dependencies: FastAPI, Supabase, Pydantic, stoa_core
 
 from __future__ import annotations
 
+import hashlib
+import json
+import logging
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -27,10 +30,18 @@ from app.services.org_context import (
 )
 from app.services.org_summary import build_completeness_for_org
 from stoa_core.db.supabase import get_supabase_admin
+from stoa_core.ingestion.embed import EmbeddingUnavailableError
 from stoa_core.rag.ingest import ingest_knowledge, profile_to_knowledge_text
 from stoa_core.security.permissions import SYSTEM_ROLE_ADMIN, SYSTEM_ROLE_OWNER
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/v1/orgs", tags=["organizations"])
+
+
+def _update_idempotency_suffix(updates: dict[str, Any]) -> str:
+    payload = json.dumps(updates, sort_keys=True, default=str)
+    return hashlib.sha256(payload.encode()).hexdigest()[:8]
 
 
 class OrgProfileUpdate(BaseModel):
@@ -324,16 +335,22 @@ def update_my_org(body: OrgUpdate, scope: OrgScope = Depends(require_onboarded_s
         org = (res.data or [None])[0]
         write_audit(org_id, scope.user_id, "org.updated", "organization", org_id, updates)
         updated_org = org or current
-        ingest_knowledge(
-            org_id,
-            kind="company_profile",
-            title=f"{updated_org.get('name', 'Company')} profile",
-            text=profile_to_knowledge_text(updated_org),
-            feature_origin="data",
-            uri=f"org:{org_id}:company_profile",
-        )
+        try:
+            ingest_knowledge(
+                org_id,
+                kind="company_profile",
+                title=f"{updated_org.get('name', 'Company')} profile",
+                text=profile_to_knowledge_text(updated_org),
+                feature_origin="data",
+                uri=f"org:{org_id}:company_profile",
+            )
+        except EmbeddingUnavailableError as exc:
+            logger.warning(
+                "Org profile KB ingest skipped (embeddings unavailable): %s",
+                exc,
+            )
         if any(k in updates for k in ("website_url", "industry", "name", "profile")):
-            suffix = str(hash(frozenset(updates.items())))[-8:]
+            suffix = _update_idempotency_suffix(updates)
             enrich_company.delay(org_id, user_id=scope.user_id, idempotency_suffix=f"patch:{suffix}")
     completeness = build_completeness_for_org(org or current)
     return {"org": org or current, "completeness": completeness}

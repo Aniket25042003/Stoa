@@ -175,6 +175,22 @@ def get_membership_optional(user_id: str, org_id: str | None = None) -> dict[str
     return memberships[0]
 
 
+def _org_setup_complete(org: dict[str, Any]) -> bool:
+    """True when org-level onboarding fields are populated (with or without timestamp)."""
+    if org.get("onboarding_completed_at"):
+        return True
+    profile = org.get("profile") or {}
+    if not isinstance(profile, dict):
+        profile = {}
+    return bool(
+        org.get("name")
+        and org.get("website_url")
+        and org.get("industry")
+        and str(profile.get("target_customers") or "").strip()
+        and str(profile.get("business_model") or "").strip()
+    )
+
+
 def onboarding_needed(profile: dict[str, Any], membership: dict[str, Any] | None) -> bool:
     """Handles onboarding needed logic for the surrounding Stoa workflow.
 
@@ -206,27 +222,27 @@ def onboarding_needed_for_user(
     Returns:
         bool: Result produced for the caller.
     """
-    sb = get_supabase_admin()
     if profile is None:
         if claims:
             profile = get_or_create_user_profile(user_id, claims)
         else:
+            sb = get_supabase_admin()
             res = sb.table("user_profiles").select("*").eq("user_id", user_id).limit(1).execute()
             profile = (res.data or [None])[0] or {}
 
-    memberships = list_memberships(user_id)
-    if not memberships:
-        return True
     if not profile.get("onboarding_completed_at"):
         return True
 
     if membership is None:
+        memberships = list_memberships(user_id)
+        if not memberships:
+            return True
         membership = get_membership_optional(user_id)
 
     if membership:
         org = membership.get("organizations") or {}
         role_key = role_key_from_membership(membership)
-        if role_key == SYSTEM_ROLE_OWNER and not org.get("onboarding_completed_at"):
+        if role_key == SYSTEM_ROLE_OWNER and not _org_setup_complete(org):
             return True
     else:
         # User has memberships but no resolvable active org — not blocked from app shell

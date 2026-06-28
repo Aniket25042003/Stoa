@@ -47,3 +47,26 @@ def test_completeness_with_data():
     assert result["ready_for_intelligence"] is True
     assert result["ready_for_competitive"] is True
     assert result["ready_for_campaigns"] is True
+
+
+def test_completeness_goals_as_list():
+    result = compute_completeness(
+        {
+            "name": "Acme",
+            "website_url": "https://acme.com",
+            "industry": "SaaS",
+            "profile": {
+                "target_customers": "B2B marketers",
+                "business_model": "Subscription",
+                "stage": "Growth",
+                "goals": ["Expand ICP", "Improve win rate"],
+                "brand_voice": "Clear and direct",
+                "known_competitors_notes": "RivalCo",
+            },
+        },
+        document_count=1,
+        competitor_count=1,
+        integration_count=1,
+    )
+    assert result["checks"]["has_goals"] is True
+    assert result["percent"] == 100
