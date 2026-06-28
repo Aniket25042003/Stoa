@@ -1,0 +1,554 @@
+# Demo seed manifest — fictional B2B marketing analytics SaaS "Stoa" (demo customer workspace)
+# Run: python scripts/seed_demo_org.py
+
+org:
+  name: Stoa
+  slug: stoa-demo
+  website_url: https://stoa-analytics.demo
+  industry: B2B SaaS - Marketing Analytics
+  profile:
+    target_customers: VP Marketing and Head of Growth at 50–500 employee B2B SaaS companies
+    business_model: PLG with sales-assisted expansion
+    stage: Series A growth
+    goals:
+      - improve win rate on enterprise deals
+      - shorten sales cycle by 20%
+      - align paid and organic attribution
+    brand_voice: confident, data-driven, plain language
+    known_competitors_notes: InsightLoop, PipelineIQ, RevTrack
+
+demo_user:
+  email: demo@stoa.demo
+  password: StoaDemo2026!
+  full_name: Alex Morgan
+
+integrations:
+  - provider: hubspot
+    status: active
+    label: HubSpot Production
+    last_sync_hours_ago: 2
+    provider_metadata:
+      object_types: [companies, contacts, deals]
+      pipeline_ids: ["default"]
+  - provider: gong
+    status: active
+    label: Gong Revenue Intelligence
+    last_sync_hours_ago: 6
+    provider_metadata:
+      workspace_ids: ["ws-demo-1"]
+  - provider: ga4
+    status: active
+    label: GA4 — stale demo connection
+    last_sync_hours_ago: 240
+    provider_metadata:
+      property_id: "properties/123456789"
+
+accounts:
+  - external_id: acc-001
+    name: Acme FinTech
+    domain: acmefin.com
+    industry: FinTech
+    lifecycle_stage: customer
+  - external_id: acc-002
+    name: BrightHR
+    domain: brighthr.io
+    industry: HR Tech
+    lifecycle_stage: opportunity
+  - external_id: acc-003
+    name: ScaleMart
+    domain: scalemart.com
+    industry: MarTech
+    lifecycle_stage: lead
+  - external_id: acc-004
+    name: CloudLedger
+    domain: cloudledger.io
+    industry: FinTech
+    lifecycle_stage: customer
+  - external_id: acc-005
+    name: TalentForge
+    domain: talentforge.com
+    industry: HR Tech
+    lifecycle_stage: opportunity
+  - external_id: acc-006
+    name: AdPulse
+    domain: adpulse.co
+    industry: MarTech
+    lifecycle_stage: customer
+  - external_id: acc-007
+    name: PayStream
+    domain: paystream.io
+    industry: FinTech
+    lifecycle_stage: lead
+  - external_id: acc-008
+    name: RevOps Labs
+    domain: revopslabs.com
+    industry: MarTech
+    lifecycle_stage: opportunity
+
+contacts:
+  - external_id: con-001
+    account: acc-001
+    name: Sarah Chen
+    email: sarah.chen@acmefin.com
+    title: VP Marketing
+    lead_source: Webinar
+    utm_campaign: webinar-june
+    utm_source: linkedin
+    utm_medium: social
+  - external_id: con-002
+    account: acc-002
+    name: Marcus Webb
+    email: mwebb@brighthr.io
+    title: Head of Growth
+    lead_source: Paid Social
+    utm_campaign: q3-launch
+    utm_source: facebook
+    utm_medium: paid
+  - external_id: con-003
+    account: acc-003
+    name: Priya Nair
+    email: priya@scalemart.com
+    title: CMO
+    lead_source: Inbound
+    utm_campaign: organic-content
+    utm_source: google
+    utm_medium: organic
+  - external_id: con-004
+    account: acc-004
+    name: James Okonkwo
+    email: j.okonkwo@cloudledger.io
+    title: Director Demand Gen
+    lead_source: Partner
+    utm_campaign: partner-summit
+    utm_source: partner
+    utm_medium: referral
+  - external_id: con-005
+    account: acc-005
+    name: Elena Vasquez
+    email: elena@talentforge.com
+    title: VP Marketing
+    lead_source: Webinar
+    utm_campaign: webinar-june
+    utm_source: email
+    utm_medium: nurture
+  - external_id: con-006
+    account: acc-006
+    name: Tom Bradley
+    email: tom@adpulse.co
+    title: Head of Performance Marketing
+    lead_source: Paid Social
+    utm_campaign: q3-launch
+    utm_source: linkedin
+    utm_medium: paid
+  - external_id: con-007
+    account: acc-001
+    name: David Kim
+    email: david.kim@acmefin.com
+    title: RevOps Manager
+    lead_source: Inbound
+    utm_campaign: organic-content
+    utm_source: google
+    utm_medium: organic
+  - external_id: con-008
+    account: acc-007
+    name: Lisa Park
+    email: lisa@paystream.io
+    title: Marketing Ops Lead
+    lead_source: Paid Social
+    utm_campaign: retargeting-fall
+    utm_source: google
+    utm_medium: cpc
+  - external_id: con-009
+    account: acc-008
+    name: Ryan Foster
+    email: ryan@revopslabs.com
+    title: CMO
+    lead_source: Webinar
+    utm_campaign: webinar-june
+    utm_source: hubspot
+    utm_medium: email
+  - external_id: con-010
+    account: acc-003
+    name: Amy Liu
+    email: amy.liu@scalemart.com
+    title: Demand Gen Manager
+    lead_source: Partner
+    utm_campaign: partner-summit
+    utm_source: partner
+    utm_medium: referral
+
+deals:
+  - external_id: deal-001
+    account: acc-001
+    name: Acme FinTech — Enterprise Expansion
+    amount: 85000
+    stage: closedwon
+    is_won: true
+    is_closed: true
+    close_date: "2025-11-15"
+    loss_reason: null
+    utm_campaign: webinar-june
+    lead_source: Webinar
+  - external_id: deal-002
+    account: acc-004
+    name: CloudLedger — Annual Contract
+    amount: 62000
+    stage: closedwon
+    is_won: true
+    is_closed: true
+    close_date: "2025-10-22"
+    loss_reason: null
+    utm_campaign: partner-summit
+    lead_source: Partner
+  - external_id: deal-003
+    account: acc-006
+    name: AdPulse — Growth Tier
+    amount: 48000
+    stage: closedwon
+    is_won: true
+    is_closed: true
+    close_date: "2025-12-01"
+    loss_reason: null
+    utm_campaign: q3-launch
+    lead_source: Paid Social
+  - external_id: deal-004
+    account: acc-002
+    name: BrightHR — Pilot
+    amount: 28000
+    stage: proposal
+    is_won: false
+    is_closed: false
+    close_date: "2026-03-30"
+    loss_reason: null
+    utm_campaign: q3-launch
+    lead_source: Paid Social
+  - external_id: deal-005
+    account: acc-005
+    name: TalentForge — Platform License
+    amount: 54000
+    stage: negotiation
+    is_won: false
+    is_closed: false
+    close_date: "2026-04-15"
+    loss_reason: null
+    utm_campaign: webinar-june
+    lead_source: Webinar
+  - external_id: deal-006
+    account: acc-003
+    name: ScaleMart — Competitive Displacement
+    amount: 72000
+    stage: discovery
+    is_won: false
+    is_closed: false
+    close_date: "2026-05-01"
+    loss_reason: null
+    utm_campaign: organic-content
+    lead_source: Inbound
+  - external_id: deal-007
+    account: acc-007
+    name: PayStream — Starter
+    amount: 18000
+    stage: closedlost
+    is_won: false
+    is_closed: true
+    close_date: "2025-09-10"
+    loss_reason: Budget
+    utm_campaign: retargeting-fall
+    lead_source: Paid Social
+  - external_id: deal-008
+    account: acc-008
+    name: RevOps Labs — Mid-Market
+    amount: 36000
+    stage: closedlost
+    is_won: false
+    is_closed: true
+    close_date: "2025-08-18"
+    loss_reason: Competitor
+    utm_campaign: webinar-june
+    lead_source: Webinar
+  - external_id: deal-009
+    account: acc-001
+    name: Acme FinTech — Add-on Seats
+    amount: 22000
+    stage: closedwon
+    is_won: true
+    is_closed: true
+    close_date: "2026-01-20"
+    loss_reason: null
+    utm_campaign: expansion-email
+    lead_source: Customer
+  - external_id: deal-010
+    account: acc-002
+    name: BrightHR — Full Platform
+    amount: 45000
+    stage: proposal
+    is_won: false
+    is_closed: false
+    close_date: "2026-04-01"
+    loss_reason: null
+    utm_campaign: q3-launch
+    lead_source: Paid Social
+  - external_id: deal-011
+    account: acc-005
+    name: TalentForge — Services Bundle
+    amount: 31000
+    stage: qualification
+    is_won: false
+    is_closed: false
+    close_date: "2026-06-01"
+    loss_reason: null
+    utm_campaign: webinar-june
+    lead_source: Webinar
+  - external_id: deal-012
+    account: acc-006
+    name: AdPulse — Renewal
+    amount: 52000
+    stage: negotiation
+    is_won: false
+    is_closed: false
+    close_date: "2026-03-15"
+    loss_reason: null
+    utm_campaign: renewal-outreach
+    lead_source: Customer
+
+interactions:
+  - external_id: int-call-001
+    type: call_transcript
+    title: Discovery call — BrightHR (Marcus Webb)
+    source: gong
+    file: documents/call-discovery-brighthr.md
+  - external_id: int-call-002
+    type: call_transcript
+    title: Pricing call — ScaleMart (Priya Nair)
+    source: gong
+    file: documents/call-pricing-scalemart.md
+  - external_id: int-ticket-001
+    type: support_ticket
+    title: HubSpot integration sync delay
+    source: zendesk
+    body: "Customer reports HubSpot deal stages not updating for 24h. Engineering confirmed webhook retry resolved issue."
+  - external_id: int-ticket-002
+    type: support_ticket
+    title: GA4 property mapping question
+    source: zendesk
+    body: "User asks how to map custom GA4 events to campaign dimensions. Support shared docs link and offered onboarding call."
+  - external_id: int-review-001
+    type: review
+    title: G2 Review — Acme FinTech champion
+    source: reviews
+    file: documents/review-g2-positive.md
+  - external_id: int-review-002
+    type: review
+    title: G2 Review — onboarding friction
+    source: reviews
+    file: documents/review-g2-onboarding.md
+
+documents:
+  - file: documents/call-discovery-brighthr.md
+    title: Discovery Call — BrightHR
+    doc_type: call_transcript
+  - file: documents/call-pricing-scalemart.md
+    title: Pricing Call — ScaleMart
+    doc_type: call_transcript
+  - file: documents/review-g2-positive.md
+    title: G2 Review — Positive
+    doc_type: review
+  - file: documents/review-g2-onboarding.md
+    title: G2 Review — Onboarding
+    doc_type: review
+  - file: documents/crm-pipeline-summary.md
+    title: Q1 Pipeline Summary Export
+    doc_type: crm_export
+  - file: documents/ae-loss-analysis.md
+    title: AE Loss Analysis — Q4
+    doc_type: note
+  - file: documents/cmo-goals-memo.md
+    title: CMO Q2 Goals Memo
+    doc_type: note
+  - file: documents/competitive-battlecard-insightloop.md
+    title: Battlecard — InsightLoop
+    doc_type: note
+  - file: documents/icp-one-pager.md
+    title: ICP One-Pager — 2026
+    doc_type: note
+
+knowledge:
+  - file: knowledge/icp-summary.md
+    kind: icp_profile
+    title: ICP Profile v3 — Mid-Market B2B SaaS
+    uri: stoa-demo:icp:v3
+  - file: knowledge/competitive-insightloop-snapshot.md
+    kind: competitive_snapshot
+    title: InsightLoop competitive snapshot
+    uri: stoa-demo:competitive:insightloop:2026-01
+  - file: knowledge/competitive-pipelineiq-snapshot.md
+    kind: competitive_snapshot
+    title: PipelineIQ competitive snapshot
+    uri: stoa-demo:competitive:pipelineiq:2026-01
+  - file: knowledge/campaign-q3-launch-assets.md
+    kind: campaign_asset
+    title: Q3 Launch Campaign Assets
+    uri: stoa-demo:campaign:q3-launch:assets
+  - file: knowledge/ga4-traffic-summary.md
+    kind: product_analytics_summary
+    title: GA4 Traffic Summary (last 30 days)
+    uri: stoa-demo:ga4:summary
+  - file: knowledge/agent-evidence-hubspot-deals.md
+    kind: agent_search_evidence
+    title: "hubspot: Top enterprise deals last quarter"
+    uri: agent_evidence:hubspot:deal-001
+  - file: knowledge/agent-evidence-webinar.md
+    kind: agent_search_evidence
+    title: "canonical: Webinar lead conversion patterns"
+    uri: agent_evidence:canonical:webinar-june
+
+competitors:
+  - slug: insightloop
+    name: InsightLoop
+    website_url: https://insightloop.com
+    pricing_url: https://insightloop.com/pricing
+    last_scanned_days_ago: 2
+  - slug: pipelineiq
+    name: PipelineIQ
+    website_url: https://pipelineiq.io
+    pricing_url: https://pipelineiq.io/pricing
+    last_scanned_days_ago: 7
+  - slug: revtrack
+    name: RevTrack
+    website_url: https://revtrack.co
+    pricing_url: https://revtrack.co/pricing
+    last_scanned_days_ago: 3
+
+competitive_alerts:
+  - competitor: insightloop
+    summary: InsightLoop reduced Pro tier pricing by 20% and added AI campaign summaries
+    severity: high
+    categories: [pricing, product]
+  - competitor: insightloop
+    summary: InsightLoop published case study targeting FinTech marketing teams
+    severity: medium
+    categories: [marketing]
+  - competitor: pipelineiq
+    summary: PipelineIQ launched native GA4 connector in public beta
+    severity: high
+    categories: [product, integrations]
+  - competitor: pipelineiq
+    summary: PipelineIQ hiring spree for enterprise AEs in EMEA
+    severity: low
+    categories: [hiring]
+  - competitor: revtrack
+    summary: RevTrack blog post claims 40% faster attribution setup vs incumbents
+    severity: medium
+    categories: [marketing, positioning]
+  - competitor: revtrack
+    summary: RevTrack added Slack alerts for pipeline changes
+    severity: low
+    categories: [product]
+
+campaigns:
+  - slug: q3-launch
+    brief: Q3 product launch — unified attribution dashboard for B2B SaaS marketers
+    status: completed
+    assets:
+      headline: "See which campaigns actually drive pipeline — in one dashboard"
+      emails:
+        - subject: "Your campaigns are working. Can you prove it?"
+          body: "Introducing unified attribution for HubSpot + GA4..."
+        - subject: "3-minute walkthrough: Q3 dashboard"
+          body: "Watch how VP Marketing teams cut reporting time by 60%..."
+      social:
+        - platform: linkedin
+          text: "Stop exporting CSVs. Stoa connects HubSpot, Gong, and GA4 so you know what drives revenue."
+      battlecard:
+        vs: InsightLoop
+        differentiators:
+          - "Native Gong + HubSpot alignment"
+          - "Precomputed insights, not chat-only"
+        objections:
+          - objection: "We already have HubSpot dashboards"
+            response: "HubSpot shows activity; Stoa connects activity to revenue and call evidence."
+  - slug: webinar-june
+    brief: Webinar follow-up nurture — attribution masterclass attendees
+    status: running
+    assets: {}
+  - slug: partner-cobrand
+    brief: Partner co-marketing with RevOps Alliance
+    status: failed
+    error: "Missing partner brand assets — generation aborted"
+    assets: {}
+  - slug: competitive-displacement
+    brief: Competitive displacement campaign vs InsightLoop
+    status: queued
+    assets: {}
+
+content_assets:
+  - asset_type: image
+    status: completed
+    prompt: "Hero image for Q3 launch — modern SaaS dashboard"
+    generation_time_seconds: 18
+  - asset_type: image
+    status: completed
+    prompt: "LinkedIn ad creative — attribution dashboard"
+    generation_time_seconds: 22
+  - asset_type: image
+    status: completed
+    prompt: "Blog header — webinar attribution"
+    generation_time_seconds: 14
+  - asset_type: image
+    status: completed
+    prompt: "Email banner — pipeline proof"
+    generation_time_seconds: 16
+  - asset_type: image
+    status: completed
+    prompt: "Case study cover — Acme FinTech"
+    generation_time_seconds: 20
+  - asset_type: image
+    status: completed
+    prompt: "Competitive battlecard visual"
+    generation_time_seconds: 25
+  - asset_type: image
+    status: failed
+    prompt: "Video storyboard frame — complex scene"
+    error: "Imagen safety filter triggered"
+  - asset_type: image
+    status: failed
+    prompt: "Ultra-wide billboard mockup"
+    error: "Generation timeout after 120s"
+  - asset_type: video
+    status: completed
+    prompt: "15s product teaser — dashboard reveal"
+    generation_time_seconds: 95
+  - asset_type: video
+    status: completed
+    prompt: "Customer testimonial b-roll"
+    generation_time_seconds: 110
+  - asset_type: video
+    status: generating
+    prompt: "Webinar recap clip"
+  - asset_type: video
+    status: failed
+    prompt: "Long-form brand film"
+    error: "Veo quota exceeded"
+
+analytics_metrics:
+  - dimension_type: channel
+    dimension_value: Organic Search
+    metrics: {sessions: 1240, conversions: 52, users: 980}
+  - dimension_type: channel
+    dimension_value: Paid Social
+    metrics: {sessions: 820, conversions: 14, users: 710}
+  - dimension_type: channel
+    dimension_value: Email
+    metrics: {sessions: 560, conversions: 38, users: 490}
+  - dimension_type: channel
+    dimension_value: Referral
+    metrics: {sessions: 310, conversions: 28, users: 270}
+  - dimension_type: utm_campaign
+    dimension_value: q3-launch
+    metrics: {sessions: 420, conversions: 24, users: 380}
+  - dimension_type: utm_campaign
+    dimension_value: webinar-june
+    metrics: {sessions: 185, conversions: 19, users: 160}
+  - dimension_type: utm_campaign
+    dimension_value: retargeting-fall
+    metrics: {sessions: 290, conversions: 6, users: 250}
