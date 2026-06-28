@@ -7,10 +7,6 @@ const INLINE_CITATION_RE =
 const KB_CITATION_RE = /\s*\[(?:kb:[^\]]+)\]/gi;
 const THOUGHT_SIGNATURE_RE = /['"]thought_signature['"]\s*:\s*['"][^'"]*['"]\s*,?\s*/gi;
 
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
 /** Remove inline evidence citation markers from synthesized answers. */
 export function stripInlineCitations(text: string): string {
   return text
@@ -33,7 +29,7 @@ export function sanitizeAgentContent(text: string): string {
 
   if (out.startsWith("[{") && out.includes("thought_signature")) {
     const textField = out.match(/'text':\s*'((?:[^'\\]|\\.)*)'/);
-    const tailField = out.match(/},\s*'((?:[^'\\]|\\.)*)'\s*\]\s*$/s);
+    const tailField = out.match(/},\s*'((?:[^'\\]|\\.)*)'\s*\]\s*$/);
     const parts: string[] = [];
     if (textField?.[1]) parts.push(textField[1].replace(/\\'/g, "'"));
     if (tailField?.[1]) parts.push(tailField[1].replace(/\\'/g, "'"));
