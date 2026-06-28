@@ -15,7 +15,7 @@ export default async function AgentPage() {
   if (!user) redirect(getAuthEntryPath());
 
   return (
-    <Suspense fallback={<p className="p-6 text-sm text-mkt-muted">Loading agent…</p>}>
+    <Suspense fallback={<p className="p-6 text-sm text-mkt-muted">Loading STOA…</p>}>
       <AgentWorkspace />
     </Suspense>
   );

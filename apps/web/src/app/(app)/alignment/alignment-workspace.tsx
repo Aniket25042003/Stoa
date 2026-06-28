@@ -12,6 +12,7 @@ import {
   ProductInput,
   ProductPageHeader,
 } from "@/components/product";
+import { InsightMarkdown } from "@/components/product/InsightMarkdown";
 import { apiFetch } from "@/lib/api";
 import { consumeSse } from "@/lib/sse";
 
@@ -192,9 +193,9 @@ export function AlignmentWorkspace() {
           Shared intelligence
         </h2>
         {frictionInsight ? (
-          <p className="mt-3 text-sm text-mkt-muted">
-            {frictionInsight.content?.answer}
-          </p>
+          <InsightMarkdown contextualTitle={frictionInsight.title} className="mt-3">
+            {frictionInsight.content?.answer ?? ""}
+          </InsightMarkdown>
         ) : (
           <p className="mt-3 text-sm text-mkt-muted">
             Run a refresh after CRM sync to generate the shared friction
@@ -228,9 +229,9 @@ export function AlignmentWorkspace() {
               className="rounded-sm border border-mkt-ink/[0.06] p-4"
             >
               <p className="font-medium text-mkt-ink">{ins.title}</p>
-              <p className="mt-2 text-sm text-mkt-muted">
-                {ins.content?.answer}
-              </p>
+              <InsightMarkdown contextualTitle={ins.title} className="mt-2">
+                {ins.content?.answer ?? ""}
+              </InsightMarkdown>
             </li>
           ))}
         </ul>
@@ -252,7 +253,7 @@ export function AlignmentWorkspace() {
           </ProductButton>
         </div>
         {answer ? (
-          <p className="mt-4 text-sm text-mkt-muted">{answer}</p>
+          <InsightMarkdown className="mt-4">{answer}</InsightMarkdown>
         ) : null}
       </ProductCard>
     </div>

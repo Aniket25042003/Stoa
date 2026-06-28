@@ -11,6 +11,7 @@ import {
   ProductInput,
   ProductPageHeader,
 } from "@/components/product";
+import { InsightMarkdown } from "@/components/product/InsightMarkdown";
 import { apiFetch } from "@/lib/api";
 import { consumeSse } from "@/lib/sse";
 
@@ -167,10 +168,9 @@ export function CampaignAnalysisWorkspace() {
             summary?.insights.map((ins) => (
               <li key={ins.key} className="rounded-sm border border-mkt-ink/[0.06] p-4">
                 <p className="font-medium text-mkt-ink">{ins.title}</p>
-                <p className="mt-2 text-sm text-mkt-muted">{ins.content?.answer}</p>
-                {ins.citations?.length > 0 ? (
-                  <p className="mt-2 text-xs text-mkt-subtle">{ins.citations.length} citations</p>
-                ) : null}
+                <InsightMarkdown contextualTitle={ins.title} className="mt-2">
+                  {ins.content?.answer ?? ""}
+                </InsightMarkdown>
               </li>
             ))
           )}
@@ -190,7 +190,7 @@ export function CampaignAnalysisWorkspace() {
             {asking ? "Thinking…" : "Ask"}
           </ProductButton>
         </div>
-        {answer ? <p className="mt-4 text-sm text-mkt-muted">{answer}</p> : null}
+        {answer ? <InsightMarkdown className="mt-4">{answer}</InsightMarkdown> : null}
       </ProductCard>
     </div>
   );

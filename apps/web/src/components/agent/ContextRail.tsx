@@ -65,7 +65,7 @@ export function ContextRail({ summary, className, overlay }: ContextRailProps) {
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-medium uppercase tracking-wider text-mkt-subtle">Data readiness</p>
                 <p className="mt-0.5 text-sm text-mkt-muted">
-                  {completeness.ready_for_intelligence ? "Ready for agent queries" : "Complete your data hub"}
+                  {completeness.ready_for_intelligence ? "Ready for STOA" : "Complete your data hub"}
                 </p>
                 {!completeness.ready_for_intelligence ? (
                   <Link href="/data/profile" className="mt-1 inline-block text-xs text-mkt-accent hover:underline">

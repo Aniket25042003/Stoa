@@ -31,26 +31,32 @@ export async function consumeSse(
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
   let buf = "";
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    buf += decoder.decode(value, { stream: true }).replace(/\r\n/g, "\n");
-    let idx: number;
-    while ((idx = buf.indexOf("\n\n")) !== -1) {
-      const chunk = buf.slice(0, idx);
-      buf = buf.slice(idx + 2);
-      const lines = chunk.split("\n");
-      for (const line of lines) {
-        if (line.startsWith(":") || line.trim() === "") continue;
-        if (line.startsWith("data:")) {
-          const raw = line.slice(5).trim();
-          try {
-            onEvent(JSON.parse(raw) as Record<string, unknown>);
-          } catch {
-            onEvent({ message: raw });
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true }).replace(/\r\n/g, "\n");
+      let idx: number;
+      while ((idx = buf.indexOf("\n\n")) !== -1) {
+        const chunk = buf.slice(0, idx);
+        buf = buf.slice(idx + 2);
+        const lines = chunk.split("\n");
+        for (const line of lines) {
+          if (line.startsWith(":") || line.trim() === "") continue;
+          if (line.startsWith("data:")) {
+            const raw = line.slice(5).trim();
+            try {
+              onEvent(JSON.parse(raw) as Record<string, unknown>);
+            } catch {
+              onEvent({ message: raw });
+            }
           }
         }
       }
     }
+  } catch (err) {
+    // Caller aborts after completed/failed; that is expected, not an error.
+    if (signal?.aborted) return;
+    throw err;
   }
 }
