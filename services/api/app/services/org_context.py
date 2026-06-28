@@ -69,11 +69,13 @@ def _resolve_org_id(request: Request, user_id: str) -> str | None:
     header = (request.headers.get("x-org-id") or "").strip()
     if header:
         try:
-            return str(uuid.UUID(header))
+            header_org_id = str(uuid.UUID(header))
         except ValueError as exc:
             raise HTTPException(
                 status.HTTP_400_BAD_REQUEST, "Invalid X-Org-Id header"
             ) from exc
+        if _load_membership(user_id, header_org_id):
+            return header_org_id
     sb = get_supabase_admin()
     profile = sb.table("user_profiles").select("last_active_org_id").eq("user_id", user_id).limit(1).execute()
     row = (profile.data or [None])[0]

@@ -7,7 +7,7 @@
 import { NextResponse } from "next/server";
 import { ACTIVE_ORG_COOKIE } from "@/lib/active-org";
 import { rejectIfCrossOrigin } from "@/lib/same-origin";
-import { proxyJsonResponse } from "@/lib/server-api";
+import { proxyAuthenticatedJsonResponse } from "@/lib/server-api";
 
 /**
  * Handles post behavior for this part of the Stoa application.
@@ -19,7 +19,7 @@ export async function POST(request: Request) {
   const forbidden = rejectIfCrossOrigin(request);
   if (forbidden) return forbidden;
 
-  const upstream = await proxyJsonResponse(request, "/v1/orgs/switch");
+  const upstream = await proxyAuthenticatedJsonResponse(request, "/v1/orgs/switch");
   const text = await upstream.text();
   if (!upstream.ok) {
     return new Response(text, { status: upstream.status, headers: { "Content-Type": "application/json" } });

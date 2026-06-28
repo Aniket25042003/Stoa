@@ -6,6 +6,7 @@
  */
 import { ACTIVE_ORG_COOKIE } from "@/lib/active-org";
 import { trustedProxyHeaders } from "@/lib/proxy-headers";
+import { createClient } from "@/lib/supabase/server";
 
 const UPSTREAM_TIMEOUT_MS = 25_000;
 const UPSTREAM_RETRIES = 2;
@@ -123,7 +124,12 @@ async function fetchUpstream(url: string, init: RequestInit): Promise<Response> 
  * @param init - Input value used to render UI or execute the workflow.
  * @returns Rendered UI or completion signal for the workflow.
  */
-export async function proxyToApi(request: Request, path: string, init?: RequestInit) {
+export async function proxyToApi(
+  request: Request,
+  path: string,
+  init?: RequestInit,
+  options?: { accessToken?: string },
+) {
   const base = getServerApiBase();
   if (!base) {
     return new Response(JSON.stringify({ detail: misconfiguredApiMessage() }), {
@@ -151,6 +157,7 @@ export async function proxyToApi(request: Request, path: string, init?: RequestI
         Origin: request.headers.get("origin") ?? process.env.NEXT_PUBLIC_APP_URL ?? "",
         ...trustedProxyHeaders(request),
         ...(orgId ? { "X-Org-Id": orgId } : {}),
+        ...(options?.accessToken ? { Authorization: `Bearer ${options.accessToken}` } : {}),
         ...(init?.headers ?? {}),
       },
       body,
@@ -172,11 +179,35 @@ export async function proxyToApi(request: Request, path: string, init?: RequestI
  * @param init - Input value used to render UI or execute the workflow.
  * @returns Rendered UI or completion signal for the workflow.
  */
-export async function proxyJsonResponse(request: Request, path: string, init?: RequestInit) {
-  const upstream = await proxyToApi(request, path, init);
+export async function proxyJsonResponse(
+  request: Request,
+  path: string,
+  init?: RequestInit,
+  options?: { accessToken?: string },
+) {
+  const upstream = await proxyToApi(request, path, init, options);
   const text = await upstream.text();
   return new Response(text, {
     status: upstream.status,
     headers: { "Content-Type": upstream.headers.get("content-type") ?? "application/json" },
   });
+}
+
+/** Proxy to the API with the current Supabase session bearer token (required for auth routes). */
+export async function proxyAuthenticatedJsonResponse(
+  request: Request,
+  path: string,
+  init?: RequestInit,
+) {
+  const supabase = await createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session?.access_token) {
+    return new Response(JSON.stringify({ detail: "Not authenticated" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+  return proxyJsonResponse(request, path, init, { accessToken: session.access_token });
 }

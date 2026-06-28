@@ -20,6 +20,14 @@ PROFILE_FIELDS = (
 )
 
 
+def _profile_field_filled(value: Any) -> bool:
+    if value is None:
+        return False
+    if isinstance(value, list):
+        return any(str(item).strip() for item in value)
+    return bool(str(value).strip())
+
+
 def compute_completeness(
     org: dict[str, Any],
     *,
@@ -45,7 +53,7 @@ def compute_completeness(
         profile = {}
 
     profile_checks = {
-        field: bool(str(profile.get(field) or "").strip())
+        field: _profile_field_filled(profile.get(field))
         for field in PROFILE_FIELDS
     }
     has_name = bool(str(org.get("name") or "").strip())

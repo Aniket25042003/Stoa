@@ -187,7 +187,7 @@ def _extract_interaction_signals(org_id: str, interaction: dict[str, Any], text:
     interaction_id = interaction.get("id")
     source_type = interaction.get("external_source")
     for chunk in chunk_text(text):
-        for sig in extract_signals(chunk, str(interaction_id or "")):
+        for sig in extract_signals(chunk.content, str(interaction_id or "")):
             sb.table("intelligence").insert(
                 {
                     "org_id": org_id,
