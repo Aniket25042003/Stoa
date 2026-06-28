@@ -17,6 +17,15 @@ import redis.asyncio as redis_async
 from stoa_core.config import get_settings
 from stoa_core.redis.client import stream_key
 
+_SSE_WAIT_MESSAGES = (
+    "Reviewing your workspace…",
+    "Cross-checking customer signals…",
+    "Pulling patterns from your data…",
+    "Connecting insights across sources…",
+    "Looking for what matters most…",
+)
+_wait_message_index = 0
+
 
 async def read_events_since(
     scope: str,
@@ -42,7 +51,10 @@ async def read_events_since(
         while True:
             resp = await r.xread({key: cur}, count=50, block=block_ms)
             if not resp:
-                yield ("heartbeat", {"message": "keepalive"})
+                global _wait_message_index
+                message = _SSE_WAIT_MESSAGES[_wait_message_index % len(_SSE_WAIT_MESSAGES)]
+                _wait_message_index += 1
+                yield ("heartbeat", {"status": "thinking", "message": message})
                 continue
             for _name, messages in resp:
                 for msg_id, fields in messages:

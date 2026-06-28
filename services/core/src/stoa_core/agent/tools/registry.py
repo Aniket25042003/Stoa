@@ -33,6 +33,65 @@ AGENT_MEMORY_KINDS = [
     AGENT_SEARCH_EVIDENCE_KIND,
 ]
 
+TOOL_CATALOG: dict[str, dict[str, str]] = {
+    "search_workspace_memory": {
+        "description": "Additional KB vector search mid-turn.",
+        "when": "Topic differs from initial retrieval or context is thin.",
+    },
+    "get_workspace_freshness": {
+        "description": "Sync times, stale insights, KB version.",
+        "when": "User asks if data is current or stale.",
+    },
+    "search_connected_sources": {
+        "description": "Live connector search (HubSpot, Salesforce, etc.).",
+        "when": "User needs live/latest external data.",
+    },
+    "lookup_canonical_records": {
+        "description": "Exact CRM entity lookup by name or ID.",
+        "when": "User names a specific account, deal, or contact.",
+    },
+    "refresh_connected_source": {
+        "description": "Queue background connector sync.",
+        "when": "User explicitly asks to refresh or sync a source.",
+    },
+    "refresh_precomputed_insights": {
+        "description": "Queue insight precompute refresh.",
+        "when": "User asks to refresh prepared insights.",
+    },
+    "refresh_competitor_intel": {
+        "description": "Queue competitive intel refresh.",
+        "when": "User asks to refresh competitor research.",
+    },
+    "search_public_web": {
+        "description": "Guardrailed public web search.",
+        "when": "External public information is required.",
+    },
+    "icp_customer_research_tool": {
+        "description": "ICP segments, win rates, CRM highlights.",
+        "when": "Customer segments, conversion, ICP, or deal performance.",
+    },
+    "content_bottleneck_tool": {
+        "description": "Content production throughput and failures.",
+        "when": "Content pipeline bottlenecks or asset generation issues.",
+    },
+    "competitive_intelligence_tool": {
+        "description": "Competitive snapshots and alerts.",
+        "when": "Competitor positioning or competitive changes.",
+    },
+    "launch_orchestration_tool": {
+        "description": "Launch planning across campaigns and content.",
+        "when": "Product/campaign launch orchestration.",
+    },
+    "campaign_analysis_tool": {
+        "description": "Campaign performance and metrics.",
+        "when": "Campaign ROI, channel performance, or campaign analysis.",
+    },
+    "sales_marketing_alignment_tool": {
+        "description": "Sales vs marketing alignment friction.",
+        "when": "Pipeline alignment, messaging gaps, or SLA friction.",
+    },
+}
+
 
 def build_agent_tools(
     org_id: str,

@@ -14,8 +14,8 @@ from stoa_core.llm.router import invoke_text
 from stoa_core.rag.cache import cache_answer, get_cached_answer
 
 ANSWER_SYSTEM = """You are a marketing intelligence analyst. Answer using ONLY the provided context.
-Cite evidence using [doc:ID] or [signal:ID] markers. If insufficient evidence, say so.
-Be concise and actionable. Do not invent facts."""
+Do not include inline citation markers, bracketed source IDs, or document references in the answer.
+If insufficient evidence, say so. Be concise and actionable. Do not invent facts."""
 
 ANSWER_UNAVAILABLE = "Unable to generate an answer right now. Please try again."
 EMBEDDING_UNAVAILABLE = (

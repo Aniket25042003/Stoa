@@ -40,10 +40,11 @@ The platform does not run multi-agent LangGraph loops on each request. Instead, 
 2. **Ad-hoc Q&A path**:
    - User message saved to `messages`
    - Celery task `answer_intelligence_question` runs (idempotent per user message)
-   - `classify_agent_route()` chooses `rag_only` vs `tools`
-   - `retrieve_context_prepared()` may rewrite the query, then fetches ranked chunks
-   - RAG-only: `answer_question()` with cached answers when applicable
-   - Tools route: LangChain agent with tiered tools (`build_agent_tools`: memory, live search, refresh, canonical, dashboard, optional web)
+   - `resolve_agent_route(org_id, question)` chooses execution tier:
+     - **`precomputed_enriched`** — matched fresh `precomputed_insights` + CRM stats + optional light retrieval → 1 synthesis call
+     - **`rag_only`** — `retrieve_context_prepared()` + optional CRM prefix → `answer_question()`
+     - **`tools_bounded`** — plan (1 LLM) + ≤3 parallel tools + synthesize (1 LLM)
+     - **`tools_react`** — fallback `AgentExecutor` (max 3 iterations)
    - End of turn: `persist_turn_evidence()` writes sanitized connector/web/canonical hits to KB
    - Assistant message inserted into `messages`
    - SSE event published for realtime UI update
@@ -102,7 +103,9 @@ Prefer KB evidence newer than connector `last_sync_at` before live search; use `
 ## Key code callouts
 
 - **`answer_intelligence_question`** — [`services/api/app/tasks/intelligence.py`](../services/api/app/tasks/intelligence.py) — Celery task orchestrating retrieve + answer.
-- **`run_unified_agent_turn()`** — [`services/core/src/stoa_core/agent/unified_agent.py`](../services/core/src/stoa_core/agent/unified_agent.py) — Route classification, prepared retrieval, tools vs RAG-only.
+- **`run_unified_agent_turn()`** — [`services/core/src/stoa_core/agent/unified_agent.py`](../services/core/src/stoa_core/agent/unified_agent.py) — Tiered routing, precomputed enrichment, bounded tools.
+- **`resolve_agent_route()`** — [`services/core/src/stoa_core/agent/route_resolver.py`](../services/core/src/stoa_core/agent/route_resolver.py) — Org-aware route resolution.
+- **`run_bounded_agent_turn()`** — [`services/core/src/stoa_core/agent/bounded_agent.py`](../services/core/src/stoa_core/agent/bounded_agent.py) — Plan-execute-synthesize tools path.
 - **`retrieve_context_prepared()`** — [`services/core/src/stoa_core/rag/query_prepare.py`](../services/core/src/stoa_core/rag/query_prepare.py) — Query rewrite + multi-query retrieval.
 - **`retrieve_context()`** — [`services/core/src/stoa_core/rag/retrieve.py`](../services/core/src/stoa_core/rag/retrieve.py) — Cached hybrid retrieval.
 - **`publish_event()`** — [`services/core/src/stoa_core/redis/client.py`](../services/core/src/stoa_core/redis/client.py) — Redis stream SSE events.

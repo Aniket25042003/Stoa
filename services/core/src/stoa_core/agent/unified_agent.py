@@ -1,24 +1,36 @@
 from __future__ import annotations
 
 import logging
-import os
 import re
+import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
+from stoa_core.agent.bounded_agent import run_bounded_agent_turn
 from stoa_core.agent.evidence import clear_turn_accumulator, persist_turn_evidence
-from stoa_core.agent.route import classify_agent_route
+from stoa_core.agent.precomputed_context import (
+    build_enriched_context,
+    build_structured_rag_prefix,
+    load_matched_insight,
+    synthesize_from_enriched_context,
+)
+from stoa_core.agent.progress import AgentProgressCallback
+from stoa_core.agent.route_resolver import RouteDecision, resolve_agent_route
 from stoa_core.agent.tools.registry import AGENT_MEMORY_KINDS, build_agent_tools
 from stoa_core.db.supabase import get_supabase_admin
 from stoa_core.enrichment.conversation import maybe_checkpoint_conversation
-from stoa_core.llm.router import load_config
+from stoa_core.llm.content import extract_text_content
+from stoa_core.llm.langchain_chat import build_chat_model
 from stoa_core.rag.answer import answer_question
 from stoa_core.rag.query_prepare import PreparedQuery, retrieve_context_prepared
+from stoa_core.rag.retrieve import retrieve_context
 
 logger = logging.getLogger(__name__)
 
 SHORT_TERM_CHAR_BUDGET = 14000
 SHORT_TERM_RECENT_MESSAGES = 28
+HIGH_ROUTE_CONFIDENCE = 0.8
 
 
 @dataclass
@@ -30,46 +42,10 @@ class UnifiedAgentResult:
     route: str = "tools"
     retrieved_context: list[dict[str, Any]] | None = None
     prepared_query: PreparedQuery | None = None
-
-
-def _build_chat_model(task_tier: str = "premium") -> Any | None:
-    cfg = load_config()
-
-    try:
-        from langchain_google_vertexai import ChatVertexAI
-    except Exception:
-        ChatVertexAI = None  # type: ignore[assignment]
-
-    try:
-        from langchain_openai import ChatOpenAI
-    except Exception:
-        ChatOpenAI = None  # type: ignore[assignment]
-
-    for provider in cfg.fallback_chain:
-        model = cfg.model_for(provider, task_tier)  # type: ignore[arg-type]
-        try:
-            if provider == "vertex" and ChatVertexAI is not None:
-                kwargs: dict[str, Any] = {
-                    "model": model or cfg.vertex_model,
-                    "temperature": cfg.temperature,
-                    "request_timeout": cfg.timeout_seconds,
-                }
-                if cfg.vertex_project:
-                    kwargs["project"] = cfg.vertex_project
-                if cfg.vertex_location:
-                    kwargs["location"] = cfg.vertex_location
-                return ChatVertexAI(**kwargs)
-
-            if provider == "openai" and ChatOpenAI is not None and os.getenv("OPENAI_API_KEY"):
-                return ChatOpenAI(
-                    model=model or cfg.openai_model or "gpt-4o-mini",
-                    temperature=cfg.temperature,
-                    timeout=cfg.timeout_seconds,
-                )
-        except Exception as exc:
-            logger.warning("Unable to initialize %s model for unified agent: %s", provider, exc)
-
-    return None
+    route_reason: str = ""
+    matched_insight_key: str | None = None
+    llm_calls_estimate: int = 0
+    duration_ms: int = 0
 
 
 def _load_messages(conversation_id: str, *, limit: int = 80) -> list[dict[str, Any]]:
@@ -149,6 +125,14 @@ def _build_short_term_history(conversation_id: str) -> list[Any]:
     return history
 
 
+def _history_snippets(rows: list[dict[str, Any]]) -> list[str]:
+    return [
+        f"{row.get('role', 'user')}: {str(row.get('content') or '')[:180]}"
+        for row in rows[-4:]
+        if row.get("content")
+    ]
+
+
 def _finalize_turn(
     org_id: str,
     conversation_id: str,
@@ -181,15 +165,15 @@ def _retrieve_for_turn(
     conversation_id: str,
     *,
     message_rows: list[dict[str, Any]] | None = None,
+    k: int = 8,
 ) -> tuple[list[dict[str, Any]], PreparedQuery, str]:
-    """Returns context, prepared query metadata, and retrieval_status."""
     rows = message_rows if message_rows is not None else _load_messages(conversation_id)
     try:
         context, prepared = retrieve_context_prepared(
             org_id,
             question,
             kinds=AGENT_MEMORY_KINDS,
-            k=8,
+            k=k,
             conversation_id=conversation_id,
             history=rows,
         )
@@ -204,6 +188,22 @@ def _retrieve_for_turn(
         raise
 
 
+def _merge_context(
+    primary: list[dict[str, Any]],
+    extra: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    seen: set[str] = set()
+    merged: list[dict[str, Any]] = []
+    for item in [*extra, *primary]:
+        ref = str(item.get("ref") or "")
+        if ref and ref in seen:
+            continue
+        if ref:
+            seen.add(ref)
+        merged.append(item)
+    return merged
+
+
 def _rag_only_answer(
     org_id: str,
     question: str,
@@ -211,6 +211,7 @@ def _rag_only_answer(
     *,
     retrieval_status: str,
     prepared: PreparedQuery,
+    llm_calls: int = 1,
 ) -> UnifiedAgentResult:
     answer = answer_question(
         question,
@@ -228,84 +229,96 @@ def _rag_only_answer(
         route="rag_only",
         retrieved_context=context,
         prepared_query=prepared,
+        llm_calls_estimate=llm_calls + (1 if prepared.rewrite_used else 0),
     )
 
 
-def _fallback_answer(
+def _precomputed_enriched_answer(
     org_id: str,
-    question: str,
     conversation_id: str,
+    question: str,
+    decision: RouteDecision,
+    message_rows: list[dict[str, Any]],
     *,
-    context: list[dict[str, Any]] | None = None,
-    prepared: PreparedQuery | None = None,
-    retrieval_status: str = "ok",
+    on_progress: Callable[[dict[str, Any]], None] | None,
 ) -> UnifiedAgentResult:
-    if context is None or prepared is None:
-        context, prepared, retrieval_status = _retrieve_for_turn(org_id, question, conversation_id)
-    return _rag_only_answer(
+    if on_progress:
+        on_progress({"status": "thinking", "message": "Using prepared intelligence…"})
+
+    insight = load_matched_insight(
         org_id,
+        decision.matched_insight_key or "",
+        decision.matched_scope or "intelligence",
+    )
+    if insight is None:
+        context, prepared, status = _retrieve_for_turn(
+            org_id, question, conversation_id, message_rows=message_rows
+        )
+        return _rag_only_answer(
+            org_id,
+            question,
+            context,
+            retrieval_status=status,
+            prepared=prepared,
+        )
+
+    skip_retrieval = decision.confidence >= HIGH_ROUTE_CONFIDENCE
+    enriched = build_enriched_context(
+        org_id,
+        insight,
         question,
-        context,
-        retrieval_status=retrieval_status,
-        prepared=prepared,
+        light_retrieval_k=4,
+        skip_retrieval=skip_retrieval,
+    )
+    prepared = PreparedQuery(question, question, [question], False)
+
+    if on_progress:
+        on_progress({"status": "thinking", "message": "Synthesizing answer…"})
+
+    answer = synthesize_from_enriched_context(
+        question,
+        enriched,
+        history_snippets=_history_snippets(message_rows),
+    )
+    citations = _collect_citations(answer, enriched)
+    insight_citations = insight.get("citations") or []
+    if isinstance(insight_citations, list):
+        for c in insight_citations:
+            if isinstance(c, str) and c not in citations:
+                citations.append(c)
+
+    return UnifiedAgentResult(
+        answer=answer,
+        citations=citations[:20],
+        used_tools=[],
+        tool_events=[],
+        route="precomputed_enriched",
+        retrieved_context=enriched,
+        prepared_query=prepared,
+        route_reason=decision.reason,
+        matched_insight_key=decision.matched_insight_key,
+        llm_calls_estimate=1,
     )
 
 
-def run_unified_agent_turn(org_id: str, conversation_id: str, question: str) -> UnifiedAgentResult:
-    message_rows = _load_messages(conversation_id)
-    long_term_context, prepared, retrieval_status = _retrieve_for_turn(
-        org_id, question, conversation_id, message_rows=message_rows
-    )
+def _run_react_agent(
+    org_id: str,
+    conversation_id: str,
+    question: str,
+    long_term_context: list[dict[str, Any]],
+    prepared: PreparedQuery,
+    *,
+    on_progress: Callable[[dict[str, Any]], None] | None,
+) -> UnifiedAgentResult:
+    from langchain_classic.agents import AgentExecutor, create_tool_calling_agent
+    from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
-    route = classify_agent_route(question, history=message_rows)
-    if route == "rag_only":
-        result = _rag_only_answer(
-            org_id,
-            question,
-            long_term_context,
-            retrieval_status=retrieval_status,
-            prepared=prepared,
-        )
-        _finalize_turn(org_id, conversation_id, result.answer, result.citations)
-        logger.info(
-            "agent_turn org=%s conversation=%s route=rag_only rewrite=%s queries=%s context=%d",
-            org_id,
-            conversation_id,
-            prepared.rewrite_used,
-            len(prepared.search_queries),
-            len(long_term_context),
-        )
-        return result
-
-    try:
-        from langchain.agents import AgentExecutor, create_tool_calling_agent
-        from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-    except Exception as exc:
-        logger.warning("LangChain agent unavailable; using fallback answer path: %s", exc)
-        result = _fallback_answer(
-            org_id,
-            question,
-            conversation_id,
-            context=long_term_context,
-            prepared=prepared,
-            retrieval_status=retrieval_status,
-        )
-        _finalize_turn(org_id, conversation_id, result.answer, result.citations)
-        return result
-
-    llm = _build_chat_model("premium")
+    llm = build_chat_model("premium")
     if llm is None:
-        logger.warning("No available tool-capable chat model; using fallback answer path")
-        result = _fallback_answer(
-            org_id,
-            question,
-            conversation_id,
-            context=long_term_context,
-            prepared=prepared,
-            retrieval_status=retrieval_status,
-        )
-        _finalize_turn(org_id, conversation_id, result.answer, result.citations)
-        return result
+        raise RuntimeError("No chat model available for react agent")
+
+    if on_progress:
+        on_progress({"status": "thinking", "message": "Planning tool strategy…"})
 
     tools = build_agent_tools(org_id, conversation_id)
     chat_history = _build_short_term_history(conversation_id)
@@ -319,13 +332,8 @@ def run_unified_agent_turn(org_id: str, conversation_id: str, question: str) -> 
                 "system",
                 (
                     "You are Stoa's unified GTM Agent with tiered tools. "
-                    "Use get_workspace_freshness when data may be stale. "
-                    "Use search_workspace_memory for additional KB retrieval mid-turn. "
-                    "Use search_connected_sources for live connector data when memory "
-                    "is insufficient. "
-                    "Use lookup_canonical_records for exact CRM entity lookups. "
-                    "Use refresh_* tools to queue background syncs (disclose refresh-in-progress). "
-                    "Dashboard tools cover ICP, content, competitive, campaigns, and alignment. "
+                    "Use dashboard tools for ICP, campaigns, competitive, and alignment. "
+                    "Avoid redundant search_workspace_memory when context is already rich. "
                     "Prefer quantitative metrics and cite evidence refs when available."
                 ),
             ),
@@ -339,71 +347,191 @@ def run_unified_agent_turn(org_id: str, conversation_id: str, question: str) -> 
         ]
     )
 
-    try:
-        agent = create_tool_calling_agent(llm, tools, prompt)
-        executor = AgentExecutor(
-            agent=agent,
-            tools=tools,
-            verbose=False,
-            return_intermediate_steps=True,
-            handle_parsing_errors=True,
-            max_iterations=8,
-        )
+    agent = create_tool_calling_agent(llm, tools, prompt)
+    executor = AgentExecutor(
+        agent=agent,
+        tools=tools,
+        verbose=False,
+        return_intermediate_steps=True,
+        handle_parsing_errors=True,
+        max_iterations=3,
+    )
 
-        raw = executor.invoke(
-            {
-                "input": question,
-                "chat_history": chat_history,
-                "long_term_context": long_term_block,
-            }
-        )
-        answer = str(raw.get("output") or "").strip() or "I couldn't generate a response right now."
+    progress_handler = AgentProgressCallback(on_progress) if on_progress else None
+    invoke_config = {"callbacks": [progress_handler]} if progress_handler else {}
+    raw = executor.invoke(
+        {
+            "input": question,
+            "chat_history": chat_history,
+            "long_term_context": long_term_block,
+        },
+        config=invoke_config,
+    )
+    answer = extract_text_content(raw.get("output")).strip() or (
+        "I couldn't generate a response right now."
+    )
 
-        used_tools: list[str] = []
-        tool_events: list[dict[str, Any]] = []
-        for step in raw.get("intermediate_steps") or []:
-            try:
-                action, observation = step
-                tool_name = str(getattr(action, "tool", ""))
-                if tool_name:
-                    used_tools.append(tool_name)
-                    tool_events.append(
-                        {
-                            "tool": tool_name,
-                            "observation_preview": str(observation)[:400],
-                        }
-                    )
-            except Exception:
-                continue
+    used_tools: list[str] = list(progress_handler.used_tools) if progress_handler else []
+    tool_events: list[dict[str, Any]] = []
+    for step in raw.get("intermediate_steps") or []:
+        try:
+            action, observation = step
+            tool_name = str(getattr(action, "tool", ""))
+            if tool_name and tool_name not in used_tools:
+                used_tools.append(tool_name)
+            if tool_name:
+                tool_events.append(
+                    {
+                        "tool": tool_name,
+                        "observation_preview": str(observation)[:400],
+                    }
+                )
+        except Exception:
+            continue
 
-        citations = _collect_citations(answer, long_term_context)
-        _finalize_turn(org_id, conversation_id, answer, citations)
-        logger.info(
-            "agent_turn org=%s conversation=%s route=tools rewrite=%s tools=%s context=%d",
+    citations = _collect_citations(answer, long_term_context)
+    return UnifiedAgentResult(
+        answer=answer,
+        citations=citations,
+        used_tools=sorted(set(used_tools)),
+        tool_events=tool_events,
+        route="tools_react",
+        retrieved_context=long_term_context,
+        prepared_query=prepared,
+        llm_calls_estimate=4,
+    )
+
+
+def _log_turn(
+    org_id: str,
+    conversation_id: str,
+    result: UnifiedAgentResult,
+    *,
+    prepared: PreparedQuery | None,
+) -> None:
+    logger.info(
+        "agent_turn org=%s conversation=%s route=%s reason=%s insight_key=%s "
+        "llm_calls_est=%d tools=%s rewrite=%s queries=%s context=%d duration_ms=%d",
+        org_id,
+        conversation_id,
+        result.route,
+        result.route_reason,
+        result.matched_insight_key,
+        result.llm_calls_estimate,
+        sorted(set(result.used_tools)),
+        prepared.rewrite_used if prepared else False,
+        len(prepared.search_queries) if prepared else 0,
+        len(result.retrieved_context or []),
+        result.duration_ms,
+    )
+
+
+def run_unified_agent_turn(
+    org_id: str,
+    conversation_id: str,
+    question: str,
+    *,
+    on_progress: Callable[[dict[str, Any]], None] | None = None,
+) -> UnifiedAgentResult:
+    started = time.monotonic()
+    message_rows = _load_messages(conversation_id)
+
+    if on_progress:
+        on_progress({"status": "thinking", "message": "Analyzing your question…"})
+
+    decision = resolve_agent_route(org_id, question, history=message_rows)
+
+    if decision.route == "precomputed_enriched":
+        result = _precomputed_enriched_answer(
             org_id,
             conversation_id,
-            prepared.rewrite_used,
-            sorted(set(used_tools)),
-            len(long_term_context),
+            question,
+            decision,
+            message_rows,
+            on_progress=on_progress,
         )
-        return UnifiedAgentResult(
-            answer=answer,
-            citations=citations,
-            used_tools=sorted(set(used_tools)),
-            tool_events=tool_events,
-            route="tools",
-            retrieved_context=long_term_context,
-            prepared_query=prepared,
-        )
-    except Exception as exc:
-        logger.exception("Unified agent execution failed; falling back: %s", exc)
-        result = _fallback_answer(
+        result.route_reason = decision.reason
+        result.duration_ms = int((time.monotonic() - started) * 1000)
+        _finalize_turn(org_id, conversation_id, result.answer, result.citations)
+        _log_turn(org_id, conversation_id, result, prepared=result.prepared_query)
+        return result
+
+    long_term_context, prepared, retrieval_status = _retrieve_for_turn(
+        org_id, question, conversation_id, message_rows=message_rows
+    )
+    structured_prefix = build_structured_rag_prefix(org_id, question)
+    if structured_prefix:
+        long_term_context = _merge_context(long_term_context, structured_prefix)
+
+    if decision.route == "rag_only":
+        if on_progress:
+            on_progress({"status": "thinking", "message": "Synthesizing answer…"})
+        result = _rag_only_answer(
             org_id,
             question,
-            conversation_id,
-            context=long_term_context,
-            prepared=prepared,
+            long_term_context,
             retrieval_status=retrieval_status,
+            prepared=prepared,
         )
+        result.route_reason = decision.reason
+        result.duration_ms = int((time.monotonic() - started) * 1000)
         _finalize_turn(org_id, conversation_id, result.answer, result.citations)
+        _log_turn(org_id, conversation_id, result, prepared=prepared)
+        return result
+
+    if decision.route == "tools_bounded":
+        try:
+            bounded = run_bounded_agent_turn(
+                org_id,
+                conversation_id,
+                question,
+                long_term_context,
+                on_progress=on_progress,
+            )
+            citations = _collect_citations(bounded.answer, long_term_context)
+            result = UnifiedAgentResult(
+                answer=bounded.answer,
+                citations=citations,
+                used_tools=bounded.used_tools,
+                tool_events=bounded.tool_events,
+                route="tools_bounded",
+                retrieved_context=long_term_context,
+                prepared_query=prepared,
+                route_reason=bounded.plan_reason or decision.reason,
+                llm_calls_estimate=2,
+            )
+            result.duration_ms = int((time.monotonic() - started) * 1000)
+            _finalize_turn(org_id, conversation_id, result.answer, result.citations)
+            _log_turn(org_id, conversation_id, result, prepared=prepared)
+            return result
+        except Exception as exc:
+            logger.warning("Bounded agent failed; falling back to react agent: %s", exc)
+
+    try:
+        result = _run_react_agent(
+            org_id,
+            conversation_id,
+            question,
+            long_term_context,
+            prepared,
+            on_progress=on_progress,
+        )
+        result.route_reason = decision.reason
+        result.duration_ms = int((time.monotonic() - started) * 1000)
+        _finalize_turn(org_id, conversation_id, result.answer, result.citations)
+        _log_turn(org_id, conversation_id, result, prepared=prepared)
+        return result
+    except Exception as exc:
+        logger.exception("Unified agent execution failed; falling back to RAG: %s", exc)
+        result = _rag_only_answer(
+            org_id,
+            question,
+            long_term_context,
+            retrieval_status=retrieval_status,
+            prepared=prepared,
+        )
+        result.route_reason = "rag_fallback"
+        result.duration_ms = int((time.monotonic() - started) * 1000)
+        _finalize_turn(org_id, conversation_id, result.answer, result.citations)
+        _log_turn(org_id, conversation_id, result, prepared=prepared)
         return result
