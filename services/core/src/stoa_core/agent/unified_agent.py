@@ -24,7 +24,6 @@ from stoa_core.llm.content import extract_text_content
 from stoa_core.llm.langchain_chat import build_chat_model
 from stoa_core.rag.answer import answer_question
 from stoa_core.rag.query_prepare import PreparedQuery, retrieve_context_prepared
-from stoa_core.rag.retrieve import retrieve_context
 
 logger = logging.getLogger(__name__)
 

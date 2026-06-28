@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any
 
 from stoa_core.agent.progress import format_tool_label
 from stoa_core.agent.tools.registry import TOOL_CATALOG, build_agent_tools
@@ -16,7 +17,8 @@ from stoa_core.llm.router import invoke_json, invoke_text
 
 logger = logging.getLogger(__name__)
 
-PLAN_SYSTEM = """You are a GTM agent planner. Select the minimum tools needed to answer the question.
+PLAN_SYSTEM = """You are a GTM agent planner. Select the minimum tools needed to answer \
+the question.
 
 Return JSON:
 {
@@ -28,7 +30,8 @@ Return JSON:
 Rules:
 - Select at most 3 tools.
 - Prefer dashboard tools for ICP, campaigns, competitive, alignment questions.
-- Use search_connected_sources only when needs_live_search is true or user asks for live/latest data.
+- Use search_connected_sources only when needs_live_search is true or user asks for
+  live/latest data.
 - Do NOT select search_workspace_memory when retrieved_context_count >= 6 unless the user asks for
   a clearly different topic.
 - Use refresh_* tools only when user explicitly asks to refresh or sync.
@@ -36,8 +39,9 @@ Rules:
 Available tools:
 """
 
-SYNTHESIZE_SYSTEM = """You are Stoa's unified GTM Agent. Synthesize a clear, actionable answer from
-tool results and retrieved context. Do not include inline citation markers or source IDs in the answer.
+SYNTHESIZE_SYSTEM = """You are Stoa's unified GTM Agent. Synthesize a clear, actionable answer \
+from tool results and retrieved context. Do not include inline citation markers or source IDs \
+in the answer.
 Do not invent metrics."""
 
 

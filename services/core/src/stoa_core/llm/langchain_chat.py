@@ -29,7 +29,8 @@ def build_chat_model(task_tier: TaskTier = "premium") -> Any | None:
     if legacy is not None:
         if not _warned_legacy_vertex:
             logger.warning(
-                "Using deprecated ChatVertexAI; set llm_vertex_backend=genai for langchain-google-genai"
+                "Using deprecated ChatVertexAI; set llm_vertex_backend=genai "
+                "for langchain-google-genai"
             )
             _warned_legacy_vertex = True
         return legacy

@@ -1,10 +1,9 @@
 """Tests for org-aware agent route resolver."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from stoa_core.agent.route import requires_tools_route
 from stoa_core.agent.route_resolver import (
-    RouteDecision,
     jaccard_similarity,
     resolve_agent_route,
 )
