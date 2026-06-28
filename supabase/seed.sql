@@ -1,0 +1,6 @@
+-- Demo workspace seed (see scripts/seed_demo_org.py)
+-- After `supabase db reset`, run from repo root:
+--
+--   python scripts/seed_demo_org.py
+--
+-- Requires SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, and embedding API keys in .env
