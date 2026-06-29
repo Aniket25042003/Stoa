@@ -391,6 +391,17 @@ curl http://localhost:8000/health
 4. **Competitive** (`/competitive`) — add competitor URLs for monitoring.
 5. **Campaigns** (`/campaigns`) — submit a brief to generate assets.
 
+### Demo workspace (product video)
+
+Seed a fully populated fictional company with CRM, documents, competitive intel, campaigns, and precomputed insights:
+
+```bash
+pip install pyyaml   # one-time, for manifest loader
+python scripts/seed_demo_org.py --reuse
+```
+
+Login: `demo@stoa.demo` / `StoaDemo2026!` (see [demo/nexara/README.md](demo/nexara/README.md) and [docs/demo/VIDEO_SCRIPT.md](docs/demo/VIDEO_SCRIPT.md)).
+
 ---
 
 ## Testing
