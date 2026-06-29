@@ -1,10 +1,14 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { History, Send } from "lucide-react";
 import { ProductBadge, ProductButton, ProductTextarea } from "@/components/product";
+import { StreamingAssistantMessage } from "@/components/agent/StreamingAssistantMessage";
 import type { AgentMessage } from "@/components/agent/types";
 import { cn } from "@/lib/cn";
+import { formatAgentToolLabel } from "@/lib/agent-status";
+import { STOA_LABEL, STOA_WORKING_STATUS } from "@/lib/stoa-brand";
+import { visibleCitations } from "@/lib/intelligence-content";
 
 type AgentChatCanvasProps = {
   messages: AgentMessage[];
@@ -30,10 +34,11 @@ export function AgentChatCanvas({
   showHistoryToggle,
 }: AgentChatCanvasProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
+  const [revealedMessageIds, setRevealedMessageIds] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, status, asking]);
+  }, [messages, status, asking, revealedMessageIds]);
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -80,12 +85,23 @@ export function AgentChatCanvas({
                 )}
               >
                 <p className="mb-1 text-[10px] font-medium uppercase tracking-wider text-mkt-subtle">
-                  {msg.role === "user" ? "You" : "Agent"}
+                  {msg.role === "user" ? "You" : STOA_LABEL}
                 </p>
-                <p className="whitespace-pre-wrap text-mkt-ink">{msg.content}</p>
-                {msg.citations?.length ? (
+                {msg.role === "assistant" ? (
+                  <StreamingAssistantMessage
+                    content={msg.content}
+                    reveal={msg.reveal}
+                    onRevealComplete={() =>
+                      setRevealedMessageIds((prev) => new Set(prev).add(msg.id))
+                    }
+                  />
+                ) : (
+                  <p className="whitespace-pre-wrap text-mkt-ink">{msg.content}</p>
+                )}
+                {visibleCitations(msg.citations).length &&
+                (!msg.reveal || revealedMessageIds.has(msg.id)) ? (
                   <div className="mt-2 flex flex-wrap gap-1.5">
-                    {msg.citations.map((c) => (
+                    {visibleCitations(msg.citations).map((c) => (
                       <ProductBadge key={c} variant="accent">
                         {c}
                       </ProductBadge>
@@ -98,14 +114,14 @@ export function AgentChatCanvas({
             {asking || status ? (
               <div className="agent-message-assistant mr-8 px-4 py-3 text-sm text-mkt-muted">
                 <p className="mb-1 text-[10px] font-medium uppercase tracking-wider text-mkt-subtle">
-                  Agent
+                  {STOA_LABEL}
                 </p>
-                <p>{status ?? "Thinking…"}</p>
+                <p>{status ?? STOA_WORKING_STATUS}</p>
                 {usedTools.length > 0 ? (
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {usedTools.map((tool) => (
                       <ProductBadge key={tool} variant="accent">
-                        {tool}
+                        {formatAgentToolLabel(tool)}
                       </ProductBadge>
                     ))}
                   </div>

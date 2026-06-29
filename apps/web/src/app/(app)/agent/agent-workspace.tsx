@@ -8,7 +8,10 @@ import { ContextRail } from "@/components/agent/ContextRail";
 import { ConversationSidebar } from "@/components/agent/ConversationSidebar";
 import { DeleteThreadDialog } from "@/components/agent/DeleteThreadDialog";
 import type { AgentMessage, ConversationSummary } from "@/components/agent/types";
+import { agentStatusFromEvent, isAgentKeepaliveEvent, isPinnedAgentStatus, nextAgentWaitingMessage } from "@/lib/agent-status";
+import { STOA_WORKING_STATUS } from "@/lib/stoa-brand";
 import { apiFetch } from "@/lib/api";
+import { prepareInsightText } from "@/lib/intelligence-content";
 import { consumeSse } from "@/lib/sse";
 import { cn } from "@/lib/cn";
 
@@ -19,6 +22,7 @@ export function AgentWorkspace() {
 
   const conversationIdRef = useRef<string | null>(urlConversationId);
   const askingRef = useRef(false);
+  const waitingMessageIndexRef = useRef(0);
 
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [conversationsLoading, setConversationsLoading] = useState(true);
@@ -51,7 +55,7 @@ export function AgentWorkspace() {
       (m: { id: string; role: string; content: string; citations?: string[] }) => ({
         id: m.id,
         role: m.role === "user" || m.role === "assistant" ? m.role : "system",
-        content: m.content,
+        content: m.role === "assistant" ? prepareInsightText(m.content) : m.content,
         citations: m.citations,
       }),
     );
@@ -138,7 +142,8 @@ export function AgentWorkspace() {
 
       askingRef.current = true;
       setAsking(true);
-      setStatus("Thinking…");
+      setStatus(STOA_WORKING_STATUS);
+      waitingMessageIndexRef.current = 0;
       setUsedTools([]);
       setQuestion("");
 
@@ -174,16 +179,33 @@ export function AgentWorkspace() {
         await consumeSse(
           `/v1/conversations/${convId}/events`,
           (event) => {
+            if (isAgentKeepaliveEvent(event)) {
+              setStatus((prev) =>
+                isPinnedAgentStatus(prev)
+                  ? prev
+                  : nextAgentWaitingMessage(waitingMessageIndexRef),
+              );
+              return;
+            }
+            const statusMessage = agentStatusFromEvent(event);
+            if (statusMessage) {
+              setStatus(statusMessage);
+            }
             if (event.status === "tool_summary" && Array.isArray(event.used_tools)) {
               setUsedTools(event.used_tools as string[]);
-              setStatus("Synthesizing answer…");
+            }
+            if (event.status === "tool_call" && typeof event.tool === "string") {
+              setUsedTools((prev) =>
+                prev.includes(event.tool as string) ? prev : [...prev, event.tool as string],
+              );
             }
             if (event.status === "completed" && typeof event.answer === "string") {
               const assistantMsg: AgentMessage = {
                 id: `local-assistant-${Date.now()}`,
                 role: "assistant",
-                content: event.answer,
+                content: prepareInsightText(event.answer),
                 citations: Array.isArray(event.citations) ? (event.citations as string[]) : undefined,
+                reveal: true,
               };
               setMessages((prev) => [...prev, assistantMsg]);
               setStatus(null);
@@ -193,7 +215,7 @@ export function AgentWorkspace() {
               ctrl.abort();
             }
             if (event.status === "failed") {
-              setStatus("Agent failed. Please retry.");
+              setStatus("STOA couldn't finish. Please retry.");
               setAsking(false);
               askingRef.current = false;
               ctrl.abort();
@@ -202,6 +224,7 @@ export function AgentWorkspace() {
           ctrl.signal,
         );
       } catch {
+        if (ctrl.signal.aborted) return;
         setAsking(false);
         askingRef.current = false;
         setStatus((prev) => prev ?? "Stream closed. Select the thread to reload messages.");

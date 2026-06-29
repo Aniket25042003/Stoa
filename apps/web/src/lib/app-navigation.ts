@@ -36,7 +36,7 @@ export type IconRailItem = {
   altPerms?: string[];
 };
 
-/** Primary icon rail — Home, Agent, Assets, Data, Settings. */
+/** Primary icon rail — Home, STOA, Assets, Data, Settings. */
 export const ICON_RAIL_NAV: IconRailItem[] = [
   {
     id: "home",
@@ -48,7 +48,7 @@ export const ICON_RAIL_NAV: IconRailItem[] = [
   {
     id: "agent",
     href: "/agent",
-    label: "Agent",
+    label: "STOA",
     perm: "conversations:ask",
     icon: Sparkles,
     matchPrefix: "/agent",
@@ -83,7 +83,7 @@ export const ICON_RAIL_NAV: IconRailItem[] = [
 
 export const MOBILE_PRIMARY_TABS = [
   { id: "home", href: "/dashboard", label: "Home", icon: LayoutDashboard, perm: "intelligence:read" },
-  { id: "agent", href: "/agent", label: "Agent", icon: Sparkles, perm: "conversations:ask" },
+  { id: "agent", href: "/agent", label: "STOA", icon: Sparkles, perm: "conversations:ask" },
   { id: "assets", href: "/assets", label: "Assets", icon: Archive, perm: "campaigns:read", altPerms: ["content:read"] as const },
   { id: "data", href: "/data/profile", label: "Data", icon: Building2, perm: "data_sources:read" },
 ] as const;
@@ -125,7 +125,7 @@ export function isNavItemActive(pathname: string, href: string, matchPrefix?: st
  * Returns page title for top bar from pathname.
  */
 export function pageTitleForPath(pathname: string): string {
-  if (pathname.startsWith("/agent")) return "GTM Agent";
+  if (pathname.startsWith("/agent")) return "STOA";
   if (pathname.startsWith("/assets")) return "Assets";
   if (pathname.startsWith("/data")) return "Data hub";
   if (pathname.startsWith("/settings")) return "Settings";

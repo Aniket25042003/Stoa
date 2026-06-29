@@ -15,7 +15,10 @@ import {
   ProductInput,
   ProductPageHeader,
 } from "@/components/product";
+import { InsightMarkdown } from "@/components/product/InsightMarkdown";
+import { agentStatusFromEvent } from "@/lib/agent-status";
 import { apiFetch } from "@/lib/api";
+import { visibleCitations } from "@/lib/intelligence-content";
 import { consumeSse } from "@/lib/sse";
 import { formatSignalKindLabel } from "@/lib/user-facing-copy";
 
@@ -155,7 +158,7 @@ export function IntelligenceWorkspace() {
     if (!question.trim()) return;
     setLoading(true);
     setAnswer(null);
-    setStatus("Thinking...");
+    setStatus("Starting…");
     const res = await apiFetch("/v1/conversations/ask", {
       method: "POST",
       body: JSON.stringify({ question }),
@@ -172,6 +175,10 @@ export function IntelligenceWorkspace() {
       await consumeSse(
         `/v1/conversations/${convId}/events`,
         (data) => {
+          const statusMessage = agentStatusFromEvent(data);
+          if (statusMessage) {
+            setStatus(statusMessage);
+          }
           if (data.status === "completed" && typeof data.answer === "string") {
             setAnswer(data.answer);
             setStatus(null);
@@ -187,10 +194,9 @@ export function IntelligenceWorkspace() {
         ctrl.signal
       );
     } catch {
-      if (!answer) {
-        setLoading(false);
-        setStatus("Stream ended — check conversation for answer");
-      }
+      if (ctrl.signal.aborted) return;
+      setLoading(false);
+      setStatus("Stream ended — check conversation for answer");
     }
   }
 
@@ -256,11 +262,13 @@ export function IntelligenceWorkspace() {
                       <p className="text-sm font-semibold text-mkt-ink">{item.title}</p>
                     </button>
                     {expanded === item.id ? (
-                      <div className="mt-3 text-sm leading-relaxed text-mkt-muted">
-                        <p>{item.content?.answer ?? "No answer yet."}</p>
-                        {item.citations?.length ? (
+                      <div className="mt-3">
+                        <InsightMarkdown contextualTitle={item.title}>
+                          {item.content?.answer ?? "No answer yet."}
+                        </InsightMarkdown>
+                        {visibleCitations(item.citations).length ? (
                           <div className="mt-3 flex flex-wrap gap-1.5">
-                            {item.citations.map((c) => (
+                            {visibleCitations(item.citations).map((c) => (
                               <ProductBadge key={c} variant="accent">
                                 {c}
                               </ProductBadge>
@@ -359,8 +367,8 @@ export function IntelligenceWorkspace() {
               </ProductButton>
             </form>
             {answer ? (
-              <div className="rounded-sm border border-mkt-ink/[0.06] bg-mkt-ink/[0.02] p-4 text-sm leading-relaxed text-mkt-ink">
-                {answer}
+              <div className="rounded-sm border border-mkt-ink/[0.06] bg-mkt-ink/[0.02] p-4">
+                <InsightMarkdown>{answer}</InsightMarkdown>
               </div>
             ) : null}
           </ProductCard>

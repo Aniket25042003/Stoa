@@ -10,4 +10,6 @@ export type AgentMessage = {
   role: "user" | "assistant" | "system";
   content: string;
   citations?: string[];
+  /** When true, assistant text reveals word-by-word (live turns only). */
+  reveal?: boolean;
 };

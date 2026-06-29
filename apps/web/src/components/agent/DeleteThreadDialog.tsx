@@ -44,7 +44,7 @@ export function DeleteThreadDialog({
           thread list along with its messages.
         </p>
         <p className="mt-3 text-sm text-mkt-muted">
-          The agent may have saved context from this thread for future answers. Choose whether to keep or remove that
+          STOA may have saved context from this thread for future answers. Choose whether to keep or remove that
           saved context.
         </p>
 

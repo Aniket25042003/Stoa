@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { ProductButton, ProductCard, ProductPageHeader } from "@/components/product";
+import { InsightMarkdown } from "@/components/product/InsightMarkdown";
 import { CapabilityStatus } from "@/components/dashboard/CapabilityStatus";
 import { CrmPipelineMini } from "@/components/dashboard/CrmPipelineMini";
 import { MemoryLayersDiagram } from "@/components/dashboard/MemoryLayersDiagram";
@@ -81,7 +82,7 @@ export function DashboardWorkspace({ email, displayName, org, role }: Props) {
         lead={leadParts.join(" · ")}
         actions={
           <Link href={dataReady ? "/agent" : "/data/profile"}>
-            <ProductButton>{dataReady ? "Open GTM Agent" : "Complete data setup"}</ProductButton>
+            <ProductButton>{dataReady ? "Open STOA" : "Complete data setup"}</ProductButton>
           </Link>
         }
       />
@@ -102,7 +103,7 @@ export function DashboardWorkspace({ email, displayName, org, role }: Props) {
                 </p>
               ) : (
                 <p className="mt-4 max-w-[200px] text-center text-xs leading-relaxed text-mkt-dark-ink/65">
-                  Workspace is ready for agent queries across intelligence areas.
+                  Workspace is ready for STOA across intelligence areas.
                 </p>
               )}
             </div>
@@ -116,7 +117,7 @@ export function DashboardWorkspace({ email, displayName, org, role }: Props) {
                 </Link>
                 <Link href="/agent">
                   <ProductButton variant="ghost" className="!text-mkt-dark-ink hover:!bg-mkt-dark-ink/10">
-                    Ask the agent
+                    Ask STOA
                   </ProductButton>
                 </Link>
               </div>
@@ -144,7 +145,7 @@ export function DashboardWorkspace({ email, displayName, org, role }: Props) {
 
         <ProductCard className="lg:col-span-3">
           <h2 className="text-sm font-semibold tracking-tight text-mkt-ink">Memory stack</h2>
-          <p className="mt-1 text-xs text-mkt-muted">How evidence layers into agent context</p>
+          <p className="mt-1 text-xs text-mkt-muted">How evidence layers into STOA context</p>
           <div className="mt-5">
             <MemoryLayersDiagram counts={summary?.counts} icpVersion={summary?.icp_version} />
           </div>
@@ -155,7 +156,9 @@ export function DashboardWorkspace({ email, displayName, org, role }: Props) {
       {executiveSummary ? (
         <ProductCard>
           <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">Executive summary</h2>
-          <p className="mt-3 text-sm leading-relaxed text-mkt-muted">{executiveSummary}</p>
+          <InsightMarkdown contextualTitle="Executive summary" className="mt-3">
+            {executiveSummary}
+          </InsightMarkdown>
         </ProductCard>
       ) : null}
 
@@ -170,9 +173,9 @@ export function DashboardWorkspace({ email, displayName, org, role }: Props) {
               >
                 <p className="text-sm font-medium text-mkt-ink">{insight.title}</p>
                 {insight.content?.answer ? (
-                  <p className="mt-2 line-clamp-3 text-xs leading-relaxed text-mkt-muted">
+                  <InsightMarkdown contextualTitle={insight.title} compact className="mt-2">
                     {insight.content.answer}
-                  </p>
+                  </InsightMarkdown>
                 ) : null}
               </li>
             ))}
@@ -183,7 +186,7 @@ export function DashboardWorkspace({ email, displayName, org, role }: Props) {
       <div className="grid gap-6 lg:grid-cols-2">
         <ProductCard>
           <div className="flex items-center justify-between gap-4">
-            <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">Recent agent threads</h2>
+            <h2 className="text-lg font-semibold tracking-tight text-mkt-ink">Recent STOA threads</h2>
             <Link href="/agent" className="text-xs font-medium text-mkt-accent hover:underline">
               View all
             </Link>

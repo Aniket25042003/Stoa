@@ -104,10 +104,10 @@ export function AssetsWorkspace() {
       <ProductPageHeader
         eyebrow="Library"
         title="Generated assets"
-        lead="Review past campaign packages and content generations. Create new work through the GTM Agent."
+        lead="Review past campaign packages and content generations. Create new work through STOA."
         actions={
           <Link href="/agent?q=Create%20a%20new%20campaign%20brief%20for%20our%20next%20launch">
-            <ProductButton>Generate via Agent</ProductButton>
+            <ProductButton>Generate via STOA</ProductButton>
           </Link>
         }
       />
@@ -135,7 +135,7 @@ export function AssetsWorkspace() {
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
         <ProductCard className="divide-y divide-mkt-ink/[0.06] p-0">
           {items.length === 0 ? (
-            <p className="p-6 text-sm text-mkt-muted">No assets yet. Ask the agent to generate campaigns or content.</p>
+            <p className="p-6 text-sm text-mkt-muted">No assets yet. Ask STOA to generate campaigns or content.</p>
           ) : (
             items.map((item) => (
               <button
