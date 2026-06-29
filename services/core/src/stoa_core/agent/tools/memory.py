@@ -123,7 +123,7 @@ def build_memory_tools(
         insights = _as_rows(
             (
                 sb.table("precomputed_insights")
-                .select("scope, key, is_stale, updated_at")
+                .select("scope, key, is_stale, created_at")
                 .eq("org_id", org_id)
                 .execute()
             ).data
@@ -173,7 +173,7 @@ def build_memory_tools(
                     "scope": i.get("scope"),
                     "key": i.get("key"),
                     "is_stale": i.get("is_stale"),
-                    "updated_at": i.get("updated_at"),
+                    "created_at": i.get("created_at"),
                 }
                 for i in insights
             ],

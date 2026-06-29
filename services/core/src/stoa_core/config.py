@@ -8,6 +8,7 @@ Dependencies: Supabase, Celery, Redis, Pydantic
 
 from __future__ import annotations
 
+import os
 from functools import lru_cache
 from urllib.parse import urlparse
 
@@ -64,8 +65,13 @@ class Settings(BaseSettings):
     openai_model_pro: str | None = None
     anthropic_api_key: str | None = None
     anthropic_model: str | None = None
+    google_application_credentials: str | None = Field(
+        default=None, validation_alias="GOOGLE_APPLICATION_CREDENTIALS"
+    )
     llm_temperature: float = 0.25
     llm_timeout_seconds: float = 60.0
+    llm_vertex_backend: str = "genai"
+    google_api_key: str | None = Field(default=None, validation_alias="GOOGLE_API_KEY")
     embed_model: str = "gemini-embedding-001"
     embed_dimensions: int = 3072
     embed_task_doc: str = "RETRIEVAL_DOCUMENT"
@@ -93,6 +99,7 @@ class Settings(BaseSettings):
     agent_live_search_per_org_per_hour: int = 20
     agent_refresh_per_org_per_hour: int = 5
     agent_web_search_per_org_per_day: int = 20
+    agent_max_tools_per_turn: int = 3
 
     # Chunking
     chunk_target_tokens: int = 600
@@ -272,4 +279,10 @@ def get_settings() -> Settings:
     Returns:
         Settings: Result produced for the caller.
     """
-    return Settings()
+    settings = Settings()
+    if settings.google_application_credentials:
+        os.environ.setdefault(
+            "GOOGLE_APPLICATION_CREDENTIALS",
+            settings.google_application_credentials,
+        )
+    return settings

@@ -19,13 +19,23 @@ Use "rag_only" for straightforward factual questions answerable from retrieved d
 CRM records, or a single domain (e.g. top customer, deal amounts, one competitor fact)."""
 
 _TOOL_KEYWORDS = re.compile(
-    r"(compare|across|alignment|misalign\w*|bottleneck|competitive|competitor|"
-    r"campaign analysis|launch orchestr|content production|pipeline|funnel|"
-    r"channels?|conversion efficiency|sales and marketing|"
-    r"latest|today|this week|refresh|live search|hubspot|salesforce|zendesk|gong|"
-    r"connected source|stale|sync)",
+    r"\b(compare|across|misalign\w*|bottleneck|competitive intel|competitor intel|"
+    r"campaign analysis|launch orchestr\w*|content production|"
+    r"conversion efficiency|sales and marketing alignment|"
+    r"live search|connected source|refresh\b|sync\b|"
+    r"hubspot|salesforce|zendesk|gong)\b|"
+    r"\bcompare\b.{0,40}\b(campaign|competitive|alignment|pipeline)\b|"
+    r"\b(latest|today|this week)\b.{0,30}\b(data|pipeline|metrics)\b",
     re.IGNORECASE,
 )
+
+
+def requires_tools_route(question: str) -> bool:
+    """Return True when keywords require bounded/full tool execution."""
+    q = question.strip()
+    if not q:
+        return False
+    return bool(_TOOL_KEYWORDS.search(q))
 
 
 def classify_agent_route(
@@ -38,7 +48,7 @@ def classify_agent_route(
     if not q:
         return "rag_only"
 
-    if _TOOL_KEYWORDS.search(q):
+    if requires_tools_route(q):
         return "tools"
 
     history = history or []

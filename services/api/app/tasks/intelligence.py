@@ -14,12 +14,14 @@ from stoa_core.db.supabase import get_supabase_admin
 from stoa_core.insights.common import build_executive_summary, precompute_answers
 from stoa_core.intelligence.icp import build_icp_profile
 from stoa_core.intelligence.structured import aggregate_crm_stats
+from stoa_core.llm.content import extract_text_content
 from stoa_core.rag.answer import answer_question
 from stoa_core.rag.cache import get_kb_version
 from stoa_core.rag.ingest import ingest_knowledge, json_artifact_to_text
 from stoa_core.redis.ask_idempotency import find_existing_assistant_reply
 from stoa_core.redis.client import publish_event
 from stoa_core.security.pii import redact_pii
+from stoa_core.security.sanitize import strip_inline_citations
 
 from app.celery_app import celery_app
 from app.services.task_context import verify_conversation_org, verify_org_exists
@@ -70,7 +72,7 @@ def _should_skip_precompute(org_id: str, doc_count: int) -> bool:
     sb = get_supabase_admin()
     existing = (
         sb.table("precomputed_insights")
-        .select("source_document_count, updated_at")
+        .select("source_document_count, created_at")
         .eq("org_id", org_id)
         .eq("scope", "intelligence")
         .limit(1)
@@ -81,7 +83,7 @@ def _should_skip_precompute(org_id: str, doc_count: int) -> bool:
     last_count = existing.data[0].get("source_document_count") or 0
     if last_count != doc_count:
         return False
-    insight_updated = existing.data[0].get("updated_at")
+    insight_updated = existing.data[0].get("created_at")
     if insight_updated:
         enrich_res = (
             sb.table("enrichment_jobs")
@@ -285,7 +287,7 @@ def answer_intelligence_question(
                 user_message_id=user_message_id,
             )
             if existing:
-                answer = redact_pii(str(existing.get("content") or ""))
+                answer = strip_inline_citations(redact_pii(str(existing.get("content") or "")))
                 publish_event(
                     "conversation",
                     conversation_id,
@@ -296,22 +298,35 @@ def answer_intelligence_question(
         publish_event(
             "conversation",
             conversation_id,
-            {"status": "thinking", "message": "Retrieving intelligence..."},
+            {"status": "thinking", "message": "Retrieving intelligence…"},
         )
 
         safe_question = redact_pii(question)
-        result = run_unified_agent_turn(org_id, conversation_id, safe_question)
+
+        def _publish_progress(payload: dict) -> None:
+            publish_event("conversation", conversation_id, payload)
+
+        result = run_unified_agent_turn(
+            org_id,
+            conversation_id,
+            safe_question,
+            on_progress=_publish_progress,
+        )
 
         fallback_context = result.retrieved_context or []
         retrieval_status = "ok" if fallback_context else "no_matches"
-        answer = redact_pii(
-            result.answer
-            or answer_question(
-                safe_question,
-                fallback_context,
-                org_id=org_id,
-                kinds=INTELLIGENCE_KINDS,
-                retrieval_status=retrieval_status,
+        answer = strip_inline_citations(
+            redact_pii(
+                extract_text_content(
+                    result.answer
+                    or answer_question(
+                        safe_question,
+                        fallback_context,
+                        org_id=org_id,
+                        kinds=INTELLIGENCE_KINDS,
+                        retrieval_status=retrieval_status,
+                    )
+                )
             )
         )
 

@@ -56,9 +56,12 @@ Extend the unified GTM agent with tiered tools: mid-turn KB search, live connect
 - [x] Slack/Notion/Drive + `lookup_canonical_records`
 - [x] ADR-005, phase doc, `AGENT_MEMORY.md` evidence section
 - [x] Celery allowlist includes enrichment/integration beat tasks
+- [x] Tiered routing (`resolve_agent_route`, precomputed enrichment, bounded agent) — ADR-006
 
 ## Tests
 
 - `tests/test_agent_evidence.py`
 - `tests/test_agent_search.py`
 - `tests/test_agent_tools_registry.py`
+- `tests/test_route_resolver.py`
+- `tests/test_bounded_agent.py`

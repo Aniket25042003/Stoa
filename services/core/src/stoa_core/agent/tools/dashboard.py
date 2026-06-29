@@ -28,10 +28,10 @@ def _get_precomputed_insights(org_id: str, scope: str, limit: int = 8) -> list[d
     sb = get_supabase_admin()
     res = (
         sb.table("precomputed_insights")
-        .select("key, title, content, citations, is_stale, updated_at")
+        .select("key, title, content, citations, is_stale, created_at")
         .eq("org_id", org_id)
         .eq("scope", scope)
-        .order("updated_at", desc=True)
+        .order("created_at", desc=True)
         .limit(limit)
         .execute()
     )

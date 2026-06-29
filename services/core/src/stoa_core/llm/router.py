@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 from typing import Any, Literal
 
 from stoa_core.config import get_settings
+from stoa_core.llm.content import extract_text_content
 
 logger = logging.getLogger(__name__)
 
@@ -152,45 +153,15 @@ def load_config() -> LLMConfig:
 
 
 def _vertex_invocation(cfg: LLMConfig, task_tier: TaskTier) -> MessageFn | None:
-    """Handles  vertex invocation logic for the surrounding Stoa workflow.
+    """Handles vertex invocation via langchain-google-genai when available."""
+    from stoa_core.llm.langchain_chat import build_chat_model
 
-    Args:
-        cfg (LLMConfig): Input value used by this workflow step.
-        task_tier (TaskTier): Input value used by this workflow step.
-
-    Returns:
-        MessageFn | None: Result produced for the caller.
-    """
-    try:
-        from langchain_google_vertexai import ChatVertexAI
-    except Exception as exc:
-        logger.debug("Vertex unavailable: %s", exc)
-        return None
-    kwargs: dict[str, Any] = {
-        "model": cfg.model_for(PROVIDER_VERTEX, task_tier) or cfg.vertex_model,
-        "temperature": cfg.temperature,
-        "request_timeout": cfg.timeout_seconds,
-    }
-    if cfg.vertex_project:
-        kwargs["project"] = cfg.vertex_project
-    if cfg.vertex_location:
-        kwargs["location"] = cfg.vertex_location
-    try:
-        llm = ChatVertexAI(**kwargs)
-    except Exception as exc:
-        logger.warning("ChatVertexAI init failed: %s", exc)
+    llm = build_chat_model(task_tier)
+    if llm is None:
         return None
 
     def _invoke(messages: list[tuple[str, str]]) -> str:
-        """Handles  invoke logic for the surrounding Stoa workflow.
-
-        Args:
-            messages (list[tuple[str, str]]): Input value used by this workflow step.
-
-        Returns:
-            str: Result produced for the caller.
-        """
-        return str(getattr(llm.invoke(messages), "content", "") or "")
+        return extract_text_content(getattr(llm.invoke(messages), "content", "") or "")
 
     return _invoke
 
@@ -228,7 +199,7 @@ def _openai_invocation(cfg: LLMConfig, task_tier: TaskTier) -> MessageFn | None:
         Returns:
             str: Result produced for the caller.
         """
-        return str(getattr(llm.invoke(messages), "content", "") or "")
+        return extract_text_content(getattr(llm.invoke(messages), "content", "") or "")
 
     return _invoke
 
@@ -266,7 +237,7 @@ def _anthropic_invocation(cfg: LLMConfig, task_tier: TaskTier) -> MessageFn | No
         Returns:
             str: Result produced for the caller.
         """
-        return str(getattr(llm.invoke(messages), "content", "") or "")
+        return extract_text_content(getattr(llm.invoke(messages), "content", "") or "")
 
     return _invoke
 

@@ -38,7 +38,13 @@ _BINARY_SIGNATURES: tuple[tuple[bytes, str], ...] = (
 
 _SNIFF_SAMPLE_BYTES = 8192
 
-DOC_TYPE_PATTERN = re.compile(r"^(call_transcript|review|crm_export|note)$")
+_DOC_TYPE_PATTERN = re.compile(r"^(call_transcript|review|crm_export|note)$")
+DOC_TYPE_PATTERN = _DOC_TYPE_PATTERN
+
+INLINE_CITATION_PATTERN = re.compile(
+    r"\s*\[(?:kb|doc|signal|precomputed|crm|agent_evidence):[^\]]+\]",
+    re.IGNORECASE,
+)
 
 INJECTION_PATTERNS = [
     re.compile(r"ignore\s+(all\s+)?previous\s+instructions", re.I),
@@ -137,6 +143,14 @@ def validate_upload(
         raise UploadValidationError(f"File exceeds max size of {max_bytes} bytes")
     if content is not None:
         validate_upload_content(content, ext=ext)
+
+
+def strip_inline_citations(text: str) -> str:
+    """Remove inline evidence markers from user-facing LLM answers."""
+    cleaned = INLINE_CITATION_PATTERN.sub("", text or "")
+    cleaned = re.sub(r"\s+([.,;:!?])", r"\1", cleaned)
+    cleaned = re.sub(r"[ \t]{2,}", " ", cleaned)
+    return cleaned.strip()
 
 
 def sanitize_user_content(text: str) -> str:
