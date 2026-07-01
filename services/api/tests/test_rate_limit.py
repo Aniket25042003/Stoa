@@ -78,11 +78,13 @@ def test_expensive_scope_fails_closed_in_staging_without_redis(monkeypatch):
     get_settings.cache_clear()
 
 
-def test_expensive_scope_uses_memory_fallback_in_development(monkeypatch):
+def test_expensive_scope_fails_closed_in_development_without_redis(monkeypatch):
     monkeypatch.setenv("STOA_ENV", "development")
     from app.config import get_settings
 
     get_settings.cache_clear()
     monkeypatch.setattr("app.deps.rate_limit._use_redis", lambda: False)
-    check_rate_limit("user-1", 5, scope="upload")
+    with pytest.raises(HTTPException) as exc:
+        check_rate_limit("user-1", 5, scope="upload")
+    assert exc.value.status_code == 503
     get_settings.cache_clear()
