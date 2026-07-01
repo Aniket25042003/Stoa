@@ -13,7 +13,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
-from app.deps.org_scope import org_scope_dep, verified_org_scope_dep
+from app.deps.org_scope import require_onboarded_scope, verified_org_scope_dep
 from app.services.audit import write_audit
 from app.services.org_context import OrgScope, assert_permission_boundary, require_permission
 from stoa_core.db.supabase import get_supabase_admin
@@ -74,7 +74,7 @@ def _validate_permissions(perms: list[str]) -> list[str]:
 
 @router.get("/catalog")
 def get_permission_catalog(
-    scope: OrgScope = Depends(org_scope_dep),
+    scope: OrgScope = Depends(require_onboarded_scope),
 ) -> dict[str, Any]:
     """Handles get permission catalog logic for the surrounding Stoa workflow.
 
@@ -89,7 +89,7 @@ def get_permission_catalog(
 
 
 @router.get("")
-def list_roles(scope: OrgScope = Depends(org_scope_dep)) -> dict[str, Any]:
+def list_roles(scope: OrgScope = Depends(require_onboarded_scope)) -> dict[str, Any]:
     """Handles list roles logic for the surrounding Stoa workflow.
 
     Args:

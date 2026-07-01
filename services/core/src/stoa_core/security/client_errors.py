@@ -17,4 +17,8 @@ def client_safe_error_message(error: str | None, *, context: str = "operation") 
         return "Sync failed. Contact support if the issue persists."
     if context == "content":
         return "Content generation failed. Try again or contact support."
+    if context == "enrichment":
+        return "Enrichment failed. Try again or contact support."
+    if context == "oauth":
+        return "Connection failed. Try again or contact support."
     return _GENERIC_OPERATION_FAILED

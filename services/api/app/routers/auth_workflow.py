@@ -239,10 +239,22 @@ def get_session_state(claims: dict[str, Any] = Depends(verify_supabase_jwt_paylo
     """
     user_id = str(claims["sub"])
     profile = get_or_create_user_profile(user_id, claims)
-    memberships = list_memberships(user_id)
+    email_verified = user_is_email_verified(user_id, claims)
+    if not email_verified:
+        return {
+            "user": {
+                "id": user_id,
+                "email": profile.get("email"),
+                "auth_provider": profile.get("auth_provider"),
+                "email_verified": False,
+            },
+            "needs_email_verification": True,
+            "needs_onboarding": False,
+        }
+
     membership = get_membership_optional(user_id)
     org = (membership or {}).get("organizations")
-    email_verified = user_is_email_verified(user_id, claims)
+    memberships = list_memberships(user_id)
     role_row = (membership or {}).get("org_roles") or {}
     permissions = sorted(resolve_permissions(role_row if isinstance(role_row, dict) else None))
 

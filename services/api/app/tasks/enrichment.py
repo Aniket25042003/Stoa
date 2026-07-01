@@ -31,6 +31,7 @@ from stoa_core.enrichment.conversation import maybe_checkpoint_conversation
 from stoa_core.enrichment.integrations import synthesize_crm_summary, synthesize_review_themes
 from stoa_core.insights.dynamic import generate_dynamic_insights_for_org
 from stoa_core.redis.client import publish_event
+from stoa_core.security.client_errors import client_safe_error_message
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +55,12 @@ def _run_job(org_id: str, job_type: str, *, target_id: str | None, idempotency_k
         return result
     except Exception as exc:
         mark_job_failed(job_id, str(exc))
-        publish_event("enrichment", org_id, {"status": "failed", "job_id": job_id, "error": str(exc)[:200]})
+        safe_error = client_safe_error_message(str(exc), context="enrichment") or "Enrichment failed."
+        publish_event(
+            "enrichment",
+            org_id,
+            {"status": "failed", "job_id": job_id, "error": safe_error},
+        )
         raise
 
 
