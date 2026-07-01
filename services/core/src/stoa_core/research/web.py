@@ -7,6 +7,7 @@ import httpx
 
 from stoa_core.config import get_settings
 from stoa_core.research.types import ResearchItem, ResearchResult
+from stoa_core.security.ssrf import assert_safe_fetch_url
 
 logger = logging.getLogger(__name__)
 DEFAULT_TIMEOUT = 25.0
@@ -29,6 +30,11 @@ def _prefer_jina_extract(url: str) -> bool:
 
 
 def _jina_extract(url: str, api_key: str | None) -> str:
+    try:
+        assert_safe_fetch_url(url)
+    except ValueError:
+        logger.debug("Jina extract blocked unsafe URL: %s", url)
+        return ""
     try:
         headers: dict[str, str] = {"Accept": "text/plain", "x-respond-with": "markdown"}
         if api_key:

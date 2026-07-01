@@ -16,6 +16,7 @@ import httpx
 from stoa_core.integrations.base import BaseConnector, ProviderInfo, ResourceListResult, SyncResult
 from stoa_core.integrations.registry import register_connector
 from stoa_core.integrations.resource_listers import list_jira_projects
+from stoa_core.integrations.scope import assert_safe_jira_jql
 from stoa_core.integrations.store import upsert_interaction
 
 logger = logging.getLogger(__name__)
@@ -114,7 +115,11 @@ class JiraConnector(BaseConnector):
         if not jql:
             result.error = "No Jira projects selected — configure access first"
             return result
-        jql = jql or "ORDER BY updated DESC"
+        try:
+            jql = assert_safe_jira_jql(str(jql), project_keys=project_keys)
+        except ValueError as exc:
+            result.error = str(exc)
+            return result
         auth = httpx.BasicAuth(credentials["email"], credentials["api_token"])
         start_at = int(cursor.get("start_at", 0))
 
