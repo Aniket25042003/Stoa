@@ -77,6 +77,11 @@ def validate_scope(provider: str, metadata: dict[str, Any] | None) -> list[str]:
     elif provider == "jira":
         if not meta.get("project_keys") and not meta.get("jql"):
             errors.append("Select at least one Jira project")
+        elif meta.get("jql"):
+            try:
+                assert_safe_jira_jql(str(meta["jql"]), project_keys=meta.get("project_keys"))
+            except ValueError as exc:
+                errors.append(str(exc))
     elif provider == "hubspot":
         if not meta.get("object_types"):
             errors.append("Select at least one HubSpot object type")
@@ -118,7 +123,30 @@ def merge_scope_patch(provider: str, metadata: dict[str, Any], patch: dict[str, 
         if remaining:
             raise ValueError(remaining[0])
         merged["scope_configured"] = True
+    elif provider == "jira" and patch.get("jql"):
+        assert_safe_jira_jql(str(patch["jql"]), project_keys=merged.get("project_keys"))
     return merged
+
+
+def assert_safe_jira_jql(jql: str, *, project_keys: list[str] | str | None = None) -> str:
+    """Restrict custom JQL to project-scoped queries."""
+    cleaned = (jql or "").strip()
+    if not cleaned:
+        raise ValueError("JQL query is required")
+    if len(cleaned) > 1500:
+        raise ValueError("JQL query is too long")
+    lowered = cleaned.lower()
+    keys: list[str] = []
+    if isinstance(project_keys, list):
+        keys = [str(k) for k in project_keys if k]
+    elif isinstance(project_keys, str) and project_keys.strip():
+        keys = [project_keys.strip()]
+    if keys:
+        if not any(k.lower() in lowered for k in keys):
+            raise ValueError("JQL must filter to selected Jira projects")
+    elif "project in" not in lowered and "project =" not in lowered:
+        raise ValueError("JQL must include a project filter")
+    return cleaned
 
 
 def scope_summary(provider: str, metadata: dict[str, Any] | None) -> str | None:
