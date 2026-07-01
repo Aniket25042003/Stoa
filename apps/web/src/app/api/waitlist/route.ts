@@ -4,6 +4,7 @@
  * @description Handles browser-facing API requests and forwards them through the server-side boundary.
  * @dependencies standard library / local modules
  */
+import { rejectIfCrossOrigin } from "@/lib/same-origin";
 import { proxyJsonResponse } from "@/lib/server-api";
 
 /**
@@ -13,5 +14,7 @@ import { proxyJsonResponse } from "@/lib/server-api";
  * @returns Rendered UI or completion signal for the workflow.
  */
 export async function POST(request: Request) {
+  const forbidden = rejectIfCrossOrigin(request);
+  if (forbidden) return forbidden;
   return proxyJsonResponse(request, "/v1/waitlist");
 }

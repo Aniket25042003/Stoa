@@ -4,8 +4,9 @@
  * @description Handles browser-facing API requests and forwards them through the server-side boundary.
  * @dependencies Supabase, Next.js
  */
-import { createClient } from "@/lib/supabase/server";
+import { getBffAccessToken } from "@/lib/bff-auth";
 import { trustedProxyHeaders } from "@/lib/proxy-headers";
+import { rejectIfCrossOrigin } from "@/lib/same-origin";
 import { NextRequest, NextResponse } from "next/server";
 
 const apiBase = () => {
@@ -22,24 +23,20 @@ const apiBase = () => {
  * @returns Rendered UI or completion signal for the workflow.
  */
 async function proxy(request: NextRequest, pathSegments: string[]) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ detail: "Not authenticated" }, { status: 401 });
+  if (request.method !== "GET" && request.method !== "HEAD") {
+    const forbidden = rejectIfCrossOrigin(request);
+    if (forbidden) return forbidden;
   }
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  if (!session?.access_token) {
-    return NextResponse.json({ detail: "Not authenticated" }, { status: 401 });
+
+  const auth = await getBffAccessToken();
+  if (!auth.ok) {
+    return NextResponse.json({ detail: auth.detail }, { status: auth.status });
   }
 
   const path = pathSegments.join("/");
   const target = `${apiBase()}/${path}${request.nextUrl.search}`;
   const headers = new Headers();
-  headers.set("Authorization", `Bearer ${session.access_token}`);
+  headers.set("Authorization", `Bearer ${auth.accessToken}`);
   for (const [key, value] of Object.entries(trustedProxyHeaders(request))) {
     headers.set(key, value);
   }

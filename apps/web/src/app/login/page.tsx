@@ -12,7 +12,7 @@ import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { SolidButton } from "@/components/marketing/v3/Buttons";
 import { DualToneHeadline } from "@/components/marketing/v3/DualToneHeadline";
-import { routeForSessionState, safeNextPath, type SessionState } from "@/lib/auth-workflow";
+import { routeForSessionState, safeNextPath, loginErrorMessage, type SessionState } from "@/lib/auth-workflow";
 import { BRAND_NAME, BRAND_SUBHEAD } from "@/lib/brand";
 import {
   AuthBrandMark,
@@ -55,7 +55,7 @@ function LoginForm() {
 
   useEffect(() => {
     const err = searchParams.get("error");
-    if (err) setMsg(err);
+    if (err) setMsg(loginErrorMessage(err));
   }, [searchParams]);
 
   useEffect(() => {
