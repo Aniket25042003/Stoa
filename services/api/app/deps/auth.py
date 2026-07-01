@@ -18,7 +18,7 @@ from app.services.auth_state import user_is_email_verified
 
 bearer_scheme = HTTPBearer(auto_error=False)
 _ASYMMETRIC_ALGS = frozenset({"RS256", "RS384", "RS512", "ES256", "ES384", "ES512"})
-_JWKS_TTL_SECONDS = 3600
+_JWKS_TTL_SECONDS = 300
 _jwks_cache: dict[str, tuple[float, PyJWKClient]] = {}
 
 
@@ -85,6 +85,8 @@ def payload_from_jwt(token: str) -> dict:
         except jwt.PyJWTError:
             raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid token") from None
     elif alg == "HS256":
+        if settings.is_production:
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid token")
         if not settings.supabase_jwt_secret:
             raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "SUPABASE_JWT_SECRET not configured")
         try:

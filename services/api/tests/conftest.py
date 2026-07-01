@@ -52,6 +52,13 @@ def jwt_secret() -> str:
     return _require_env("SUPABASE_JWT_SECRET")
 
 
+@pytest.fixture(autouse=True)
+def rate_limit_uses_redis_in_unit_tests(monkeypatch):
+    """Unit tests assume Redis-backed rate limiting unless a test overrides _use_redis."""
+    monkeypatch.setattr("app.deps.rate_limit._use_redis", lambda: True)
+    monkeypatch.setattr("app.deps.rate_limit._redis_check", lambda key, limit: None)
+
+
 def sign_test_jwt(user_id: str, secret: str, supabase_url: str) -> str:
     issuer = f"{supabase_url.rstrip('/')}/auth/v1"
     return jwt.encode(

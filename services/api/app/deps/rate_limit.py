@@ -36,6 +36,11 @@ EXPENSIVE_SCOPES = frozenset(
         "integrations",
         "paste",
         "upload",
+        "integration_resources",
+        "team_invite",
+        "org_create",
+        "csv_detect",
+        "conversation_delete",
     }
 )
 
@@ -115,7 +120,7 @@ def _fail_closed_for_scope(scope: str) -> bool:
     if scope in SENSITIVE_SCOPES:
         return True
     if scope in EXPENSIVE_SCOPES:
-        return not _is_development()
+        return True
     return False
 
 

@@ -7,6 +7,8 @@ Dependencies: FastAPI, Redis, stoa_core
 
 from __future__ import annotations
 
+import os
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -29,6 +31,12 @@ if not settings.is_development and not settings.invite_token_pepper:
 
 if not settings.is_development and not settings.internal_proxy_secret:
     raise RuntimeError("INTERNAL_PROXY_SECRET is required outside development")
+
+if not settings.is_development and not settings.integration_credentials_key.strip():
+    raise RuntimeError("INTEGRATION_CREDENTIALS_KEY is required outside development")
+
+if os.environ.get("RENDER") and settings.is_development:
+    raise RuntimeError("STOA_ENV must be production or staging on Render (development disables API proxy gate)")
 
 _openapi_url = None if settings.is_production else "/openapi.json"
 _docs_url = None if settings.is_production else "/docs"

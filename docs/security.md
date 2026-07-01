@@ -46,7 +46,8 @@
 - Public auth/waitlist endpoints rate limit by trusted client IP plus email (Redis required; fail closed)
 - Sign-in (`/api/auth/signin`) calls `POST /v1/auth/rate-limit-gate` before Supabase password auth
 - Next.js BFF sets `X-Stoa-Client-IP` + `X-Stoa-Proxy-Secret` when `INTERNAL_PROXY_SECRET` is configured
-- Production API startup requires `INTERNAL_PROXY_SECRET`, `INVITE_TOKEN_PEPPER`, and `INTEGRATION_CREDENTIALS_KEY`
+- Production API startup requires `INTERNAL_PROXY_SECRET`, `INVITE_TOKEN_PEPPER`, and `INTEGRATION_CREDENTIALS_KEY` (enforced in `app/main.py`)
+- Render deployments must not use `STOA_ENV=development` (proxy gate would be disabled)
 
 ## Redis / Celery broker
 
