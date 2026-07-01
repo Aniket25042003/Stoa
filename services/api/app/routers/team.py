@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 
 from app.deps.auth import verify_supabase_jwt_payload_verified
 from app.deps.org_scope import require_onboarded_scope, verified_org_scope_dep
+from app.deps.rate_limit import check_rate_limit
 from app.services.audit import write_audit
 from app.services.auth_state import email_from_claims, get_or_create_user_profile
 from app.services.invites import hash_invite_token, invite_expires_at, new_invite_token
@@ -276,6 +277,7 @@ def create_invite(body: InviteCreate, scope: OrgScope = Depends(verified_org_sco
         dict[str, Any]: Result produced for the caller.
     """
     require_permission(scope, "team:invite")
+    check_rate_limit(scope.user_id, limit_per_minute=10, scope="team_invite")
     sb = get_supabase_admin()
     email = body.email.lower()
     role_id, role_key = _resolve_role_id(sb, scope.org_id, body.role_id, body.role)

@@ -27,8 +27,15 @@ from app.deps.rate_limit import check_rate_limit
 from app.services.audit import write_audit
 from app.services.org_context import OrgScope, require_permission
 from app.tasks.intelligence import answer_intelligence_question
+from stoa_core.security.permissions import permissions_include
 
 router = APIRouter(prefix="/v1/conversations", tags=["conversations"])
+
+
+def _require_conversation_delete(scope: OrgScope) -> None:
+    if permissions_include(scope.permissions, "conversations:delete"):
+        return
+    require_permission(scope, "conversations:ask")
 
 
 class AskBody(BaseModel):
@@ -193,7 +200,8 @@ def delete_conversation(
     scope: OrgScope = Depends(require_onboarded_scope),
 ) -> dict[str, Any]:
     """Delete a conversation thread; optionally purge its long-term memory."""
-    require_permission(scope, "conversations:ask")
+    _require_conversation_delete(scope)
+    check_rate_limit(scope.user_id, limit_per_minute=30, scope="conversation_delete")
     sb = get_supabase_admin()
     conv = (
         sb.table("conversations")

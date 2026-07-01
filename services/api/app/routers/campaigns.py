@@ -18,6 +18,7 @@ from app.services.audit import write_audit
 from app.services.org_context import OrgScope, require_permission
 from app.tasks.campaigns import generate_campaign
 from stoa_core.db.supabase import get_supabase_admin
+from stoa_core.security.client_errors import client_safe_error_message
 from stoa_core.security.sanitize import sanitize_user_content
 
 router = APIRouter(prefix="/v1/campaigns", tags=["campaigns"])
@@ -113,4 +114,7 @@ def get_campaign(campaign_id: str, scope: OrgScope = Depends(require_onboarded_s
     )
     if not res.data:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Campaign not found")
-    return {"campaign": res.data[0]}
+    campaign = dict(res.data[0])
+    if campaign.get("error"):
+        campaign["error"] = client_safe_error_message(str(campaign["error"]), context="content")
+    return {"campaign": campaign}

@@ -7,6 +7,7 @@ Dependencies: FastAPI, Supabase, Redis, Pydantic, stoa_core
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
@@ -38,6 +39,7 @@ from stoa_core.integrations.scope import scope_configured
 from stoa_core.redis.sse import read_events_since
 
 router = APIRouter(prefix="/v1/integrations", tags=["integrations"])
+logger = logging.getLogger(__name__)
 
 
 class ConnectCredentialsBody(BaseModel):
@@ -163,10 +165,7 @@ def oauth_callback(
     integrations_url = f"{app_url}/data/integrations"
 
     if error:
-        from urllib.parse import quote
-
-        msg = error_description or error
-        return RedirectResponse(f"{integrations_url}?error={quote(msg)}&provider={provider}")
+        return RedirectResponse(f"{integrations_url}?error=oauth_provider_error&provider={provider}")
 
     if not code or not state:
         return RedirectResponse(f"{integrations_url}?error=missing_oauth_params&provider={provider}")
@@ -208,12 +207,9 @@ def oauth_callback(
             f"{integrations_url}?connected={provider}&connection_id={conn['id']}"
             + ("&configure_scope=1" if needs_scope else "")
         )
-    except Exception as exc:
-        from urllib.parse import quote
-
-        return RedirectResponse(
-            f"{integrations_url}?error={quote(str(exc))}&provider={provider}"
-        )
+    except Exception:
+        logger.exception("OAuth callback failed for provider=%s", provider)
+        return RedirectResponse(f"{integrations_url}?error=oauth_failed&provider={provider}")
 
 
 @router.post("/sources/{provider}/connect")
@@ -375,6 +371,7 @@ def detect_csv_columns(
         dict[str, Any]: Result produced for the caller.
     """
     require_permission(scope, "data_sources:read")
+    check_rate_limit(scope.user_id, limit_per_minute=20, scope="csv_detect")
     from stoa_core.integrations.csv_structured import CSV_FIELD_DEFINITIONS, parse_csv_content
 
     headers, mapping = parse_csv_content(body.content)
