@@ -13,7 +13,6 @@ def test_beat_schedule_tasks_are_allowlisted() -> None:
 
 
 def test_registered_task_names_are_allowlisted() -> None:
-    registered = {name for name in celery_app.tasks if not name.startswith("celery.")}
     # Tasks imported only via API routers may not register until worker include list loads them.
     included_missing = {
         "enrichment.enrich_company",
