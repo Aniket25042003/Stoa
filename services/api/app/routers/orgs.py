@@ -10,12 +10,13 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import uuid
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
-from app.deps.auth import verify_supabase_jwt, verify_supabase_jwt_payload
+from app.deps.auth import verify_supabase_jwt, verify_supabase_jwt_payload_verified
 from app.deps.org_scope import require_onboarded_scope
 from app.tasks.enrichment import enrich_company
 from app.services.audit import write_audit
@@ -33,6 +34,7 @@ from stoa_core.db.supabase import get_supabase_admin
 from stoa_core.ingestion.embed import EmbeddingUnavailableError
 from stoa_core.rag.ingest import ingest_knowledge, profile_to_knowledge_text
 from stoa_core.security.permissions import SYSTEM_ROLE_ADMIN, SYSTEM_ROLE_OWNER
+from stoa_core.security.ssrf import assert_safe_fetch_url
 
 logger = logging.getLogger(__name__)
 
@@ -80,6 +82,20 @@ class OrgSwitchBody(BaseModel):
     """
     org_id: str
 
+    @field_validator("org_id")
+    @classmethod
+    def validate_org_id(cls, value: str) -> str:
+        return str(uuid.UUID(value))
+
+
+def _validate_website_url(url: str | None) -> str | None:
+    if url is None or not str(url).strip():
+        return None
+    try:
+        return assert_safe_fetch_url(str(url).strip())
+    except ValueError as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
+
 
 class TransferOwnershipBody(BaseModel):
     """Manage TransferOwnershipBody behavior within the Stoa application layer.
@@ -118,7 +134,7 @@ def _merge_profile(existing: dict[str, Any], update: OrgProfileUpdate | None) ->
 
 
 @router.get("")
-def list_orgs(claims: dict = Depends(verify_supabase_jwt_payload)) -> dict[str, Any]:
+def list_orgs(claims: dict = Depends(verify_supabase_jwt_payload_verified)) -> dict[str, Any]:
     """Handles list orgs logic for the surrounding Stoa workflow.
 
     Args:
@@ -326,6 +342,8 @@ def update_my_org(body: OrgUpdate, scope: OrgScope = Depends(require_onboarded_s
     scalar_updates = body.model_dump(exclude_none=True, exclude={"profile"})
     profile_updates = body.profile
     updates: dict[str, Any] = dict(scalar_updates)
+    if "website_url" in updates:
+        updates["website_url"] = _validate_website_url(updates.get("website_url"))
     if profile_updates is not None:
         updates["profile"] = _merge_profile(current.get("profile") or {}, profile_updates)
     if not updates:
