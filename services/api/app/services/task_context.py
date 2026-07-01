@@ -30,6 +30,10 @@ ALLOWED_CELERY_TASKS = frozenset(
         "enrichment.synthesize_crm_summary",
         "enrichment.synthesize_review_themes",
         "enrichment.checkpoint_conversation",
+        "enrichment.enrich_company",
+        "enrichment.seed_competitors_from_onboarding",
+        "enrichment.schedule_competitor_rescans",
+        "enrichment.cleanup_stale_jobs",
         "integrations.schedule_syncs",
     }
 )
