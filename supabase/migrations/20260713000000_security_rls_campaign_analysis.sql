@@ -20,7 +20,7 @@ begin
       t || '_insert', t
     );
     execute format(
-      'create policy %I on public.%I for update using (public.has_permission_in_org(org_id, ''documents:write'')) with check (public.is_org_member(org_id))',
+      'create policy %I on public.%I for update using (public.has_permission_in_org(org_id, ''documents:write'')) with check (public.has_permission_in_org(org_id, ''documents:write''))',
       t || '_update', t
     );
     execute format(
