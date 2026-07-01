@@ -89,6 +89,19 @@ export function InsightMarkdown({
             </ol>
           ),
           li: ({ children: item }) => <li className="leading-relaxed">{item}</li>,
+          a: ({ href, children: linkChildren }) => {
+            const safe =
+              href && /^https?:\/\//i.test(href) && !/^javascript:/i.test(href) ? href : undefined;
+            if (!safe) {
+              return <span>{linkChildren}</span>;
+            }
+            return (
+              <a href={safe} target="_blank" rel="noopener noreferrer" className="text-mkt-ink underline">
+                {linkChildren}
+              </a>
+            );
+          },
+          img: () => null,
         }}
       >
         {markdown}

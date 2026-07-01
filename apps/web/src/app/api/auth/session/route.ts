@@ -4,10 +4,10 @@
  * @description Handles browser-facing API requests and forwards them through the server-side boundary.
  * @dependencies Supabase, Next.js
  */
+import { getBffAccessToken } from "@/lib/bff-auth";
 import { NextResponse } from "next/server";
 import { getServerApiBase } from "@/lib/server-api";
 import { trustedProxyHeadersFromHeaders } from "@/lib/proxy-headers";
-import { createClient } from "@/lib/supabase/server";
 import { headers } from "next/headers";
 
 /**
@@ -15,21 +15,8 @@ import { headers } from "next/headers";
  * @returns Rendered UI or completion signal for the workflow.
  */
 export async function GET() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-
-  if (!user || userError) {
-    return NextResponse.json({ authenticated: false });
-  }
-
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  if (!session?.access_token) {
+  const auth = await getBffAccessToken();
+  if (!auth.ok) {
     return NextResponse.json({ authenticated: false });
   }
 
@@ -37,14 +24,14 @@ export async function GET() {
   if (!apiBase) {
     return NextResponse.json({
       authenticated: true,
-      email: user.email ?? null,
+      email: null,
     });
   }
 
   try {
     const res = await fetch(`${apiBase}/v1/auth/session-state`, {
       headers: {
-        Authorization: `Bearer ${session.access_token}`,
+        Authorization: `Bearer ${auth.accessToken}`,
         ...trustedProxyHeadersFromHeaders(await headers()),
       },
       cache: "no-store",
@@ -52,7 +39,6 @@ export async function GET() {
     if (!res.ok) {
       return NextResponse.json({
         authenticated: true,
-        email: user.email ?? null,
       });
     }
     return NextResponse.json({
@@ -62,7 +48,6 @@ export async function GET() {
   } catch {
     return NextResponse.json({
       authenticated: true,
-      email: user.email ?? null,
     });
   }
 }

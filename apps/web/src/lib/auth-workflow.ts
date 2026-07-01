@@ -58,6 +58,21 @@ export function safeNextPath(raw: string | null | undefined): string {
   return raw;
 }
 
+const LOGIN_ERROR_MESSAGES: Record<string, string> = {
+  oauth_failed: "Sign-in was cancelled or failed. Please try again.",
+  oauth_provider_error: "Sign-in was cancelled or failed. Please try again.",
+  access_denied: "Sign-in was cancelled. Please try again.",
+};
+
+/**
+ * Maps OAuth/auth error query params to safe user-facing copy.
+ */
+export function loginErrorMessage(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const key = raw.trim().toLowerCase();
+  return LOGIN_ERROR_MESSAGES[key] ?? "Sign-in failed. Please try again.";
+}
+
 /**
  * Handles route for session state behavior for this part of the Stoa application.
  *

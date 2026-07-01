@@ -5,8 +5,8 @@
  * @dependencies standard library / local modules
  */
 import { ACTIVE_ORG_COOKIE } from "@/lib/active-org";
+import { getBffAccessToken } from "@/lib/bff-auth";
 import { trustedProxyHeaders } from "@/lib/proxy-headers";
-import { createClient } from "@/lib/supabase/server";
 
 const UPSTREAM_TIMEOUT_MS = 25_000;
 const UPSTREAM_RETRIES = 2;
@@ -199,15 +199,12 @@ export async function proxyAuthenticatedJsonResponse(
   path: string,
   init?: RequestInit,
 ) {
-  const supabase = await createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  if (!session?.access_token) {
-    return new Response(JSON.stringify({ detail: "Not authenticated" }), {
-      status: 401,
+  const auth = await getBffAccessToken();
+  if (!auth.ok) {
+    return new Response(JSON.stringify({ detail: auth.detail }), {
+      status: auth.status,
       headers: { "Content-Type": "application/json" },
     });
   }
-  return proxyJsonResponse(request, path, init, { accessToken: session.access_token });
+  return proxyJsonResponse(request, path, init, { accessToken: auth.accessToken });
 }

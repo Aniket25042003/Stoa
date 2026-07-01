@@ -174,8 +174,8 @@ export async function middleware(request: NextRequest) {
   }
 
   if (isProtectedPath(nextUrl.pathname) && !user) {
-    return NextResponse.redirect(
-      new URL(getAuthEntryPath({ hostname }), request.url),
+    return applySecurityHeaders(
+      NextResponse.redirect(new URL(getAuthEntryPath({ hostname }), request.url)),
     );
   }
 
