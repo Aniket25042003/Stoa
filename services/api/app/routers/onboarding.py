@@ -16,6 +16,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
 from app.deps.auth import verify_supabase_jwt, verify_supabase_jwt_payload, verify_supabase_jwt_payload_verified
+from app.deps.rate_limit import check_rate_limit
+from app.routers.orgs import OrgProfileUpdate
 from app.tasks.enrichment import enrich_company, seed_competitors_from_onboarding
 from app.services.document_ingestion import queue_text_document
 from app.services.audit import write_audit
@@ -27,6 +29,7 @@ from app.services.auth_state import (
     list_memberships,
     onboarding_needed_for_user,
     suggest_company_from_email,
+    user_is_email_verified,
     utc_now_iso,
 )
 from app.services.org_summary import build_completeness_for_org
@@ -36,10 +39,12 @@ from stoa_core.org.roles import seed_system_roles_for_org
 from stoa_core.rag.ingest import ingest_knowledge, profile_to_knowledge_text
 from stoa_core.enrichment.jobs import pending_jobs_for_org
 from stoa_core.security.permissions import SYSTEM_ROLE_OWNER, SYSTEM_ROLE_VIEWER
+from stoa_core.security.ssrf import assert_safe_fetch_url
 
 router = APIRouter(prefix="/v1/onboarding", tags=["onboarding"])
 
 logger = logging.getLogger(__name__)
+MAX_OWNER_ORGS_PER_USER = 10
 
 
 class ProfileHints(BaseModel):
@@ -60,7 +65,7 @@ class TeammateInvite(BaseModel):
     This class groups related state and operations so routes, workers, or core
     pipelines can depend on a focused abstraction instead of duplicating logic.
     """
-    email: str
+    email: str = Field(pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
     role_id: str | None = None
     profile_hints: ProfileHints | None = None
 
@@ -79,7 +84,7 @@ class OnboardingCompleteBody(BaseModel):
     role_type: str | None = None
     job_title: str | None = None
     use_case: str | None = None
-    profile: dict[str, Any] | None = None
+    profile: OrgProfileUpdate | None = None
     seed_title: str | None = None
     seed_content: str | None = None
     teammate_invites: list[TeammateInvite] = Field(default_factory=list)
@@ -108,6 +113,36 @@ def _required_steps(mode: str, prefilled: dict[str, Any]) -> list[str]:
     steps.append("seed")
     steps.append("team")
     return steps
+
+
+def _validate_website_url(url: str | None) -> str | None:
+    if url is None or not str(url).strip():
+        return None
+    try:
+        return assert_safe_fetch_url(str(url).strip())
+    except ValueError as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
+
+
+def _resolve_invitee_membership(user_id: str, org_id: str | None, profile: dict[str, Any]) -> dict[str, Any]:
+    memberships = list_memberships(user_id)
+    if not memberships:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "No organization membership found")
+    if org_id:
+        try:
+            resolved = str(uuid.UUID(org_id))
+        except ValueError as exc:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "Invalid org_id") from exc
+        match = next((m for m in memberships if m["org_id"] == resolved), None)
+        if not match:
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "Organization access denied")
+        return match
+    hinted = (profile.get("metadata") or {}).get("invite_org_id")
+    if hinted:
+        match = next((m for m in memberships if m["org_id"] == hinted), None)
+        if match:
+            return match
+    return memberships[0]
 
 
 def _resolve_mode(user_id: str, profile: dict[str, Any], memberships: list[dict[str, Any]]) -> str:
@@ -154,6 +189,7 @@ def get_onboarding_context(claims: dict[str, Any] = Depends(verify_supabase_jwt_
     memberships = list_memberships(user_id)
     email = email_from_claims(claims)
     mode = _resolve_mode(user_id, profile, memberships)
+    email_verified = user_is_email_verified(user_id, claims)
     hints = (profile.get("metadata") or {}).get("invite_profile_hints") or {}
     prefilled = {
         **suggest_company_from_email(email),
@@ -162,6 +198,15 @@ def get_onboarding_context(claims: dict[str, Any] = Depends(verify_supabase_jwt_
         "full_name": profile.get("full_name"),
         "email": email,
     }
+    if not email_verified:
+        return {
+            "mode": mode,
+            "needs_onboarding": onboarding_needed_for_user(user_id, claims, profile=profile),
+            "needs_email_verification": True,
+            "required_steps": _required_steps(mode, prefilled),
+            "prefilled": {"email": email},
+            "memberships": [],
+        }
     return {
         "mode": mode,
         "needs_onboarding": onboarding_needed_for_user(user_id, claims, profile=profile),
@@ -260,9 +305,8 @@ def complete_onboarding(
     email = email_from_claims(claims)
     sb = get_supabase_admin()
     completed_at = utc_now_iso()
-    profile_payload = body.profile or {}
-    profile_row = sb.table("user_profiles").select("full_name").eq("user_id", user_id).limit(1).execute()
-    user_full_name = (profile_row.data or [{}])[0].get("full_name")
+    profile_payload = body.profile.model_dump(exclude_none=True) if body.profile else {}
+    profile = get_or_create_user_profile(user_id, claims)
 
     user_updates = {
         k: v
@@ -282,8 +326,20 @@ def complete_onboarding(
     seed_job_id: str | None = None
 
     if body.mode == "owner_setup":
+        check_rate_limit(user_id, limit_per_minute=3, scope="org_create")
+        owner_memberships = [
+            m
+            for m in list_memberships(user_id)
+            if (m.get("org_roles") or {}).get("role_key") == SYSTEM_ROLE_OWNER or m.get("role") == SYSTEM_ROLE_OWNER
+        ]
+        if len(owner_memberships) >= MAX_OWNER_ORGS_PER_USER:
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST,
+                f"You can create at most {MAX_OWNER_ORGS_PER_USER} organizations",
+            )
         if not body.name or not body.name.strip():
             raise HTTPException(status.HTTP_400_BAD_REQUEST, "Company name is required")
+        website_url = _validate_website_url(body.website_url)
         slug_base = body.name.lower().replace(" ", "-")[:70]
         slug = f"{slug_base}-{uuid.uuid4().hex[:8]}"
         org_res = (
@@ -292,7 +348,7 @@ def complete_onboarding(
                 {
                     "name": body.name.strip(),
                     "slug": slug,
-                    "website_url": body.website_url,
+                    "website_url": website_url,
                     "industry": body.industry,
                     "profile": profile_payload,
                     "onboarding_completed_at": completed_at,
@@ -320,7 +376,7 @@ def complete_onboarding(
         delete_legacy_stub_orgs_for_user(
             user_id,
             keep_org_id=org_id,
-            full_name=user_full_name,
+            full_name=profile.get("full_name"),
             email=email,
         )
 
@@ -387,10 +443,7 @@ def complete_onboarding(
             ).execute()
 
     elif body.mode == "invitee_profile":
-        memberships = list_memberships(user_id)
-        if not memberships:
-            raise HTTPException(status.HTTP_400_BAD_REQUEST, "No organization membership found")
-        active = memberships[0]
+        active = _resolve_invitee_membership(user_id, body.org_id, profile)
         org_id = active["org_id"]
         org = active.get("organizations") or {}
         sb.table("user_profiles").update({"last_active_org_id": org_id}).eq("user_id", user_id).execute()
